@@ -8,6 +8,7 @@ REM      built .exe rather than stating it a second time.
 REM   2) Calls build-installer.cmd (publish + Inno Setup), then checks that the
 REM      .exe really carries the number that was asked for. That is the same
 REM      check release.yml makes against the tag, made here where it is cheap.
+REM      Then rewrites build\winget for that version and that installer (DD281).
 REM   3) [optional] With "upload" as the 2nd argument: commits the bump, pushes
 REM      it, creates and pushes the tag vX.Y.Z, and then creates the GitHub
 REM      release with the installer it just built and that installer's SHA-256
@@ -62,6 +63,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "$e='src\FreeWilly.Tray\b
 if errorlevel 1 (
     echo.
     echo *** ERROR: the built .exe does not carry v%~1. ***
+    exit /b 1
+)
+
+REM The winget manifests (DD281), hashed from the installer just built: the file publish-release.ps1
+REM uploads. Here rather than after the upload, so the rewritten manifests land in the same commit
+REM as the bump that names the version.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0update-winget.ps1" -Version "%~1"
+if errorlevel 1 (
+    echo.
+    echo *** ERROR: the winget manifests were not updated. ***
     exit /b 1
 )
 

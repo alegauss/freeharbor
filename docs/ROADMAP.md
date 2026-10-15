@@ -14,6 +14,9 @@
 
 ## Block F — Installer and distribution (free, Apache 2.0)
 
+- 📋 **DD282** (deps: DD281 ✅) **A release never reaches winget-pkgs: the manifests stay in the repository unsubmitted** — publish-release.ps1 submits the manifests with wingetcreate once the release is public, so each version reaches winget without a manual step. → §DD282
+- 💭 **DD283** (deps: DD281 ✅) **Nobody knows whether winget's validation VM can install it, since the preflight exits 7 without WSL2** — A silent manifest install in Windows Sandbox decides whether the first submission passes or needs a moderator, before the README promises winget. → §DD283
+
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
 ## Block H — The public surface (the site a reader and an agent both read)

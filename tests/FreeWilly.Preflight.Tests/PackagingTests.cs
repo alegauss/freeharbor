@@ -220,6 +220,86 @@ public sealed class PackagingTests
             FreeWilly.Core.Releases.ReleaseSums.DigestFor($"{digest}  {asset}\r\n", asset));
     }
 
+    /// <summary>One winget manifest from build\winget, read as text.</summary>
+    private static string WingetManifest(string suffix) =>
+        File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "build", "winget", $"alegauss.FreeWilly{suffix}.yaml"));
+
+    /// <summary>The value of a top-level or indented <c>Key: value</c> line, quotes stripped.</summary>
+    private static string YamlValue(string yaml, string key)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(
+            yaml, $@"^[ \t-]*{key}:[ \t]*'?([^'\r\n]+?)'?[ \t]*\r?$",
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+
+        Assert.True(match.Success, $"no {key} in the manifest");
+        return match.Groups[1].Value;
+    }
+
+    [Fact]
+    public void The_winget_manifest_names_the_install_the_installer_makes()
+    {
+        // DD281. winget finds an installed copy by its Add/Remove Programs entry, and every field of
+        // that entry is decided in installer.iss: the key is the AppId plus Inno's "_is1", the
+        // publisher is MyAppPublisher, the name is UninstallDisplayName. A manifest that disagrees
+        // installs fine and then cannot see what it installed, so `winget upgrade` offers nothing
+        // and `winget uninstall` finds nothing, and no step of a release would notice.
+        var script = InstallerScript();
+        var installer = WingetManifest(".installer");
+
+        var appId = System.Text.RegularExpressions.Regex
+            .Match(script, @"^AppId=\{(\{[^}]+\})", System.Text.RegularExpressions.RegexOptions.Multiline)
+            .Groups[1].Value;
+        Assert.NotEmpty(appId);
+        Assert.Equal($"{appId}_is1", YamlValue(installer, "ProductCode"));
+
+        var publisher = System.Text.RegularExpressions.Regex
+            .Match(script, "#define MyAppPublisher \"([^\"]+)\"").Groups[1].Value;
+        Assert.Equal(publisher, YamlValue(installer, "Publisher"));
+        Assert.Equal(publisher, YamlValue(WingetManifest(".locale.en-US"), "Publisher"));
+
+        Assert.Contains(
+            "UninstallDisplayName={#MyAppName} {#MyAppVersion}", script, StringComparison.Ordinal);
+        Assert.Equal($"FreeWilly {BuildVersion.Current}", YamlValue(installer, "DisplayName"));
+
+        // Per-user, because PrivilegesRequired=lowest is the whole point of this installer.
+        Assert.Contains("PrivilegesRequired=lowest", script, StringComparison.Ordinal);
+        Assert.Equal("user", YamlValue(installer, "Scope"));
+    }
+
+    [Fact]
+    public void Every_winget_manifest_describes_the_version_this_build_produces()
+    {
+        // update-release.cmd rewrites build\winget in the same run that raises <Version>, so the two
+        // agree on every release commit. A bump made any other way leaves the manifests describing
+        // the previous installer, and DD282 would submit them as if they were this release.
+        var version = BuildVersion.Current;
+
+        foreach (var suffix in new[] { "", ".installer", ".locale.en-US", ".locale.pt-BR" })
+        {
+            Assert.Equal(version, YamlValue(WingetManifest(suffix), "PackageVersion"));
+        }
+
+        var installer = WingetManifest(".installer");
+        Assert.Equal(version, YamlValue(installer, "DisplayVersion"));
+        Assert.Equal(
+            $"https://github.com/alegauss/freewilly/releases/download/v{version}/FreeWilly-Setup-{version}.exe",
+            YamlValue(installer, "InstallerUrl"));
+    }
+
+    [Fact]
+    public void The_exit_code_a_blocked_preflight_returns_reaches_winget_as_a_reason()
+    {
+        // PrepareToInstall returns a message when the preflight blocks, and Inno turns that into exit
+        // code 7. winget reports an unmapped code as a bare installer failure, on exactly the machine
+        // that most needs to be told it lacks WSL2 rather than that something broke.
+        Assert.Contains("function PrepareToInstall", InstallerScript(), StringComparison.Ordinal);
+
+        var installer = WingetManifest(".installer");
+        Assert.Equal("7", YamlValue(installer, "InstallerReturnCode"));
+        Assert.Equal("systemNotSupported", YamlValue(installer, "ReturnResponse"));
+    }
+
     [Fact]
     public void A_self_update_relaunches_and_an_unattended_install_still_does_not()
     {

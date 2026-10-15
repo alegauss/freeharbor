@@ -218,6 +218,7 @@
 - ✅ **DD223** **prepared rescue images are never swept, so a manifest bump orphans one and an uninstall leaves it behind** — Keeping a new prepared image drops the ones this build no longer names, and the uninstaller takes whichever are left, so an Alpine bump and a removal both stop leaving tarballs behind.
 - ✅ **DD232** **the clean-room release fails on its last step, because two commands are folded into one line of YAML** — The drafting step is a literal block, so it runs as two commands, and a test refuses any run: whose next line is indented into it, which is what folded them.
 - ✅ **DD236** **an install over a running tray leaves the stop to Restart Manager, which cannot close a tray or its detached engine** — The stop moved above both callers, and the install asks for it on the ready page and again in PrepareToInstall, which is the only one a silent install reaches.
+- ✅ **DD281** **No winget manifest exists, so `winget install` cannot find FreeWilly** — build\winget carries manifests for alegauss.FreeWilly, rewritten from the built installer by update-winget.ps1 during update-release; winget validate passes on v1.0.15.
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
