@@ -288,6 +288,26 @@ public sealed class PackagingTests
     }
 
     [Fact]
+    public void A_release_reaches_winget_only_once_it_is_public_and_never_fails_over_it()
+    {
+        // DD282. winget's validation downloads the installer from the URL the manifest names, so
+        // the submission belongs after `gh release create` and never on a draft, whose asset is
+        // not public. And nothing past the release may throw: the release is real by then, and a
+        // failed script sends a maintainer to re-run a `gh release create` that refuses the tag.
+        var script = PublishScript();
+        var created = script.IndexOf("& gh @arguments", StringComparison.Ordinal);
+        var submitted = script.IndexOf("& wingetcreate submit", StringComparison.Ordinal);
+
+        Assert.True(created > 0, "the script no longer creates the release with `& gh @arguments`");
+        Assert.True(submitted > created, "the winget submission runs before the release exists");
+
+        var after = script[script.IndexOf("# --- winget-pkgs", StringComparison.Ordinal)..];
+        Assert.Contains("if ($Draft)", after, StringComparison.Ordinal);
+        Assert.DoesNotContain("throw", after, StringComparison.Ordinal);
+        Assert.DoesNotContain("exit 1", after, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void The_exit_code_a_blocked_preflight_returns_reaches_winget_as_a_reason()
     {
         // PrepareToInstall returns a message when the preflight blocks, and Inno turns that into exit

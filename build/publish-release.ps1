@@ -17,6 +17,9 @@
 #     refuses to run an installer it does not vouch for. A release without it is
 #     a release every installed copy declines.
 #
+# Once the release is public it also submits build\winget to winget-pkgs
+# (DD282), when WINGET_TOKEN is set; any reason not to is printed and skipped.
+#
 # Usage:  powershell -File build\publish-release.ps1 -Version 1.0.1
 #         powershell -File build\publish-release.ps1 -Version 1.0.1 -Draft
 # =============================================================================
@@ -105,3 +108,45 @@ if ($Draft) {
     Write-Host "  gh release view `"v$Version`" --web"
 }
 Write-Host ''
+
+# --- winget-pkgs (DD282) -----------------------------------------------------
+# After the release, because winget's validation downloads the installer from
+# the URL the manifest names, and that URL exists from here on. Never fatal: the
+# release is already real, and failing now would send a maintainer to re-run a
+# script whose `gh release create` refuses a tag that already has one. Every
+# skip prints the command that does the same by hand.
+$winget = Join-Path $PSScriptRoot 'winget'
+$byHand = "  wingetcreate submit build\winget --token <a GitHub token with public_repo>"
+
+function Skip-Winget([string]$reason) {
+    Write-Host "=== winget: not submitted - $reason ==="
+    Write-Host $byHand
+    Write-Host ''
+}
+
+$manifest = Join-Path $winget 'alegauss.FreeWilly.installer.yaml'
+$described = if (Test-Path $manifest) { [System.IO.File]::ReadAllText($manifest) } else { '' }
+$digest = (Get-FileHash $installer -Algorithm SHA256).Hash
+
+if ($Draft) {
+    Skip-Winget 'the release is a draft, so its installer is not public yet'
+} elseif ($described -notmatch "(?m)^PackageVersion:[ \t]*$([regex]::Escape($Version))[ \t]*\r?$") {
+    # update-release.cmd rewrites the manifests in the run that builds the
+    # installer; a release made any other way leaves them on the previous one.
+    Skip-Winget "build\winget does not describe v$Version - run build\update-winget.ps1 -Version $Version"
+} elseif ($described -notmatch "InstallerSha256:[ \t]*$digest") {
+    Skip-Winget "build\winget names another installer than the one just uploaded - run build\update-winget.ps1 -Version $Version"
+} elseif (-not $env:WINGET_TOKEN) {
+    Skip-Winget 'WINGET_TOKEN is not set'
+} elseif (-not (Get-Command wingetcreate -ErrorAction SilentlyContinue)) {
+    Skip-Winget 'wingetcreate is not installed (winget install Microsoft.WingetCreate)'
+} else {
+    Write-Host "=== Submitting v$Version to microsoft/winget-pkgs ==="
+    & wingetcreate submit $winget --token $env:WINGET_TOKEN
+    if ($LASTEXITCODE -ne 0) {
+        Skip-Winget "wingetcreate exited $LASTEXITCODE"
+    } else {
+        Write-Host "=== winget: pull request opened for alegauss.FreeWilly $Version ==="
+        Write-Host ''
+    }
+}

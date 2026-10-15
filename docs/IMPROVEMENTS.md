@@ -12,19 +12,6 @@
 
 ## Block F — Installer and distribution (free, Apache 2.0)
 
-### §DD282 Submitting each release to winget-pkgs
-
-claude-tray submits from CI on a tag push. Since DD161 this project creates its release
-locally, in publish-release.ps1, so the submission belongs at the end of that script,
-right after `gh release create` succeeds and the installer URL exists.
-
-It runs `wingetcreate submit build\winget`, with the token from WINGET_TOKEN or the one
-`wingetcreate token --store` saved. Without a token, without wingetcreate, or with
--Draft, it says why it skipped and what command does it by hand, and the script still
-succeeds: the release is already real by then, and failing the script over the
-submission would make a maintainer re-run a step that cannot be repeated. A draft is
-skipped because validation downloads the installer, and a draft asset is not public.
-
 ### §DD283 Measuring the winget install before promising it
 
 winget-pkgs validates a new package by installing it silently on a Microsoft VM.
