@@ -1413,6 +1413,20 @@ begin
     Exit;
   end;
 
+  // DD284. A silent Setup still walks custom pages and presses Next on each, which is the opposite
+  // of what the notes above assumed. Measured on the test guest with winget's own switches: the
+  // preflight page disabled Next on a blocked machine, Setup logged "Failed to proceed to next wizard
+  // page; aborting" and exited 1, so PrepareToInstall and its exit 7 were never reached. Leaving the
+  // tasks page also called WizardSelectTasks with the unseen box defaults, replacing /MERGETASKS.
+  //
+  // A skipped page gets no NextButtonClick, so both go together: [Tasks] keeps whatever the command
+  // line chose, and the preflight is first read in PrepareToInstall.
+  if WizardSilent and ((PageID = TasksPage.ID) or (PageID = PreflightPage.ID)) then
+  begin
+    Result := True;
+    Exit;
+  end;
+
   // A machine that can host an engine has nothing to read here, and a page saying so is a click
   // this wizard has not earned. The answer is already in hand: NextButtonClick below reads the
   // machine on the way out of the tasks page, which is the page immediately in front of this one.

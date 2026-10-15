@@ -315,6 +315,13 @@ public sealed class PackagingTests
         // that most needs to be told it lacks WSL2 rather than that something broke.
         Assert.Contains("function PrepareToInstall", InstallerScript(), StringComparison.Ordinal);
 
+        // DD284. And PrepareToInstall is only reached silently if no drawn page stands in front of
+        // it: silent Setup presses Next on custom pages too, the preflight page disables Next on a
+        // blocked machine, and the guest measured exit 1 at that page rather than 7 here.
+        Assert.Contains(
+            "if WizardSilent and ((PageID = TasksPage.ID) or (PageID = PreflightPage.ID)) then",
+            InstallerScript(), StringComparison.Ordinal);
+
         var installer = WingetManifest(".installer");
         Assert.Equal("7", YamlValue(installer, "InstallerReturnCode"));
         Assert.Equal("systemNotSupported", YamlValue(installer, "ReturnResponse"));
