@@ -20,6 +20,10 @@
 
 ## Block H — The public surface (the site a reader and an agent both read)
 
+## Block I — The site on the design system
+
+- 📋 **DD285** (deps: viglet-design-system: VDS213–VDS215, claude-tray: T389) **The site keeps its own copy of the template that eight product sites share** — The shared Nav, Hero, Footer and sponsor slot drift apart in each copy, and the design system now carries them once. → §DD285
+
 ## Non-goals
 
 - **Feature parity with Docker Desktop** Kubernetes, the extensions marketplace and Dev
