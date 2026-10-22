@@ -82,7 +82,7 @@ public static class AgentSurface
         new(AgentNamespace.Read, "health", "read health",
             "whether WSL, the distribution and the disk under the engine are well"),
         new(AgentNamespace.Read, "logs", "read logs",
-            "<name> [--since t:..] [--level x] [--dedup] [--budget n] [--out path]\n"
+            "<name> [--since t:..|5m] [--level x] [--dedup] [--budget n] [--out path]\n"
             + "[--follow] [--until s] [--timeout 30s] watch a run to a line or a deadline"),
         new(AgentNamespace.Read, "ports", "read ports",
             "[port] every published port, and what holds it on Windows"),

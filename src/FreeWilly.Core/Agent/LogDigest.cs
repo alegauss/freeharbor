@@ -382,13 +382,21 @@ public static class LogDigest
             : CursorPrefix + last.Value.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Read a cursor a caller passed back.</summary>
-    /// <param name="text">The cursor, with or without its prefix.</param>
+    /// <summary>Read a cursor a caller passed back, or a window back from now.</summary>
+    /// <remarks>
+    /// The window is DD287's. Following a container that just restarted is the common case, and with
+    /// only a cursor the caller had to make one read first to scrape a <c>t:</c> off it, for nothing
+    /// but a moment it could have said: <c>--since 1m</c>. Seconds, minutes and hours, a number and
+    /// its unit, because that is the whole of the use and a duration grammar would be one more thing
+    /// to refuse.
+    /// </remarks>
+    /// <param name="text">The cursor, with or without its prefix, or a window as 30s, 5m or 2h.</param>
     /// <param name="since">The position.</param>
     /// <param name="refusal">Why it is not one.</param>
-    /// <returns><see langword="true"/> where it is a log cursor.</returns>
+    /// <param name="now">What a window is measured back from, so a test's is a fixed one.</param>
+    /// <returns><see langword="true"/> where it is a log cursor or a window.</returns>
     public static bool TryParseCursor(
-        string? text, out DateTimeOffset since, out string? refusal)
+        string? text, out DateTimeOffset since, out string? refusal, DateTimeOffset? now = null)
     {
         since = default;
         refusal = null;
@@ -410,6 +418,12 @@ public static class LogDigest
             return false;
         }
 
+        if (TryParseWindow(value) is { } window)
+        {
+            since = (now ?? DateTimeOffset.UtcNow) - window;
+            return true;
+        }
+
         if (value.StartsWith(CursorPrefix, StringComparison.Ordinal))
         {
             value = value[CursorPrefix.Length..];
@@ -422,8 +436,27 @@ public static class LogDigest
         }
 
         refusal = $"{text} is not a log cursor: it is {CursorPrefix} and a timestamp, as this command "
-            + "printed it.";
+            + "printed it, or a window back from now, as 30s, 5m or 2h.";
         return false;
+    }
+
+    /// <summary>A window as <c>30s</c>, <c>5m</c> or <c>2h</c>, or null where it is not one.</summary>
+    private static TimeSpan? TryParseWindow(string value)
+    {
+        if (value.Length < 2
+            || !int.TryParse(value[..^1], NumberStyles.None, CultureInfo.InvariantCulture, out var count)
+            || count <= 0)
+        {
+            return null;
+        }
+
+        return value[^1] switch
+        {
+            's' => TimeSpan.FromSeconds(count),
+            'm' => TimeSpan.FromMinutes(count),
+            'h' => TimeSpan.FromHours(count),
+            _ => null,
+        };
     }
 }
 

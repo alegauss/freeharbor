@@ -326,6 +326,31 @@ public sealed class LogDigestTests
         Assert.Equal(T0, without);
     }
 
+    [Theory]
+    [InlineData("30s", 30)]
+    [InlineData("1m", 60)]
+    [InlineData("5m", 300)]
+    [InlineData("2h", 7200)]
+    public void A_window_back_from_now_is_a_cursor_too(string window, int seconds)
+    {
+        // DD287. Following a container that just restarted needed a read first, only to scrape a
+        // t: cursor off it for a moment the caller could have named.
+        Assert.True(LogDigest.TryParseCursor(window, out var since, out _, now: T0));
+        Assert.Equal(T0 - TimeSpan.FromSeconds(seconds), since);
+    }
+
+    [Theory]
+    [InlineData("0m")]
+    [InlineData("-5m")]
+    [InlineData("5d")]
+    [InlineData("m")]
+    [InlineData("1.5m")]
+    public void A_window_that_is_not_a_count_and_a_unit_is_refused_and_says_what_one_is(string text)
+    {
+        Assert.False(LogDigest.TryParseCursor(text, out _, out var refusal, now: T0));
+        Assert.Contains("30s, 5m or 2h", refusal!, StringComparison.Ordinal);
+    }
+
     // ---- what a stream marks --------------------------------------------------------------------
 
     [Fact]

@@ -258,6 +258,7 @@
 - ✅ **DD257** **a follow is bound to a container id, so a compose recreate ends it and the session is told the log ended** — A follow that ends on the stream now asks the daemon once who answers the address, so a container replaced under it says so instead of reporting the log ended, with or without `--until`.
 - ✅ **DD258** **a follow across a compose recreate costs a second call, because it reports the replacement rather than following it** — A follow on a role address now crosses one recreate and marks the seam as a row in the payload, so `compose up` and the read watching it are one call again; an id address still ends.
 - ✅ **DD286** **read ps and read verify never show a container's health (starting, healthy, unhealthy), and the inspect verb is denied** — read ps prints each container's health beside its state, as running (healthy), (unhealthy) or (starting), off the list's own status; read verify already had a health row.
+- ✅ **DD287** **read logs --since refuses a relative window like 1m, so following a restart needs an extra read to scrape a t: cursor** — read logs --since takes a window back from now, as 30s, 5m or 2h, beside a t: cursor, so following a restart needs no read first to scrape one.
 
 ## Block H — The public surface (the site a reader and an agent both read)
 

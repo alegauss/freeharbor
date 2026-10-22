@@ -16,8 +16,6 @@
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
-- 📋 **DD287** (deps: —) **read logs --since refuses a relative window like 1m, so following a restart needs an extra read to scrape a t: cursor** — Watching a container just restarted is the common case, and a cursor grabbed by parsing another read's output is a workaround. → §DD287
-
 ## Block H — The public surface (the site a reader and an agent both read)
 
 ## Block I — The site on the design system
