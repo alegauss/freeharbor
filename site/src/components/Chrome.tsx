@@ -4,6 +4,7 @@ import {
   SiteNav,
   SiteSponsor,
   SiteThemeToggle,
+  type SiteBrand,
 } from "@viglet/viglet-design-system/site";
 import {
   THEME_KEY,
@@ -23,7 +24,8 @@ import { Waves } from "./ui/Waves";
 // here is this product's half of it: which links, which words, and the water the footer opens
 // out of.
 
-const brand = { href: "/freewilly/", name: "FreeWilly", logo: "/freewilly/logo.svg" };
+// A mark, not a tile: the orca is taller than it is wide and carries its own silhouette.
+const brand: SiteBrand = { href: "/freewilly/", name: "FreeWilly", logo: "/freewilly/logo.svg", logoShape: "mark" };
 
 const themeLabel = (next: string) => `Switch to ${next} theme`;
 

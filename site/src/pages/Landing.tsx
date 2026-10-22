@@ -31,7 +31,7 @@ export function Landing() {
     <>
       <Nav />
       <SiteHero
-        icon={{ src: "/freewilly/logo.svg", alt: "FreeWilly logo" }}
+        icon={{ src: "/freewilly/logo.svg", alt: "FreeWilly logo", logoShape: "mark" }}
         badge={hero.badge}
         title={hero.titleLead}
         titleAccent={hero.titleAccent}
@@ -49,25 +49,19 @@ export function Landing() {
             </SiteButton>
           </>
         }
+        // The session stands under the call to action: what it costs an agent is the argument
+        // the rest of the page makes, and the twin keeps it (VDS227's slot).
+        feature={
+          <>
+            <div className="session-eyebrow">{heroSession.eyebrow}</div>
+            <HeroSession />
+          </>
+        }
+        meta={hero.meta}
+        pills={hero.pills.map((runs, i) => (
+          <Rich runs={runs} key={i} />
+        ))}
       >
-        {/* The session stands between the actions and the meta line, where the shared hero
-            has no slot, so the tail of the hero is drawn here with the layer's own classes. */}
-        <div className="vg-site-wrap">
-          <div className="session-eyebrow">{heroSession.eyebrow}</div>
-          <HeroSession />
-          <div className="vg-site-hero-meta">
-            {hero.meta.map((item) => (
-              <span key={item}>{item}</span>
-            ))}
-          </div>
-          <div className="vg-site-pills">
-            {hero.pills.map((runs, i) => (
-              <span className="vg-site-pill" key={i}>
-                <Rich runs={runs} />
-              </span>
-            ))}
-          </div>
-        </div>
         <Waves />
       </SiteHero>
       <Operator />
