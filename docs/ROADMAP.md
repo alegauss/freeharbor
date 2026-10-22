@@ -14,8 +14,6 @@
 
 ## Block F — Installer and distribution (free, Apache 2.0)
 
-- 💭 **DD283** (deps: DD281 ✅) **Nobody knows whether winget's validation VM can install it, since the preflight exits 7 without WSL2** — A silent manifest install in Windows Sandbox decides whether the first submission passes or needs a moderator, before the README promises winget. → §DD283
-
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
 - 📋 **DD286** (deps: —) **read ps and read verify never show a container's health (starting, healthy, unhealthy), and the inspect verb is denied** — An agent checking a deploy needs the state the platform acts on; seeing only running hid an unhealthy container from the session. → §DD286
