@@ -87,7 +87,7 @@ public static class AgentSurface
         new(AgentNamespace.Read, "ports", "read ports",
             "[port] every published port, and what holds it on Windows"),
         new(AgentNamespace.Read, "ps", "read ps",
-            "every container as one line each: name, state, image, ports"),
+            "every container as one line each: name, state (health), image, ports"),
         new(AgentNamespace.Read, "verify", "read verify",
             "<name> [--request [:port]/path] [--expect n] [--wait] [--timeout 30s] it answers"),
         new(AgentNamespace.Do, "compose", "do compose up",
@@ -1382,8 +1382,12 @@ public static class AgentSurface
             var ports = container.PublishedPorts.Count == 0
                 ? "-"
                 : string.Join(",", container.PublishedPorts);
+            // The health beside the state, because "running" is not what a deploy is judged on: a
+            // container whose check fails is running and unhealthy, and the platform acts on the
+            // second word (DD286).
             text.Append(container.DisplayName).Append("  ")
-                .Append(container.State).Append("  ")
+                .Append(container.State)
+                .Append(container.Health is { } health ? $" ({health})" : "").Append("  ")
                 .Append(container.ImageName).Append("  ")
                 .Append(ports).AppendLine();
         }

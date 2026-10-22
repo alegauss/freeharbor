@@ -16,7 +16,6 @@
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
-- 📋 **DD286** (deps: —) **read ps and read verify never show a container's health (starting, healthy, unhealthy), and the inspect verb is denied** — An agent checking a deploy needs the state the platform acts on; seeing only running hid an unhealthy container from the session. → §DD286
 - 📋 **DD287** (deps: —) **read logs --since refuses a relative window like 1m, so following a restart needs an extra read to scrape a t: cursor** — Watching a container just restarted is the common case, and a cursor grabbed by parsing another read's output is a workaround. → §DD287
 
 ## Block H — The public surface (the site a reader and an agent both read)

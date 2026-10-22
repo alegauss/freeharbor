@@ -283,6 +283,35 @@ public sealed class AgentSurfaceTests
     }
 
     [Fact]
+    public async Task A_container_with_a_health_check_shows_its_health_beside_the_state()
+    {
+        // DD286. "running" hid an unhealthy container from a session checking a deploy, and the
+        // list's own sentence already carries the health, so no inspect is needed to say it.
+        await using var daemon = new FakeDockerDaemon()
+            .Fails(Path("_ping"), "200 OK", "OK")
+            .Json(Path("containers/json?all=1"), """
+                [{"Id":"aaaaaaaaaaaa0000","Names":["/site-db-1"],"Image":"mariadb:11","State":"running",
+                  "Status":"Up 17 minutes (healthy)","Ports":[]},
+                 {"Id":"bbbbbbbbbbbb0000","Names":["/site-web-1"],"Image":"wordpress:7","State":"running",
+                  "Status":"Up 2 minutes (unhealthy)","Ports":[]},
+                 {"Id":"cccccccccccc0000","Names":["/site-worker-1"],"Image":"worker:1","State":"running",
+                  "Status":"Up 3 seconds (health: starting)","Ports":[]},
+                 {"Id":"dddddddddddd0000","Names":["/site-cli-1"],"Image":"wordpress:cli","State":"running",
+                  "Status":"Up 1 minute","Ports":[]}]
+                """);
+        using var api = new DockerApi(daemon.PipeName);
+        var output = new StringWriter();
+
+        Assert.Equal(0, AgentSurface.Read(Verb("read", "ps"), api, [], output));
+
+        var lines = output.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        Assert.StartsWith("site-cli-1  running  ", lines[0], StringComparison.Ordinal);
+        Assert.StartsWith("site-db-1  running (healthy)  ", lines[1], StringComparison.Ordinal);
+        Assert.StartsWith("site-web-1  running (unhealthy)  ", lines[2], StringComparison.Ordinal);
+        Assert.StartsWith("site-worker-1  running (starting)  ", lines[3], StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task An_engine_that_is_not_answering_says_so_rather_than_returning_an_empty_list()
     {
         // Self-describing state, so the agent never probes for a capability. An empty list would read

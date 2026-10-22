@@ -544,6 +544,20 @@ public sealed record ContainerSummary
     public string ImageName => ImageReference.Short(Image);
 
     /// <summary>
+    /// starting, healthy or unhealthy, read off <see cref="Status"/>; null where no check is declared.
+    /// </summary>
+    /// <remarks>
+    /// The list's own sentence carries it, <c>Up 4 minutes (healthy)</c>, so the state the platform
+    /// acts on costs no inspect (DD286). Only a running container has one: the daemon stops
+    /// reporting it once the container exits.
+    /// </remarks>
+    public string? Health =>
+        Status.Contains("(healthy)", StringComparison.Ordinal) ? "healthy"
+        : Status.Contains("(unhealthy)", StringComparison.Ordinal) ? "unhealthy"
+        : Status.Contains("(health: starting)", StringComparison.Ordinal) ? "starting"
+        : null;
+
+    /// <summary>
     /// Whether the image this was created from has left the store (DD167).
     /// </summary>
     /// <remarks>

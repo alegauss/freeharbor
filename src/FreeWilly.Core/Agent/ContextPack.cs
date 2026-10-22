@@ -281,10 +281,7 @@ public static class ContextPack
 
         if (status.StartsWith("Up ", StringComparison.Ordinal))
         {
-            var health = status.Contains("(healthy)", StringComparison.Ordinal) ? " (healthy)"
-                : status.Contains("(unhealthy)", StringComparison.Ordinal) ? " (unhealthy)"
-                : status.Contains("(health: starting)", StringComparison.Ordinal) ? " (starting)"
-                : "";
+            var health = container.Health is { } said ? $" ({said})" : "";
             return "up " + Brief(status[3..]) + health;
         }
 
