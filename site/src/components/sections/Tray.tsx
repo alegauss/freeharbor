@@ -1,18 +1,16 @@
 import { tray } from "../../lib/site-content";
 import { stateIcons, trayMenuDiagram } from "../../lib/diagrams";
-import { Rich } from "../ui/Rich";
+import { SiteRich as Rich, SiteSectionHead } from "@viglet/viglet-design-system/site";
 import { RawSvg } from "../ui/RawSvg";
 
 export function Tray() {
   return (
     <section id="tray">
-      <div className="wrap">
-        <div className="sec-head reveal">
-          <div className="eyebrow">{tray.eyebrow}</div>
-          <h2>{tray.heading}</h2>
-          <p>
+      <div className="vg-site-wrap">
+        <div className="reveal">
+          <SiteSectionHead eyebrow={tray.eyebrow} title={tray.heading}>
             <Rich runs={tray.intro} />
-          </p>
+          </SiteSectionHead>
         </div>
         <div className="states reveal">
           {tray.states.map((state) => (
@@ -27,7 +25,7 @@ export function Tray() {
         </div>
         <div className="split reveal" style={{ marginTop: "52px" }}>
           <div className="split-txt">
-            <div className="eyebrow">{tray.splitEyebrow}</div>
+            <div className="vg-site-eyebrow">{tray.splitEyebrow}</div>
             <h2>{tray.splitHeading}</h2>
             {/* One entry per item the menu shows, plus the one it hides — two arrays so the
                 count the heading states is a number a test can hold the list to (DD160). */}

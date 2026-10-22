@@ -43,6 +43,19 @@ test("no source fetches a third-party font at page load", () => {
   assert.deepEqual(offenders.map((f) => f.replace(siteDir + "/", "")), []);
 });
 
+test("analytics loads only from the consent banner (DD285)", () => {
+  // The banner's promise is that nothing reaches Google before a choice. A tag pasted back
+  // into the head would load on every page and the banner would go on asking regardless, so
+  // the template is held to carrying none and the consent component to being the only loader.
+  const html = readFileSync(join(siteDir, "index.html"), "utf8");
+  assert.ok(!html.includes("googletagmanager.com"), "index.html loads analytics before consent");
+  const loaders = sourceFiles.filter((f) => readFileSync(f, "utf8").includes("googletagmanager.com"));
+  assert.deepEqual(
+    loaders.map((f) => f.slice(siteDir.length + 1).replaceAll("\\", "/")),
+    ["src/components/Consent.tsx"],
+  );
+});
+
 // The ocean loops by translating one whole repeat of its crests, so a period that does not
 // divide that repeat puts a visible seam through the water once per cycle — every few
 // seconds, forever. The arithmetic is the whole of the illusion, so it is asserted rather

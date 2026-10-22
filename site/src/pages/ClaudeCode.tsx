@@ -1,9 +1,7 @@
 import { claudeCode as cc, friction } from "../lib/site-content";
 import { ceiling, measured, shippedCount, surface, thousands } from "../lib/surface";
-import { Nav } from "../components/Nav";
-import { Footer } from "../components/Footer";
-import { Rich } from "../components/ui/Rich";
-import { CopyButton } from "../components/ui/CopyButton";
+import { SiteCopyButton, SiteRich as Rich, SiteSectionHead } from "@viglet/viglet-design-system/site";
+import { Nav, Footer } from "../components/Chrome";
 
 type Verb = { k: string; v: string; d: string };
 
@@ -97,9 +95,9 @@ export function ClaudeCode() {
   return (
     <>
       <Nav />
-      <header className="hero page-hero" id="top">
-        <div className="wrap">
-          <div className="eyebrow">{cc.eyebrow}</div>
+      <header className="page-hero" id="top">
+        <div className="vg-site-wrap">
+          <div className="vg-site-eyebrow">{cc.eyebrow}</div>
           <h1>{cc.heading}</h1>
           <p className="sub">
             <Rich runs={cc.intro} />
@@ -111,13 +109,11 @@ export function ClaudeCode() {
       </header>
 
       <section id="friction">
-        <div className="wrap">
-          <div className="sec-head reveal">
-            <div className="eyebrow">{friction.eyebrow}</div>
-            <h2>{friction.heading}</h2>
-            <p>
+        <div className="vg-site-wrap">
+          <div className="reveal">
+            <SiteSectionHead eyebrow={friction.eyebrow} title={friction.heading}>
               <Rich runs={friction.intro} />
-            </p>
+            </SiteSectionHead>
           </div>
 
           {/* Every figure here is read from agent-budget.json at build time (S2). A <p> for
@@ -152,14 +148,19 @@ export function ClaudeCode() {
       </section>
 
       <section>
-        <div className="wrap narrow">
-          <div className="sec-head reveal" style={{ marginBottom: "26px" }}>
-            <h2>{cc.allowlistHeading}</h2>
+        <div className="vg-site-wrap narrow">
+          <div className="allowlist-head reveal">
+            <SiteSectionHead title={cc.allowlistHeading} />
           </div>
           <p className="allowlist-lead reveal">{cc.allowlistLead}</p>
           <div className="codeblock copy reveal" style={{ maxWidth: "520px", margin: "0 auto" }}>
             <code>{cc.allowlistLine}</code>
-            <CopyButton text={cc.allowlistLine} label="Copy the allowlist line" />
+            <SiteCopyButton
+              text={cc.allowlistLine}
+              label="Copy the allowlist line"
+              copyLabel="Copy"
+              copiedLabel="Copied!"
+            />
           </div>
           <p className="allowlist-note reveal">
             <Rich runs={cc.allowlistNote} />
@@ -168,7 +169,7 @@ export function ClaudeCode() {
       </section>
 
       <section>
-        <div className="wrap">
+        <div className="vg-site-wrap">
           <div className="verbs-split">
             <VerbList heading={cc.readHeading} verbs={cc.read} />
             <VerbList heading={cc.doHeading} verbs={cc.do} />
@@ -177,25 +178,21 @@ export function ClaudeCode() {
       </section>
 
       <section>
-        <div className="wrap narrow">
-          <div className="sec-head reveal">
-            <div className="eyebrow">Discovery</div>
-            <h2>{cc.pluginHeading}</h2>
-            <p>
+        <div className="vg-site-wrap narrow">
+          <div className="reveal">
+            <SiteSectionHead eyebrow="Discovery" title={cc.pluginHeading}>
               <Rich runs={cc.pluginBody} />
-            </p>
+            </SiteSectionHead>
           </div>
         </div>
       </section>
 
       <section>
-        <div className="wrap">
-          <div className="sec-head reveal">
-            <div className="eyebrow">Scope</div>
-            <h2>{cc.refusesHeading}</h2>
-            <p>
+        <div className="vg-site-wrap">
+          <div className="reveal">
+            <SiteSectionHead eyebrow="Scope" title={cc.refusesHeading}>
               <Rich runs={cc.refusesLead} />
-            </p>
+            </SiteSectionHead>
           </div>
           <div className="refuses reveal">
             {cc.refuses.map((r) => (

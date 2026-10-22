@@ -10,7 +10,9 @@ const SKIP_TAGS = new Set(["NAV", "FOOTER", "BUTTON", "SCRIPT", "STYLE", "NOSCRI
 // Decorative chrome dropped by class: the pulse dot, the ✓ ticks, the emoji card icons,
 // the step numbers, the banner lock, the section kicker, terminal window bars, the legend.
 const SKIP_CLASSES = new Set([
-  "dot", "chk", "ico", "n", "lock", "eyebrow", "bar", "legend", "copy-btn",
+  "dot", "chk", "ico", "n", "lock", "eyebrow", "bar", "legend",
+  // the same three as the design system's site layer names them (DD285)
+  "vg-site-dot", "vg-site-eyebrow", "vg-site-copy",
 ]);
 // Elements that carry a run of text, not a block — rendered inline, never recursed as blocks.
 const INLINE_TAGS = new Set(["SPAN", "B", "STRONG", "I", "EM", "CODE", "KBD", "A", "BR"]);

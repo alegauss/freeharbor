@@ -1,6 +1,5 @@
-import { Nav } from "../components/Nav";
-import { Footer } from "../components/Footer";
-import { Rich } from "../components/ui/Rich";
+import { SiteRich as Rich } from "@viglet/viglet-design-system/site";
+import { Nav, Footer } from "../components/Chrome";
 import { RawSvg } from "../components/ui/RawSvg";
 import { features, type FeatureRecord } from "../lib/features";
 import { pipeDiagram, windowDiagram, preflightTerminal } from "../lib/diagrams";
@@ -37,12 +36,12 @@ export function FeaturePage({ record }: { record: FeatureRecord }) {
   return (
     <>
       <Nav />
-      <header className="hero page-hero" id="top">
-        <div className="wrap">
+      <header className="page-hero" id="top">
+        <div className="vg-site-wrap">
           <a className="feature-back" href="/freewilly/#pipe">
             ← Features
           </a>
-          <div className="eyebrow">{record.eyebrow}</div>
+          <div className="vg-site-eyebrow">{record.eyebrow}</div>
           <h1>{record.heading}</h1>
           <p className="sub">
             <Rich runs={record.lead} />
@@ -51,7 +50,7 @@ export function FeaturePage({ record }: { record: FeatureRecord }) {
       </header>
 
       <section>
-        <div className="wrap">
+        <div className="vg-site-wrap">
           {record.figure && <Figure kind={record.figure} />}
           <div className="feature-body">
             {record.sections.map((s) => (

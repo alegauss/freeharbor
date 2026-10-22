@@ -253,7 +253,7 @@ site/                        a self-contained Node workspace — this repo's fir
   src/components/sections/   one component per landing section, rendering content
   scripts/prerender.mjs      per-route HTML + the Markdown twin + manifest.json
   scripts/roadmap.mjs        roadkeep export --json → generated module (S2)
-  scripts/og-image.mjs       og.svg → og.png, 1200x630
+  scripts/og-card.mjs        the card's template filled; the design system rasterises it
   scripts/*.test.mjs         the site's own claims (S1), run by node --test
   public/                    robots.txt, sitemap.xml, llms.txt, favicon, og.svg
 ```
@@ -316,9 +316,13 @@ discovers is one nobody uses.
   `--help` are the documentation, and a docs site is a fourth surface to keep true.
 - **No blog, no changelog page, no release notes.** `CHANGELOG.md` is roadkeep's and
   `git log` is authoritative; a second telling of either is a second thing to drift.
-- **No analytics, no fonts fetched from a third party at page load, no cookie banner.**
+- **No fonts fetched from a third party at page load, and no analytics without consent.**
   The product claims no telemetry and no account. A site that measures its readers to
-  advertise a tool that measures nothing is the same defect the product refuses.
+  advertise a tool that measures nothing is the same defect the product refuses. This
+  bullet once said *no analytics, no cookie banner*; a Google tag later went into the
+  template and loaded on every page, so DD285 moved it behind the consent banner the
+  alegauss hub runs. Nothing reaches Google before a visitor allows it, a refusal is
+  remembered, and a lint test holds the template to carrying no tag.
 - **No live demo instance.** Shio's remaining site task is a public read-only CMS; the
   equivalent here would be a Windows machine somebody else can drive, which is not a
   thing to expose to the internet at any price.

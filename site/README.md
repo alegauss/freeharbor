@@ -11,7 +11,7 @@ constitution under Block H).
 ```
 npm install        # once
 npm run dev        # dev server at /freewilly/
-npm run build      # generate → tsc → client → og image → SSR → prerender
+npm run build      # generate → tsc → client → SSR → og image + prerender
 npm test           # the site's own claims, against what the build produced
 npm run typecheck  # tsc -b, no emit
 npm run preview    # serve the built dist/
@@ -34,7 +34,8 @@ published URL at once — the prefix is written once, in [vite.config.ts](vite.c
 |---|---|
 | `src/lib/site-content.ts` | **All copy** — sections only render it, so a claim is one array element a reviewer can check (S3) |
 | `src/lib/diagrams.ts` | The illustrative SVGs and the preflight terminal, kept verbatim as figures |
-| `src/lib/theme.ts` + `index.html` pre-paint script + `src/index.css` tokens | **The theme follows the OS**, a stored choice overrides it, applied before first paint (S6) |
+| `src/components/Chrome.tsx` | The nav and the footer, drawn by `@viglet/viglet-design-system/site` on `data-tone="navy"` (DD285); this file holds only the links, the words and the water |
+| `vite.config.ts` pre-paint script + `src/index.css` tokens | **The theme follows the OS**, a stored choice overrides it, applied before first paint (S6). The script and the toggle are the design system's, under `THEME_KEY` |
 | `src/routes.tsx` | The route table and its metadata, asserted against each other at import time (S4) |
 | `src/components/sections/` | One component per landing section; the composition (order, JSX) lives here |
 | `src/App.tsx` | The landing page, section order = the argument |
@@ -42,9 +43,10 @@ published URL at once — the prefix is written once, in [vite.config.ts](vite.c
 
 ## Deliberate non-goals here
 
-No third-party fonts fetched at page load (the product claims no telemetry; the site adds
-none), no analytics, no cookie banner. Inter / JetBrains Mono are named with system
-fallbacks rather than pulled from a CDN.
+No third-party fonts fetched at page load, and no analytics before consent: Google
+Analytics loads only once a visitor allows it, from the banner in `src/components/Consent.tsx`
+(DD285), and `scripts/lint.test.mjs` holds the template to carrying no tag. Inter /
+JetBrains Mono are named with system fallbacks rather than pulled from a CDN.
 
 ## What is not written down here
 

@@ -14,7 +14,7 @@
   <rect width="1200" height="630" fill="url(#dd-glow)"/>
   <rect x="0" y="0" width="1200" height="8" fill="#2E9BD6"/>
 
-  <!-- The mark. og-image.mjs substitutes public/logo.svg here, positioned and scaled by the
+  <!-- The mark. og-card.mjs substitutes public/logo.svg here, positioned and scaled by the
        constants it holds, so the card carries no copy of the artwork to fall behind it. -->
   {{mark}}
 
@@ -29,7 +29,7 @@
   <text x="92" y="502" font-family="DejaVu Sans, sans-serif" font-size="26" fill="#9db3c1">Upstream Moby in a WSL2 distro it owns, on the pipe your tools already use.</text>
 
   <!-- Status badge: the same three facts the hero badge states, in the same order. The pill has
-       no width of its own — og-image.mjs measures the text and fits it, because a width typed
+       no width of its own — og-card.mjs measures the text and fits it, because a width typed
        here is a width measured against whichever font the machine that typed it happened to have. -->
   <rect x="90" y="540" width="{{chip-width}}" height="46" rx="23" fill="#11212c" stroke="#22404f"/>
   <circle cx="118" cy="563" r="6" fill="#67C3F2"/>

@@ -1,17 +1,15 @@
 import { preflight } from "../../lib/site-content";
 import { preflightTerminal } from "../../lib/diagrams";
-import { Rich } from "../ui/Rich";
+import { SiteRich as Rich, SiteSectionHead } from "@viglet/viglet-design-system/site";
 
 export function Preflight() {
   return (
     <section id="preflight">
-      <div className="wrap">
-        <div className="sec-head reveal">
-          <div className="eyebrow">{preflight.eyebrow}</div>
-          <h2>{preflight.heading}</h2>
-          <p>
+      <div className="vg-site-wrap">
+        <div className="reveal">
+          <SiteSectionHead eyebrow={preflight.eyebrow} title={preflight.heading}>
             <Rich runs={preflight.intro} />
-          </p>
+          </SiteSectionHead>
         </div>
         <div className="reveal">
           <div className="term">
@@ -43,7 +41,7 @@ export function Preflight() {
         <p
           style={{
             textAlign: "center",
-            color: "var(--muted-2)",
+            color: "var(--vg-muted-foreground)",
             fontSize: ".9rem",
             marginTop: "30px",
           }}

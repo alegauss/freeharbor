@@ -1,8 +1,7 @@
 import { Fragment } from "react";
 import { compare as cmp } from "../lib/site-content";
-import { Nav } from "../components/Nav";
-import { Footer } from "../components/Footer";
-import { Rich } from "../components/ui/Rich";
+import { SiteRich as Rich, SiteSectionHead } from "@viglet/viglet-design-system/site";
+import { Nav, Footer } from "../components/Chrome";
 
 function cellClass(value: string): string {
   const head = value[0];
@@ -15,9 +14,9 @@ export function Compare() {
   return (
     <>
       <Nav />
-      <header className="hero page-hero" id="top">
-        <div className="wrap">
-          <div className="eyebrow">{cmp.eyebrow}</div>
+      <header className="page-hero" id="top">
+        <div className="vg-site-wrap">
+          <div className="vg-site-eyebrow">{cmp.eyebrow}</div>
           <h1>{cmp.heading}</h1>
           <p className="sub">
             <Rich runs={cmp.intro} />
@@ -26,7 +25,7 @@ export function Compare() {
       </header>
 
       <section>
-        <div className="wrap">
+        <div className="vg-site-wrap">
           <div className="cmp-legend reveal">
             {cmp.legend.map((l) => (
               <span key={l.sym}>
@@ -71,10 +70,9 @@ export function Compare() {
       </section>
 
       <section>
-        <div className="wrap">
-          <div className="sec-head reveal">
-            <div className="eyebrow">Credibility</div>
-            <h2>{cmp.winsHeading}</h2>
+        <div className="vg-site-wrap">
+          <div className="reveal">
+            <SiteSectionHead eyebrow="Credibility" title={cmp.winsHeading} />
           </div>
           <div className="grid reveal">
             {cmp.wins.map((w) => (

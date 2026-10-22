@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { heroSession } from "../lib/site-content";
-import { Rich } from "./ui/Rich";
+import { SiteRich as Rich } from "@viglet/viglet-design-system/site";
 
 // The hero is a session (§DD44): an autoplaying transcript of the five-call agent task,
 // because what is sold here is how cheaply an agent operates the machine. All steps render

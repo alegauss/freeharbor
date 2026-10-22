@@ -311,3 +311,4 @@
 
 ## Block I — The site on the design system
 
+- ✅ **DD285 (the site on the shared site layer)** **The site keeps its own copy of the template that eight product sites share** — Nav, hero, section heads, feature index, sponsor, footer, copy button and theme toggle come from the design system on navy with an azure brand; the build uses its prerender and OG helpers.

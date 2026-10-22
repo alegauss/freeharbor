@@ -1,16 +1,14 @@
 import { engine } from "../../lib/site-content";
-import { Rich } from "../ui/Rich";
+import { SiteRich as Rich, SiteSectionHead } from "@viglet/viglet-design-system/site";
 
 export function Engine() {
   return (
     <section id="engine">
-      <div className="wrap">
-        <div className="sec-head reveal">
-          <div className="eyebrow">{engine.eyebrow}</div>
-          <h2>{engine.heading}</h2>
-          <p>
+      <div className="vg-site-wrap">
+        <div className="reveal">
+          <SiteSectionHead eyebrow={engine.eyebrow} title={engine.heading}>
             <Rich runs={engine.intro} />
-          </p>
+          </SiteSectionHead>
         </div>
         <div className="steps reveal">
           {engine.steps.map((step) => (

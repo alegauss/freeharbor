@@ -1,17 +1,15 @@
 import { operator } from "../../lib/site-content";
-import { Rich } from "../ui/Rich";
+import { SiteRich as Rich, SiteSectionHead } from "@viglet/viglet-design-system/site";
 
 // §DD45 — the two actors, then the ten laws in the order an agent meets them.
 export function Operator() {
   return (
     <section id="operator">
-      <div className="wrap">
-        <div className="sec-head reveal">
-          <div className="eyebrow">{operator.eyebrow}</div>
-          <h2>{operator.heading}</h2>
-          <p>
+      <div className="vg-site-wrap">
+        <div className="reveal">
+          <SiteSectionHead eyebrow={operator.eyebrow} title={operator.heading}>
             <Rich runs={operator.intro} />
-          </p>
+          </SiteSectionHead>
         </div>
 
         <div className="actors reveal">
@@ -30,12 +28,10 @@ export function Operator() {
           <Rich runs={operator.actorsNote} />
         </p>
 
-        <div className="sec-head reveal" style={{ marginTop: "72px" }}>
-          <div className="eyebrow">{operator.lawsEyebrow}</div>
-          <h2>{operator.lawsHeading}</h2>
-          <p>
+        <div className="reveal" style={{ marginTop: "72px" }}>
+          <SiteSectionHead eyebrow={operator.lawsEyebrow} title={operator.lawsHeading}>
             <Rich runs={operator.lawsIntro} />
-          </p>
+          </SiteSectionHead>
         </div>
         <div className="laws reveal">
           {operator.laws.map((law) => (

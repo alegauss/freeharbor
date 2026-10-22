@@ -25,6 +25,7 @@ import {
   stepCount,
   version,
 } from "./product";
+import type { SponsorDeclaration } from "@viglet/viglet-design-system/site";
 
 export type Run =
   | string
@@ -71,6 +72,11 @@ export const parentUrl = "https://alegauss.github.io/";
 // one link that cannot go stale, and it is also where the checksum lives.
 export const releasesUrl = `${repoUrl}/releases/latest`;
 
+// Where the light/dark choice is stored: read by the pre-paint script vite.config.ts inlines
+// and by the toggle, so the two agree on one key. The key the site has always used, so a choice
+// a reader made before DD285 still holds.
+export const THEME_KEY = "dd-theme";
+
 // Section anchors (#x) act on the landing page; the page links are base-absolute so they
 // resolve the same from every route. The brand and footer link home the same way.
 export const navLinks = [
@@ -107,16 +113,20 @@ export const footer = {
 // these projects. Transcribed here rather than fetched at runtime: this site is
 // prerendered, and the whole point of naming a sponsor is that crawlers and LLMs
 // read it in the served HTML.
-export const sponsor = {
-  label: "Sponsored by",
-  name: "Viglet",
-  url: "https://www.viglet.org",
-  siteLabel: "viglet.org",
-  logo: "/freewilly/viglet/viglet-logo.png",
-  summary:
-    "Open source search and content tools for organisations with a lot to publish. Run on your own servers, with no per-user licence.",
+// Shaped as the design system's SponsorDeclaration, which SiteSponsor renders (DD285).
+export const sponsor: SponsorDeclaration = {
+  sponsor: {
+    label: "Sponsored by",
+    name: "Viglet",
+    url: "https://www.viglet.org",
+    siteLabel: "viglet.org",
+    logo: "/freewilly/viglet/viglet-logo.png",
+    summary:
+      "Open source search and content tools for organisations with a lot to publish. Run on your own servers, with no per-user licence.",
+  },
   products: [
     {
+      id: "turing",
       name: "Viglet Turing",
       url: "https://turing.viglet.org",
       logo: "/freewilly/viglet/turing-logo.png",
@@ -124,6 +134,7 @@ export const sponsor = {
         "so visitors find what they came for, with AI answers drawn only from your own content",
     },
     {
+      id: "shio",
       name: "Viglet Shio",
       url: "https://shio.viglet.org",
       logo: "/freewilly/viglet/shio-logo.png",
@@ -131,7 +142,7 @@ export const sponsor = {
         "so a new page goes live the same day, reviewed and approved by your own team",
     },
   ],
-} as const;
+};
 
 /* ------------------------------------------------------------------ hero */
 
