@@ -4,6 +4,8 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
+- 📋 **DD288** (deps: —) **The engine refuses clients below API 1.40 and FreeWilly offers no way to admit them** — Tools pinned to an older API, like Testcontainers' docker-java at 1.32, read Docker as absent until each project pins a newer version. → §DD288
+
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)
@@ -15,6 +17,8 @@
 ## Block F — Installer and distribution (free, Apache 2.0)
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
+
+- 📋 **DD289** (deps: —) **read health and read context show the engine API version but not its minimum, so a refused old client goes unexplained** — Testcontainers suites skip every container test on this engine and nothing on the machine says why. → §DD289
 
 ## Block H — The public surface (the site a reader and an agent both read)
 
