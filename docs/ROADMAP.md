@@ -2,6 +2,9 @@
 
 ## Priority
 
+- DD288
+- DD289
+
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
 - 📋 **DD288** (deps: —) **The engine refuses clients below API 1.40 and FreeWilly offers no way to admit them** — Tools pinned to an older API, like Testcontainers' docker-java at 1.32, read Docker as absent until each project pins a newer version. → §DD288
@@ -16,11 +19,16 @@
 
 ## Block F — Installer and distribution (free, Apache 2.0)
 
+- 📋 **DD290** (deps: winget-pkgs moderator approval) **winget install alegauss.FreeWilly finds nothing while the first winget-pkgs pull request waits for moderators** — The terminal is where a developer looks for a Docker replacement, and the README cannot name the command until the package is live. → §DD290
+- 📋 **DD292** (deps: visibility VS58) **Every first download meets a SmartScreen warning, because the installer is not signed** — The Store signs the MSIX package itself, and claude-tray tests that path first, so this follows what that test learns. → §DD292
+
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
 - 📋 **DD289** (deps: —) **read health and read context show the engine API version but not its minimum, so a refused old client goes unexplained** — Testcontainers suites skip every container test on this engine and nothing on the machine says why. → §DD289
 
 ## Block H — The public surface (the site a reader and an agent both read)
+
+- 📋 **DD291** (deps: —) **The README and the site open on the licence, which Rancher and Podman also offer, not on installing without admin** — A developer on a managed corporate laptop is the reader only FreeWilly serves, and the page has to say so before a comment names the rivals. → §DD291
 
 ## Block I — The site on the design system
 

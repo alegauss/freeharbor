@@ -49,6 +49,45 @@ and asks for manual validation. The README and the site name `winget install
 alegauss.FreeWilly` only after the PR merges, because an install line that finds nothing
 is worse than none.
 
+### §DD290 DD290 — Seeing the winget submission through to a working install
+
+From the portfolio review of 30/10/2026 (visibility, `produtos/freewilly.md`). DD282
+shipped the submission path, and the first pull request to winget-pkgs is now open,
+waiting for the moderators. Until it merges, `winget show alegauss.FreeWilly` finds
+nothing, and the README and the site rightly do not mention winget. The work is to
+follow that pull request to its end, not to build anything new.
+
+While it waits: answer the moderators' review comments, and if the validation VM fails
+the install (the risk DD283 set aside, since the preflight exits 7 without WSL2), record
+what it reported and fix the manifest or the installer's silent path. Once merged:
+confirm `winget install alegauss.FreeWilly` installs the current release on a clean
+machine, then add `winget install alegauss.FreeWilly` to the README's download line and
+to the site, and check that the next release's automatic submission (DD282) produces an
+update pull request rather than a new package.
+
+Done when `winget show alegauss.FreeWilly` lists the latest release and the README and
+the site name the command.
+
+### §DD292 DD292 — Distributing through the Microsoft Store
+
+From the portfolio review of 30/10/2026 (visibility, `estrategia/portfolio.md`). The
+installer is not signed, so SmartScreen warns on every first download, which is the
+wrong first impression on exactly the corporate laptop this tool is for. The decision
+for all of the author's Windows apps is the Microsoft Store, which signs the MSIX
+package itself, instead of buying a code signing certificate. claude-tray tests the path
+first (visibility VS58); this line waits for what that test learns.
+
+FreeWilly has restrictions of its own to check against the Store's rules: it enables or
+relies on the WSL2 feature, which can require elevation; it creates and registers its
+own WSL distribution and downloads the engine from upstream at install time; and its
+per-user, no-admin install is the selling point, so the package must keep it. If MSIX
+cannot host the preflight and the WSL registration, the answer may be a Store listing
+that points to the existing installer, or no Store at all; the outcome is written down
+either way.
+
+Done when FreeWilly is in the Store with its install still working without admin, or the
+reason it cannot be is recorded here and in the product sheet.
+
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
 ### §DD289 The engine minimum API version is never shown
@@ -85,6 +124,26 @@ Workaround in Turing: `turing-app/src/test/resources/docker-java.properties` wit
 `api.version=1.44`.
 
 ## Block H — The public surface (the site a reader and an agent both read)
+
+### §DD291 DD291 — Opening on the corporate laptop without admin
+
+From the portfolio review of 30/10/2026 (visibility, `estrategia/portfolio.md` and
+`produtos/freewilly.md`). The first answer anyone gives to a free Docker Desktop
+alternative is Rancher Desktop or Podman Desktop: free, open source, multi-platform,
+backed by SUSE and Red Hat. The README and the site open on the licence ("no headcount
+threshold, no revenue threshold"), which those two also satisfy, and mention "per-user
+install, no admin prompt" only as a small note under the download link.
+
+What separates FreeWilly is who can install it: a developer on a managed corporate
+laptop, with no admin rights, whose company crossed Docker Desktop's limits. The
+README's first paragraph and the site's hero should open on that reader and that
+situation, with the licence as the reason the company allows it, and say plainly the one
+exception (enabling the WSL feature may need elevation once). A short, honest comparison
+row against Rancher and Podman (admin needed or not, own distribution, no resident
+service) answers the comment before it is written.
+
+Done when the first screen of the README and of the site names the corporate laptop
+without admin, and the comparison with Rancher and Podman is on the page.
 
 ## Block I — The site on the design system
 
