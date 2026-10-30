@@ -669,8 +669,10 @@ public sealed class TrayTests
             HardErrorBox.FailCriticalErrors, mode & HardErrorBox.FailCriticalErrors);
 
         // Added rather than assigned, so calling it again is not how a flag something else set goes
-        // missing. The error mode is one word shared with the WinForms and WPF runtimes in here.
-        Assert.Equal(mode, HardErrorBox.Suppress());
+        // missing. The error mode is one word shared with the WinForms and WPF runtimes in here,
+        // and with every test running beside this one, so the second answer may carry a flag
+        // somebody else added in between: what it may not do is lose one the first answer had.
+        Assert.Equal(mode, HardErrorBox.Suppress() & mode);
     }
 
     [Fact]

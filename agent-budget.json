@@ -46,7 +46,7 @@
     ],
     "measured": {
       "calls": 6,
-      "tokens": 11641
+      "tokens": 11711
     },
     "shapes": {
       "about": [
@@ -90,7 +90,7 @@
         "against the two `measured` blocks so no one of the three can move on its own."
       ],
       "calls": 1.5,
-      "tokens": 14.3
+      "tokens": 14.4
     },
     "caveat": [
       "Task-for-task, not payload-for-payload, and the difference is not a rounding error. `read doctor`",
