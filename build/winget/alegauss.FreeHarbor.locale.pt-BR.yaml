@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.locale.1.6.0.schema.json
 PackageIdentifier: alegauss.FreeHarbor
-PackageVersion: 1.0.16
+PackageVersion: 2.0.0
 PackageLocale: pt-BR
 Publisher: FreeHarbor contributors
 PublisherUrl: https://github.com/alegauss
@@ -32,6 +32,6 @@ Tags:
   - windows
   - wsl
   - wsl2
-ReleaseNotesUrl: https://github.com/alegauss/freeharbor/releases/tag/v1.0.16
+ReleaseNotesUrl: https://github.com/alegauss/freeharbor/releases/tag/v2.0.0
 ManifestType: locale
 ManifestVersion: 1.6.0
