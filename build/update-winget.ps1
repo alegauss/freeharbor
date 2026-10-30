@@ -13,8 +13,8 @@
 # Usage:  powershell -File build\update-winget.ps1
 #         powershell -File build\update-winget.ps1 -Version 1.0.15 -Sha <SHA256>
 #   -Version  defaults to <Version> in Directory.Build.props
-#   -Sha      defaults to the SHA-256 of dist\FreeWilly-Setup.exe, or of
-#             dist\FreeWilly-Setup-<version>.exe once publish-release renamed it
+#   -Sha      defaults to the SHA-256 of dist\FreeHarbor-Setup.exe, or of
+#             dist\FreeHarbor-Setup-<version>.exe once publish-release renamed it
 #   -Date     defaults to the date of the commit being packaged, not today
 # =============================================================================
 param(
@@ -40,12 +40,12 @@ if ($Version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
 }
 
 # --- The hash of the installer that will be uploaded --------------------------
-# Before publish-release.ps1 the file is FreeWilly-Setup.exe; after it, the same
-# bytes are FreeWilly-Setup-<version>.exe. Either is the release's installer.
+# Before publish-release.ps1 the file is FreeHarbor-Setup.exe; after it, the same
+# bytes are FreeHarbor-Setup-<version>.exe. Either is the release's installer.
 if (-not $Sha) {
     $candidates = @(
-        (Join-Path $root "dist\FreeWilly-Setup-$Version.exe"),
-        (Join-Path $root 'dist\FreeWilly-Setup.exe')
+        (Join-Path $root "dist\FreeHarbor-Setup-$Version.exe"),
+        (Join-Path $root 'dist\FreeHarbor-Setup.exe')
     )
     $setup = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
     if (-not $setup) {
@@ -101,13 +101,13 @@ foreach ($file in $files) {
     # [ \t] and [^\r\n] rather than \s and .: \s crosses a line break, and . keeps
     # the \r of a CRLF file, so either would rewrite more than the one field.
     $c = $c -replace '(?m)^PackageVersion:[ \t]*[^\r\n]+', "PackageVersion: $Version"
-    $c = $c -replace 'releases/download/v[0-9]+\.[0-9]+\.[0-9]+/FreeWilly-Setup-[0-9]+\.[0-9]+\.[0-9]+\.exe',
-                     "releases/download/v$Version/FreeWilly-Setup-$Version.exe"
+    $c = $c -replace 'releases/download/v[0-9]+\.[0-9]+\.[0-9]+/FreeHarbor-Setup-[0-9]+\.[0-9]+\.[0-9]+\.exe',
+                     "releases/download/v$Version/FreeHarbor-Setup-$Version.exe"
     $c = $c -replace 'releases/tag/v[0-9]+\.[0-9]+\.[0-9]+', "releases/tag/v$Version"
 
-    # installer.iss sets UninstallDisplayName to "FreeWilly <version>", so the
+    # installer.iss sets UninstallDisplayName to "FreeHarbor <version>", so the
     # Add/Remove Programs name moves with every release too.
-    $c = $c -replace '(?m)^([ \t]*)- DisplayName:[ \t]*FreeWilly[ \t]+[0-9]+\.[0-9]+\.[0-9]+', "`${1}- DisplayName: FreeWilly $Version"
+    $c = $c -replace '(?m)^([ \t]*)- DisplayName:[ \t]*FreeHarbor[ \t]+[0-9]+\.[0-9]+\.[0-9]+', "`${1}- DisplayName: FreeHarbor $Version"
     $c = $c -replace '(?m)^([ \t]*)DisplayVersion:[ \t]*[^\r\n]+', "`${1}DisplayVersion: $Version"
     $c = $c -replace '(?m)^([ \t]*)InstallerSha256:[ \t]*[^\r\n]+', "`${1}InstallerSha256: $Sha"
     $c = $c -replace '(?m)^ReleaseDate:[ \t]*[^\r\n]+', "ReleaseDate: $Date"

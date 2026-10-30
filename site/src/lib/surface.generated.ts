@@ -7,7 +7,7 @@ export const surface: SurfaceData = {
   "baseline": {
     "task": "bring the stack up and say why the api container is not answering",
     "calls": 6,
-    "tokens": 11711,
+    "tokens": 11641,
     "shapes": {
       "containers.list": 1906,
       "container.inspect": 1603,

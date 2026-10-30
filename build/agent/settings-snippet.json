@@ -1,6 +1,6 @@
 {
   "//": [
-    "The line that makes FreeWilly's read/do split pay. Nothing installs this for you:",
+    "The line that makes FreeHarbor's read/do split pay. Nothing installs this for you:",
     "an allowlist is where a tool editing your configuration without asking would be least",
     "forgivable, so the install ships the line and you decide.",
     "",
@@ -17,7 +17,7 @@
   ],
   "permissions": {
     "allow": [
-      "Bash(freewilly read:*)"
+      "Bash(freeharbor read:*)"
     ]
   }
 }

@@ -36,13 +36,13 @@ export const features: FeatureRecord[] = [
     title: `Preflight: why Docker will not run here, in ${spelled(rowCount())} rows`,
     description:
       `The ${spelled(rowCount())} common causes of a Docker failure on Windows, each with the command that fixes it, read-only and exit 1 while a blocking row is not green.`,
-    ogTitle: "FreeWilly: the preflight",
+    ogTitle: "FreeHarbor: the preflight",
     ogDescription: `${Spelled(rowCount())} checks, ${spelled(rowCount())} remedies, and the hypervisor-before-firmware order.`,
     eyebrow: "Before anything is installed",
     heading: "The preflight",
     lead: [
       `“It does not work on my machine” has ${spelled(rowCount())} common causes on Windows, and ${spelled(rowCount())} different remedies. `,
-      { code: "freewilly --preflight" },
+      { code: "freeharbor --preflight" },
       " names the one you have, prints the command that fixes it, changes nothing, and exits ",
       { code: "1" },
       " so an installer can stop rather than fail halfway.",
@@ -74,7 +74,7 @@ export const features: FeatureRecord[] = [
     title: "The engine: upstream Moby into a distro it owns",
     description:
       `${Spelled(stepCount())} unattended steps that stop at the first failure: acquire and verify ${spelled(artefactCount())} artefacts by digest, inspect the archive, import an owned WSL2 distro, install inside it, and place the CLI with its Compose and Buildx plugins.`,
-    ogTitle: "FreeWilly: the engine",
+    ogTitle: "FreeHarbor: the engine",
     ogDescription: `${Spelled(stepCount())} steps, pinned by digest, stopping at the one that broke.`,
     eyebrow: "Provisioning",
     heading: "The engine",
@@ -87,9 +87,9 @@ export const features: FeatureRecord[] = [
         list: [
           [`Acquire and verify. ${Spelled(artefactCount())} artefacts in ${spelled(acquireCount())} steps: the Alpine rootfs, the static Linux engine, the Windows CLI zip, and the Compose and Buildx plugins. Each checked against a digest recorded in this repository, not one served by the same host as the file.`],
           ["Inspect before touching WSL. The tarball's member list is read locally, so a bad archive is caught before a distribution exists."],
-          [{ code: "wsl --import freewilly … --version 2" }, ". The name is fixed and it is this tool's, so your own apt upgrade or unregister cannot take the engine with it."],
+          [{ code: "wsl --import freeharbor … --version 2" }, ". The name is fixed and it is this tool's, so your own apt upgrade or unregister cannot take the engine with it."],
           ["Install inside it with one non-interactive sh script under set -e: iptables and socat from apk, the binaries into /usr/local/bin, systemd=false."],
-          ["Place the Windows CLI, docker.exe, under %LOCALAPPDATA%\\FreeWilly\\bin, for the installer to add to PATH."],
+          ["Place the Windows CLI, docker.exe, under %LOCALAPPDATA%\\FreeHarbor\\bin, for the installer to add to PATH."],
           ["Place the plugins. Compose and Buildx go where the CLI looks for one, so docker compose and docker buildx work from the install rather than from a second download."],
         ],
       },
@@ -108,8 +108,8 @@ export const features: FeatureRecord[] = [
     slug: "pipe",
     title: "The pipe: why a named pipe, not a port",
     description:
-      "A Linux dockerd cannot create a Windows named pipe, so FreeWilly serves docker_engine and forwards over wsl.exe stdio. The ACL grants your account and nobody else, which a forwarded port cannot express.",
-    ogTitle: "FreeWilly: the pipe",
+      "A Linux dockerd cannot create a Windows named pipe, so FreeHarbor serves docker_engine and forwards over wsl.exe stdio. The ACL grants your account and nobody else, which a forwarded port cannot express.",
+    ogTitle: "FreeHarbor: the pipe",
     ogDescription: "Why a named pipe and not a port, and the ACL that is the reason.",
     eyebrow: "The transport",
     heading: "The pipe",
@@ -118,7 +118,7 @@ export const features: FeatureRecord[] = [
       { code: "dockerd" },
       " cannot create a Windows named pipe, because that is a Win32 object. So something on the Windows side has to, or every shell and script you already have needs a ",
       { code: "DOCKER_HOST" },
-      ". FreeWilly is that something.",
+      ". FreeHarbor is that something.",
     ],
     figure: "pipe",
     sections: [
@@ -147,7 +147,7 @@ export const features: FeatureRecord[] = [
     title: "The window: the list, actions, logs, a shell, images and volumes",
     description:
       "One window that is the list of containers, with ports as links; acting on a container; logs and a shell for what the state does not say; and images and volumes made legible.",
-    ogTitle: "FreeWilly: the window",
+    ogTitle: "FreeHarbor: the window",
     ogDescription: "The tray, the container list, the logs, the shell, images and volumes.",
     eyebrow: "The window",
     heading: "The window",
@@ -185,7 +185,7 @@ export const features: FeatureRecord[] = [
     title: "The agent surface: the context pack, read doctor, teaching errors",
     description:
       "One budgeted context pack answers a session's opening questions; read doctor is the diagnostic join; and every refusal carries the Windows fact that explains it.",
-    ogTitle: "FreeWilly: the agent surface",
+    ogTitle: "FreeHarbor: the agent surface",
     ogDescription: "The context pack, read doctor, and teaching errors with the Windows join.",
     eyebrow: "For an agent",
     heading: "The agent surface",

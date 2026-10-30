@@ -10,9 +10,9 @@
 #
 # Neither the rename nor the sums file is decoration:
 #
-#   - DD152 names the asset FreeWilly-Setup-<x.y.z>.exe, and DD154's release
+#   - DD152 names the asset FreeHarbor-Setup-<x.y.z>.exe, and DD154's release
 #     check finds the installer by matching that pattern. An asset called
-#     FreeWilly-Setup.exe is one no installed copy can see.
+#     FreeHarbor-Setup.exe is one no installed copy can see.
 #   - DD15 publishes SHA256SUMS.txt beside it, and DD154 fetches that first and
 #     refuses to run an installer it does not vouch for. A release without it is
 #     a release every installed copy declines.
@@ -41,7 +41,7 @@ if ($Version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
 
 # This script lives in build\; dist\ is in the folder above.
 $root = Split-Path $PSScriptRoot -Parent
-$built = Join-Path $root 'dist\FreeWilly-Setup.exe'
+$built = Join-Path $root 'dist\FreeHarbor-Setup.exe'
 
 if (-not (Test-Path $built)) {
     throw "no installer at $built - run build\build-installer.cmd first"
@@ -51,7 +51,7 @@ if (-not (Test-Path $built)) {
 # The installer's OutputBaseFilename has no version in it, because Inno reads the
 # number off the built .exe and never states it. So the versioned name is made
 # here, exactly as release.yml made it.
-$installer = Join-Path $root "dist\FreeWilly-Setup-$Version.exe"
+$installer = Join-Path $root "dist\FreeHarbor-Setup-$Version.exe"
 Move-Item -LiteralPath $built -Destination $installer -Force
 
 # The number that actually travelled into the installer's own version resource.
@@ -82,7 +82,7 @@ $arguments = @(
     'release', 'create', "v$Version",
     $installer,
     $sums,
-    '--title', "FreeWilly $Version",
+    '--title', "FreeHarbor $Version",
     '--generate-notes',
     '--verify-tag'
 )
@@ -124,7 +124,7 @@ function Skip-Winget([string]$reason) {
     Write-Host ''
 }
 
-$manifest = Join-Path $winget 'alegauss.FreeWilly.installer.yaml'
+$manifest = Join-Path $winget 'alegauss.FreeHarbor.installer.yaml'
 $described = if (Test-Path $manifest) { [System.IO.File]::ReadAllText($manifest) } else { '' }
 $digest = (Get-FileHash $installer -Algorithm SHA256).Hash
 
@@ -146,7 +146,7 @@ if ($Draft) {
     if ($LASTEXITCODE -ne 0) {
         Skip-Winget "wingetcreate exited $LASTEXITCODE"
     } else {
-        Write-Host "=== winget: pull request opened for alegauss.FreeWilly $Version ==="
+        Write-Host "=== winget: pull request opened for alegauss.FreeHarbor $Version ==="
         Write-Host ''
     }
 }

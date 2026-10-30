@@ -1,19 +1,19 @@
 ---
-name: freewilly
-description: Drive Docker on this Windows machine through FreeWilly's agent surface. Use when the task involves containers, images, volumes, published ports, compose services, or the Docker engine itself — and before reaching for the `docker` CLI.
+name: freeharbor
+description: Drive Docker on this Windows machine through FreeHarbor's agent surface. Use when the task involves containers, images, volumes, published ports, compose services, or the Docker engine itself — and before reaching for the `docker` CLI.
 ---
 
-# FreeWilly
+# FreeHarbor
 
-This machine runs Docker through FreeWilly, which ships a surface built for you rather
-than for a terminal. **Reach for `freewilly read` before `docker`.**
+This machine runs Docker through FreeHarbor, which ships a surface built for you rather
+than for a terminal. **Reach for `freeharbor read` before `docker`.**
 
 The reason is not convenience. `read` is a promise that nothing is mutated, held by two
 guards in the build, so the whole half is grantable in one allowlist line:
 
 ```jsonc
 // .claude/settings.json
-"allow": ["Bash(freewilly read:*)"]
+"allow": ["Bash(freeharbor read:*)"]
 ```
 
 `docker ps` and `docker rm -f -v` are the same string to an allowlist, so a rule over
@@ -24,7 +24,7 @@ cost this surface removes.
 
 <!-- Generated from AgentSurface.All. A test holds this list equal to the registry, so a
      verb that lands without appearing here fails the build. Names only, deliberately:
-     what each one does lives in `freewilly --help`, which is one copy and the one you
+     what each one does lives in `freeharbor --help`, which is one copy and the one you
      already have. -->
 
 ```
@@ -41,13 +41,13 @@ do engine
 do reclaim
 ```
 
-Run `freewilly --help` for what each of them does, what arguments it takes, and what it
+Run `freeharbor --help` for what each of them does, what arguments it takes, and what it
 costs. Do not rely on this file for that: it names verbs and defers on purpose, because
 two descriptions of one surface drift and the one loaded every session drifts unnoticed.
 
 ## Three things worth knowing before the first call
 
-- **Start with `freewilly read context`.** One budgeted payload — engine, containers,
+- **Start with `freeharbor read context`.** One budgeted payload — engine, containers,
   disk, and a cursor — in place of the four or five calls a diagnosis otherwise opens
   with.
 - **Addresses are names.** A container by its name, a compose service as

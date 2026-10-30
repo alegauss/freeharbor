@@ -35,18 +35,18 @@ const siteDir = join(here, "..");
 const repoRoot = join(siteDir, "..");
 const outFile = join(siteDir, "src", "lib", "product.generated.ts");
 
-const provisionerFile = join(repoRoot, "src", "FreeWilly.Core", "Engine", "EngineProvisioner.cs");
-const manifestFile = join(repoRoot, "src", "FreeWilly.Core", "Engine", "engine-manifest.json");
+const provisionerFile = join(repoRoot, "src", "FreeHarbor.Core", "Engine", "EngineProvisioner.cs");
+const manifestFile = join(repoRoot, "src", "FreeHarbor.Core", "Engine", "engine-manifest.json");
 const inspectionFile = join(
   repoRoot,
   "src",
-  "FreeWilly.Core",
+  "FreeHarbor.Core",
   "Preflight",
   "PreflightInspection.cs",
 );
-const commandLineFile = join(repoRoot, "src", "FreeWilly.Tray", "Cli", "CommandLine.cs");
-const trayMenuFile = join(repoRoot, "src", "FreeWilly.Tray", "TrayMenu.cs");
-const mainWindowFile = join(repoRoot, "src", "FreeWilly.Tray", "Ui", "MainWindow.xaml");
+const commandLineFile = join(repoRoot, "src", "FreeHarbor.Tray", "Cli", "CommandLine.cs");
+const trayMenuFile = join(repoRoot, "src", "FreeHarbor.Tray", "TrayMenu.cs");
+const mainWindowFile = join(repoRoot, "src", "FreeHarbor.Tray", "Ui", "MainWindow.xaml");
 
 function read(path, what) {
   try {

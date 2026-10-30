@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 // "Analytics settings" asks again.
 //
 // The key and the measurement id are the hub's on purpose. This site is served from the same
-// origin (alegauss.github.io/freewilly/), so the two share one localStorage and one property,
+// origin (alegauss.github.io/freeharbor/), so the two share one localStorage and one property,
 // and a visitor who has answered on either has answered for both.
 
 const KEY = "alegauss-consent";
@@ -83,7 +83,7 @@ export function ConsentBanner() {
     <section className="consent" aria-label="Analytics consent">
       <p>
         This site counts visits with Google Analytics only if you allow it. Nothing is loaded
-        until you choose, and FreeWilly itself collects nothing either way.
+        until you choose, and FreeHarbor itself collects nothing either way.
       </p>
       <div className="consent-actions">
         {/* SiteButton is an anchor, and these act rather than go somewhere: its classes on a button */}

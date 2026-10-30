@@ -52,23 +52,23 @@ function hostRuns(hosts: readonly string[]): Rich {
 /* ------------------------------------------------------------------ meta + chrome */
 
 export const meta = {
-  title: "FreeWilly: Docker on Windows, without Docker Desktop",
+  title: "FreeHarbor: Docker on Windows, without Docker Desktop",
   description:
     "A free Windows desktop app that installs upstream Moby into a WSL2 distribution it owns, serves the docker_engine pipe your existing tools already look for, and shows your containers in one window. Per-user install, no admin, nothing resident.",
   og: {
-    title: "FreeWilly",
+    title: "FreeHarbor",
     description:
       "Upstream Moby in a WSL2 distro it owns, the docker_engine pipe your tools already look for, and one window of containers. No licence fee, nothing resident.",
-    url: "https://alegauss.github.io/freewilly/",
+    url: "https://alegauss.github.io/freeharbor/",
   },
 } as const;
 
-export const repoUrl = "https://github.com/alegauss/freewilly";
+export const repoUrl = "https://github.com/alegauss/freeharbor";
 export const parentUrl = "https://alegauss.github.io/";
 
 // The release page rather than a file: the installer carries its version in its name, so
 // there is no version-independent URL for the asset itself, and a hard-coded
-// `FreeWilly-Setup-1.0.0.exe` would 404 on the day 1.0.1 ships. `releases/latest` is the
+// `FreeHarbor-Setup-1.0.0.exe` would 404 on the day 1.0.1 ships. `releases/latest` is the
 // one link that cannot go stale, and it is also where the checksum lives.
 export const releasesUrl = `${repoUrl}/releases/latest`;
 
@@ -83,8 +83,8 @@ export const navLinks = [
   { href: "#operator", label: "Agent" },
   { href: "#pipe", label: "The pipe" },
   { href: "#window", label: "Window" },
-  { href: "/freewilly/claude-code/", label: "Claude Code" },
-  { href: "/freewilly/compare/", label: "Compare" },
+  { href: "/freeharbor/claude-code/", label: "Claude Code" },
+  { href: "/freeharbor/compare/", label: "Compare" },
   // No "Download" link here, and DD155 is why: it sat immediately left of the download
   // button, so the row carried the same destination twice and paid for it in width — five
   // labels, two buttons and the theme toggle wrapped "The pipe" and "Claude Code" onto two
@@ -93,8 +93,8 @@ export const navLinks = [
 
 export const footer = {
   links: [
-    { href: "/freewilly/claude-code/", label: "Claude Code" },
-    { href: "/freewilly/compare/", label: "Compare" },
+    { href: "/freeharbor/claude-code/", label: "Claude Code" },
+    { href: "/freeharbor/compare/", label: "Compare" },
       { href: repoUrl, label: "GitHub" },
     { href: releasesUrl, label: "Releases" },
     { href: `${repoUrl}/blob/main/docs/ROADMAP.md`, label: "Roadmap" },
@@ -120,7 +120,7 @@ export const sponsor: SponsorDeclaration = {
     name: "Viglet",
     url: "https://www.viglet.org",
     siteLabel: "viglet.org",
-    logo: "/freewilly/viglet/viglet-logo.png",
+    logo: "/freeharbor/viglet/viglet-logo.png",
     summary:
       "Open source search and content tools for organisations with a lot to publish. Run on your own servers, with no per-user licence.",
   },
@@ -129,7 +129,7 @@ export const sponsor: SponsorDeclaration = {
       id: "turing",
       name: "Viglet Turing",
       url: "https://openviglet.github.io/turing/",
-      logo: "/freewilly/viglet/turing-logo.png",
+      logo: "/freeharbor/viglet/turing-logo.png",
       inline:
         "so visitors find what they came for, with AI answers drawn only from your own content",
     },
@@ -137,7 +137,7 @@ export const sponsor: SponsorDeclaration = {
       id: "shio",
       name: "Viglet Shio",
       url: "https://openviglet.github.io/shio/",
-      logo: "/freewilly/viglet/shio-logo.png",
+      logo: "/freeharbor/viglet/shio-logo.png",
       inline:
         "so a new page goes live the same day, reviewed and approved by your own team",
     },
@@ -151,7 +151,7 @@ export const hero = {
   titleLead: "Docker on Windows,",
   titleAccent: "without Docker Desktop.",
   sub: [
-    "FreeWilly puts ",
+    "FreeHarbor puts ",
     { b: "upstream Moby" },
     " into a WSL2 distribution it owns, serves the ",
     { code: "docker_engine" },
@@ -189,11 +189,11 @@ export const heroSession = {
     "bring this project's stack up and tell me why the api container is not responding",
   steps: [
     {
-      cmd: "freewilly read context",
+      cmd: "freeharbor read context",
       cost: "~150 tok",
       // the context pack (§4.2): one budgeted payload in a terse line format, not JSON
       pack: [
-        "engine  running  wsl:freewilly  api=v1.43  pipe=docker_engine  ctx=default(ok)",
+        "engine  running  wsl:freeharbor  api=v1.43  pipe=docker_engine  ctx=default(ok)",
         "web     up 6m       healthy   svc:shop/web   :8080→80   listening",
         "db      up 6m       healthy   svc:shop/db    :5432→5432 listening",
         "api     exited 137  ×3/2m     svc:shop/api   OOM  limit=512m",
@@ -203,22 +203,22 @@ export const heroSession = {
       ],
     },
     {
-      cmd: "freewilly read doctor api",
+      cmd: "freeharbor read doctor api",
       cost: "~200 tok",
       out: "api  OOM-killed ×3  ·  mem_limit 512m too low  →  raise it in compose",
     },
     {
-      cmd: "freewilly read logs api --dedup --budget 1500 --out .freewilly/logs/api.log",
+      cmd: "freeharbor read logs api --dedup --budget 1500 --out .freeharbor/logs/api.log",
       cost: "~300 tok",
       out: "1 unique line ×3 (deduped from 41), written to file, then Grep, paying for matches only",
     },
     {
-      cmd: "freewilly do compose up --wait",
+      cmd: "freeharbor do compose up --wait",
       cost: "~100 tok",
       out: "shop  3/3 ready  ·  api healthy in 4.2s  (this one still asks, because it writes)",
     },
     {
-      cmd: "freewilly read verify svc:shop/api",
+      cmd: "freeharbor read verify svc:shop/api",
       cost: "~80 tok",
       out: ":8080 answers from Windows  ·  200 OK  ·  PASS",
     },
@@ -229,7 +229,7 @@ export const heroSession = {
     "A scripted session. The costs are ",
     { b: "targets the benchmark must prove or falsify" },
     ", acceptance criteria and not measurements. Steps 1, 2, 3 and 5 are reads, so one allowlist line, ",
-    { code: "Bash(freewilly read:*)" },
+    { code: "Bash(freeharbor read:*)" },
     ", removes every prompt on the inspection path while step 4 still asks.",
   ] as Rich,
 };
@@ -244,13 +244,13 @@ export const operator = {
   eyebrow: "Who operates this",
   heading: "The operator is an agent. You install and approve.",
   intro: [
-    "FreeWilly is a Docker installation whose primary operator is a coding agent. The agent runs, inspects and diagnoses; you install, approve and intervene. Every decision on the agent surface is judged in tokens rather than clicks, which is why the site opens on a session and not a screenshot.",
+    "FreeHarbor is a Docker installation whose primary operator is a coding agent. The agent runs, inspects and diagnoses; you install, approve and intervene. Every decision on the agent surface is judged in tokens rather than clicks, which is why the site opens on a session and not a screenshot.",
   ] as Rich,
   actors: [
     {
       who: "Agent",
       sub: "Claude Code",
-      iface: "the freewilly CLI, over an ordinary shell",
+      iface: "the freeharbor CLI, over an ordinary shell",
       job: "Run, inspect, diagnose, clean up after itself",
     },
     {
@@ -269,8 +269,8 @@ export const operator = {
     "Binding, in the same sense as the product's. A feature that breaks one is wrong even if it was asked for. Each names the defect it prevents.",
   ] as Rich,
   laws: [
-    { id: "P1", title: "The shell is the surface", body: "Every agent-facing capability is a freewilly CLI verb first. An MCP tool is a second head over the same method, or it does not exist." },
-    { id: "P2", title: "One call replaces a session", body: "Learning what the machine is running is a product feature, not a docs problem. Needing six commands to learn the engine's state is a defect in FreeWilly." },
+    { id: "P1", title: "The shell is the surface", body: "Every agent-facing capability is a freeharbor CLI verb first. An MCP tool is a second head over the same method, or it does not exist." },
+    { id: "P2", title: "One call replaces a session", body: "Learning what the machine is running is a product feature, not a docs problem. Needing six commands to learn the engine's state is a defect in FreeHarbor." },
     { id: "P3", title: "Tokens are a measured budget", body: "Every response has a size ceiling and the canonical task has a measured cost. “It got cheaper” has to be a number, and a regression fails the build." },
     { id: "P4", title: "A file beats a stream", body: "An unbounded log read is the largest token sink here. Write it to disk and let the agent Grep it, so it pays for the lines that match, not for the whole log." },
     { id: "P5", title: "Names, not ids", body: "A 64-hex id changes on every recreate. The address is the name: svc:<project>/<service>, or the container name. Ids stop being currency threaded across calls." },
@@ -290,7 +290,7 @@ export const why = {
   intro: [
     "Moby and the ",
     { code: "docker" },
-    " CLI are Apache-2.0 and always were. What a company pays for, and what a managed laptop cannot install, is the wrapper around them. FreeWilly is a different wrapper: it installs the same engine, gets out of the way, and stops when you tell it to.",
+    " CLI are Apache-2.0 and always were. What a company pays for, and what a managed laptop cannot install, is the wrapper around them. FreeHarbor is a different wrapper: it installs the same engine, gets out of the way, and stops when you tell it to.",
   ] as Rich,
   cards: [
     {
@@ -314,7 +314,7 @@ export const why = {
       title: "Per-user, no admin prompt",
       body: [
         "Everything lands under ",
-        { code: "%LOCALAPPDATA%\\FreeWilly" },
+        { code: "%LOCALAPPDATA%\\FreeHarbor" },
         ": the verified downloads, the distribution's disk, and the ",
         { code: "docker.exe" },
         " that goes on your PATH. Which is what reaches a corporate laptop you are not an administrator on.",
@@ -342,7 +342,7 @@ export const why = {
       title: "An uninstall that is one command",
       body: [
         "The distribution is called ",
-        { code: "freewilly" },
+        { code: "freeharbor" },
         " and it is this tool's, never yours. Your own WSL distros are untouched, and removing the engine cannot take anything of yours with it.",
       ] as Rich,
     },
@@ -359,12 +359,12 @@ export const preflight = {
   heading: `Why Docker will not run here, in ${spelled(rowCount())} rows`,
   intro: [
     `“It does not work on my machine” has ${spelled(rowCount())} common causes on Windows, and they have ${spelled(rowCount())} different remedies. `,
-    { code: "freewilly --preflight" },
+    { code: "freeharbor --preflight" },
     " names the one you have, prints the command that fixes it, changes nothing, and exits ",
     { code: "1" },
     " so an installer can stop rather than fail halfway.",
   ] as Rich,
-  terminalTitle: "freewilly --preflight",
+  terminalTitle: "freeharbor --preflight",
   // Split from the notes below it so the row count is assertable (DD159): a list mixing the
   // rows with what is true of every row cannot be held to the number the heading states, and
   // holding it to that number is the whole of why the heading no longer types one.
@@ -440,7 +440,7 @@ export const engine = {
       n: "3",
       title: "Import an owned distro",
       body: [
-        { code: "wsl --import freewilly … --version 2" },
+        { code: "wsl --import freeharbor … --version 2" },
         ". A fixed name that is this tool's, so an ",
         { code: "apt upgrade" },
         " or a ",
@@ -473,7 +473,7 @@ export const engine = {
       body: [
         { code: "docker.exe" },
         " is extracted to ",
-        { code: "…\\FreeWilly\\bin" },
+        { code: "…\\FreeHarbor\\bin" },
         ". Putting that directory on your PATH is the installer's job, and this step's only job is being the path it points at.",
       ] as Rich,
     },
@@ -507,7 +507,7 @@ export const engine = {
   // travels here by itself. What was typed here had already drifted from the real output in
   // two places — it named a pipe the help text does not print, and it opened with a summary
   // line the command has never said.
-  helpTitle: "freewilly --help: the engine verbs",
+  helpTitle: "freeharbor --help: the engine verbs",
   help: helpExcerpt("--plan", "--autostart"),
   helpNote:
     "Exit code 0 means the mode finished; 1 names the step it stopped at. For --status, 1 means the engine is not answering.",
@@ -527,7 +527,7 @@ export const pipe = {
     { code: "dockerd" },
     " cannot create a Windows named pipe, because that is a Win32 object. So something on the Windows side has to, or every shell and every script you already have needs a ",
     { code: "DOCKER_HOST" },
-    ". FreeWilly is that something.",
+    ". FreeHarbor is that something.",
   ] as Rich,
   cards: [
     {
@@ -545,7 +545,7 @@ export const pipe = {
       icon: "🧩",
       title: "Your existing tools, unchanged",
       body: [
-        "It is the same pipe name, so the CLI, Compose, Testcontainers, an IDE plugin and whatever your CI script does locally all find it without a setting. Nothing has to be told about FreeWilly.",
+        "It is the same pipe name, so the CLI, Compose, Testcontainers, an IDE plugin and whatever your CI script does locally all find it without a setting. Nothing has to be told about FreeHarbor.",
       ] as Rich,
     },
     {
@@ -618,7 +618,7 @@ export const tray = {
       ": it stops serving the pipe, kills the daemon and terminates the distribution. WSL powers the virtual machine down itself once nothing else is using it",
     ] as Rich,
     [
-      { b: "Start engine with FreeWilly" },
+      { b: "Start engine with FreeHarbor" },
       ": what happens when you are not asking. Opening this tool usually means wanting an engine, so it ships on; turning it off restores the old behaviour exactly, or the setting is decoration",
     ] as Rich,
     [
@@ -795,10 +795,10 @@ export const nonGoals = {
 
 export const claudeCode = {
   meta: {
-    title: "FreeWilly for Claude Code: the friction it removes",
+    title: "FreeHarbor for Claude Code: the friction it removes",
     description:
       "What plain docker costs an agent: a table it cannot read, an inspect paid for four fields, a restart loop billed once per restart, and a permission prompt on every read. And the verb that replaces each one.",
-    ogTitle: "FreeWilly for Claude Code",
+    ogTitle: "FreeHarbor for Claude Code",
     ogDescription:
       "The friction plain docker puts on an agent, item by item, with the measured cost of each and the verb that replaces it.",
   },
@@ -819,7 +819,7 @@ export const claudeCode = {
   ] as Rich,
   allowlistHeading: "The one line that pays for it",
   allowlistLead: "One entry in .claude/settings.json:",
-  allowlistLine: "Bash(freewilly read:*)",
+  allowlistLine: "Bash(freeharbor read:*)",
   allowlistNote: [
     { code: "read" },
     " is a promise, not a naming convention: a verb under it that writes is a defect. So this single grant removes every prompt on the inspection path, while every ",
@@ -859,7 +859,7 @@ export const claudeCode = {
   ] as Rich,
   refusesHeading: "What it deliberately refuses",
   refusesLead: [
-    "FreeWilly is the substrate; the intelligence is the caller's. It is a CLI over the Engine API and facts Windows already knows, not a second Docker CLI (P10).",
+    "FreeHarbor is the substrate; the intelligence is the caller's. It is a CLI over the Engine API and facts Windows already knows, not a second Docker CLI (P10).",
   ] as Rich,
   refuses: [
     { t: "No model", b: "It calls no LLM." },
@@ -916,7 +916,7 @@ export const friction = {
         ] as Rich,
       },
       here: {
-        cmd: "freewilly read context",
+        cmd: "freeharbor read context",
         verb: "read context",
         body: [
           "One payload: the engine, every container with its state and compose address, the published ports, the disk, and a cursor that fingerprints the machine. Sorted by name, so it caches and a diff means something. It also answers the canonical question, ",
@@ -935,7 +935,7 @@ export const friction = {
         ] as Rich,
       },
       here: {
-        cmd: "freewilly read doctor api",
+        cmd: "freeharbor read doctor api",
         verb: "read doctor",
         body: [
           "The same join, returned as a verdict and a remedy per row, over the model the preflight already uses: state, memory, restarts, health, ports and mounts. What comes back is the conclusion and the action, not the fields they were read from.",
@@ -953,7 +953,7 @@ export const friction = {
         ] as Rich,
       },
       here: {
-        cmd: "freewilly read logs api --dedup --level warn --out .freewilly/logs/api.log",
+        cmd: "freeharbor read logs api --dedup --level warn --out .freeharbor/logs/api.log",
         verb: "read logs",
         body: [
           { code: "--dedup" },
@@ -993,7 +993,7 @@ export const friction = {
         ] as Rich,
       },
       here: {
-        cmd: "freewilly read doctor svc:shop/api",
+        cmd: "freeharbor read doctor svc:shop/api",
         body: [
           "The address is the name: the container's, or ",
           { code: "svc:<project>/<service>" },
@@ -1014,10 +1014,10 @@ export const friction = {
         ] as Rich,
       },
       here: {
-        cmd: "freewilly read verify svc:shop/api",
+        cmd: "freeharbor read verify svc:shop/api",
         verb: "read verify",
         body: [
-          "FreeWilly is a Windows process, so it can join what the daemon cannot: whether the host port actually listens, which PID holds it, whether a rival engine is answering the pipe, whether a stale context is pointing the CLI elsewhere. ",
+          "FreeHarbor is a Windows process, so it can join what the daemon cannot: whether the host port actually listens, which PID holds it, whether a rival engine is answering the pipe, whether a stale context is pointing the CLI elsewhere. ",
           { code: "read doctor" },
           " already carries the port fact; ",
           { code: "read verify" },
@@ -1041,7 +1041,7 @@ export const friction = {
         ] as Rich,
       },
       here: {
-        cmd: "Bash(freewilly read:*)",
+        cmd: "Bash(freeharbor read:*)",
         body: [
           "Reads and writes are separate words in argv, so the rule is one line, and it is enforced under it: a read verb is written against a handle with no start, no remove and no prune on it, and a test drives every one of them and requires each request it made to be a GET.",
         ] as Rich,
@@ -1056,7 +1056,7 @@ export const friction = {
         ] as Rich,
       },
       here: {
-        cmd: "freewilly read changes --since c:4f21a0",
+        cmd: "freeharbor read changes --since c:4f21a0",
         body: [
           "Every pack already prints a state cursor, and the tray already holds the engine's event stream open for the window, so the delta is a cursor over a stream the user started rather than a daemon this adds. It is the only mechanism here that makes a second session cheaper than the first.",
         ] as Rich,
@@ -1076,10 +1076,10 @@ export const friction = {
 
 export const compare = {
   meta: {
-    title: "FreeWilly vs Docker Desktop, Rancher, Podman, plain WSL2",
+    title: "FreeHarbor vs Docker Desktop, Rancher, Podman, plain WSL2",
     description:
-      "What FreeWilly does that Docker Desktop, Rancher Desktop, Podman Desktop or a hand-rolled WSL2 daemon does not, and what each of those is genuinely better at.",
-    ogTitle: "FreeWilly: the honest comparison",
+      "What FreeHarbor does that Docker Desktop, Rancher Desktop, Podman Desktop or a hand-rolled WSL2 daemon does not, and what each of those is genuinely better at.",
+    ogTitle: "FreeHarbor: the honest comparison",
     ogDescription:
       "Checkable rows grouped by the law each comes from, and a column for what every alternative wins.",
   },
@@ -1088,7 +1088,7 @@ export const compare = {
   intro: [
     "You arrive having already decided against something. A matrix that wins every row is one nobody believes, so this one is grouped by the law each row comes from, and every alternative keeps the column it genuinely wins.",
   ] as Rich,
-  columns: ["FreeWilly", "Docker Desktop", "Rancher Desktop", "Podman Desktop", "WSL2 daemon"],
+  columns: ["FreeHarbor", "Docker Desktop", "Rancher Desktop", "Podman Desktop", "WSL2 daemon"],
   legend: [
     { sym: "✓", label: "yes" },
     { sym: "~", label: "partial" },
@@ -1163,7 +1163,7 @@ export const download = {
     "The release page carries the installer and the ",
     { code: "SHA256SUMS.txt" },
     " to check it against, and nothing else to choose between. It installs into ",
-    { code: "%LOCALAPPDATA%\\FreeWilly" },
+    { code: "%LOCALAPPDATA%\\FreeHarbor" },
     " for your account alone, which is what reaches a managed corporate laptop, the machine this project exists for. The WSL2 feature the engine needs may still want elevation of its own; the installer runs the preflight and says so rather than failing halfway through a download.",
   ] as Rich,
   // Emoji-free for the same reason as the hero's three, and the arrow on the button below is
@@ -1182,7 +1182,7 @@ export const download = {
     "Uninstalling removes what was installed and ",
     { b: "asks about what was created" },
     ". The ",
-    { code: "freewilly" },
+    { code: "freeharbor" },
     " distribution holds every image, container and volume you have, so it is never deleted without a question, and an unattended uninstall keeps it.",
   ] as Rich,
 };

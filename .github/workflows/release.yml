@@ -81,7 +81,7 @@ jobs:
           # This is the other end of that chain: a tag naming a version the build did not produce
           # would ship an installer whose file name and whose Add/Remove Programs entry disagree,
           # and the only place that is cheap to catch is here.
-          $exe = "src\FreeWilly.Tray\bin\Release\net10.0-windows\win-x64\publish\FreeWilly.exe"
+          $exe = "src\FreeHarbor.Tray\bin\Release\net10.0-windows\win-x64\publish\FreeHarbor.exe"
           $built = (Get-Item $exe).VersionInfo.ProductVersion.Trim()
           $tagged = "$env:GITHUB_REF_NAME" -replace '^v', ''
           Write-Output "tag $env:GITHUB_REF_NAME, built $built"

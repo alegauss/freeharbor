@@ -53,7 +53,7 @@ jobs:
       # with MSB1050 before it evaluates anything. A runner is clean, so this is not for CI's sake —
       # it is so the line a developer copies out of here is the one that cannot fail that way.
       - name: Publish the one .exe
-        run: dotnet publish src\FreeWilly.Tray\FreeWilly.Tray.csproj -c Release --nologo
+        run: dotnet publish src\FreeHarbor.Tray\FreeHarbor.Tray.csproj -c Release --nologo
 
       # DD150. The other binary the installer packages, and it has to exist before the compile step
       # below reads [Files]. build\build-installer.cmd produces both, which is why release.yml never
@@ -62,12 +62,12 @@ jobs:
       # DD141 is why there are two at all: a command a shell waits for must be console-subsystem,
       # and the tray's .exe is a windowed application.
       - name: Publish the docker forwarder
-        run: dotnet publish src\FreeWilly.Shim\FreeWilly.Shim.csproj -c Release --nologo
+        run: dotnet publish src\FreeHarbor.Shim\FreeHarbor.Shim.csproj -c Release --nologo
 
       - name: It is one file, and only one
         run: |
-          $dir = "src\FreeWilly.Tray\bin\Release\net10.0-windows\win-x64\publish"
-          $exe = Join-Path $dir "FreeWilly.exe"
+          $dir = "src\FreeHarbor.Tray\bin\Release\net10.0-windows\win-x64\publish"
+          $exe = Join-Path $dir "FreeHarbor.exe"
           if (-not (Test-Path $exe)) { throw "publish produced no $exe" }
           # The claim DD14 rests on. A stray .dll here means the bundle stopped being
           # self-contained and the installer would ship an .exe that cannot start on a clean
@@ -104,7 +104,7 @@ jobs:
           # Asserted on the artefact and not only on the exit code: [Files] names the published
           # .exe, and a script that compiled while packaging nothing is the failure a syntax check
           # alone would wave through.
-          $setup = "dist\FreeWilly-Setup.exe"
+          $setup = "dist\FreeHarbor-Setup.exe"
           if (-not (Test-Path $setup)) { throw "ISCC exited 0 and produced no $setup" }
           $mb = [math]::Round((Get-Item $setup).Length / 1MB, 1)
           Write-Output "the installer compiles, $mb MB"
@@ -113,8 +113,8 @@ jobs:
       # one somebody can read. They are different questions and neither covers the other — a page
       # whose Copy button stands nine pixels below its box compiles perfectly.
       #
-      # WW87 moved it out of scripts\page-probe.ps1 and into tests\FreeWilly.Cases, which is not in
-      # FreeWilly.slnx and so is not what `dotnet test` above runs. It is still its own step for the
+      # WW87 moved it out of scripts\page-probe.ps1 and into tests\FreeHarbor.Cases, which is not in
+      # FreeHarbor.slnx and so is not what `dotnet test` above runs. It is still its own step for the
       # reason the script was: this compiles and runs a real Setup, so it needs ISCC, and ISCC is
       # only on the PATH from the step above. A test that quietly skipped itself when the compiler
       # was missing would be a guard nobody could tell was absent, which is why it refuses instead.
@@ -124,13 +124,13 @@ jobs:
       # red waiting for whoever changes something else. `run-cases.cmd` runs both on a desk.
       - name: The preflight page renders, in every state it has
         run: |
-          dotnet test tests\FreeWilly.Cases\FreeWilly.Cases.csproj --nologo `
+          dotnet test tests\FreeHarbor.Cases\FreeHarbor.Cases.csproj --nologo `
             --filter "FullyQualifiedName~PreflightPage"
           if ($LASTEXITCODE -ne 0) { throw "the preflight page did not survive its own harness" }
 
       - name: It starts, and says what it is
         run: |
-          $exe = "src\FreeWilly.Tray\bin\Release\net10.0-windows\win-x64\publish\FreeWilly.exe"
+          $exe = "src\FreeHarbor.Tray\bin\Release\net10.0-windows\win-x64\publish\FreeHarbor.exe"
           # A windowed executable with its output redirected writes to the handle it was given;
           # PowerShell gives it a pipe, which is the same path the installer and scripts use.
           $version = (& $exe --version | Out-String).Trim()
@@ -142,7 +142,7 @@ jobs:
 
       - name: The engine plan reaches nothing and still answers
         run: |
-          $exe = "src\FreeWilly.Tray\bin\Release\net10.0-windows\win-x64\publish\FreeWilly.exe"
+          $exe = "src\FreeHarbor.Tray\bin\Release\net10.0-windows\win-x64\publish\FreeHarbor.exe"
           $plan = (& $exe --plan | Out-String)
           if ($LASTEXITCODE -ne 0) { throw "--plan exited $LASTEXITCODE" }
           # The pinned digests travel inside the assembly, so this is also the check that the
@@ -154,7 +154,7 @@ jobs:
 
       - name: The preflight runs on a machine that is not the developer's
         run: |
-          $exe = "src\FreeWilly.Tray\bin\Release\net10.0-windows\win-x64\publish\FreeWilly.exe"
+          $exe = "src\FreeHarbor.Tray\bin\Release\net10.0-windows\win-x64\publish\FreeHarbor.exe"
           # Asserted on having *run*, not on having passed. A hosted runner is a machine this
           # product would refuse, and rightly — it has no WSL2 and no nested virtualization. What
           # is worth knowing is that every probe reached a verdict there instead of throwing, which

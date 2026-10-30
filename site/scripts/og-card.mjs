@@ -13,7 +13,9 @@
 // ships DejaVu and another on a workstation that falls back to something condensed. A pill
 // hand-fitted to one of those overflows on the other, which is how a shipped card came to have
 // its chip text running out the side. resvg measures the text here and the pill is drawn round
-// the answer, so it fits whatever font resolves and survives the copy being reworded.
+// the answer, so it fits whatever font resolves and survives the copy being reworded. The
+// template names Arial (and Consolas for the mono lines) after DejaVu, so a Windows workstation
+// resolves a readable face rather than the condensed one resvg used to fall back to.
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,10 +24,10 @@ import { Resvg } from "@resvg/resvg-js";
 const here = dirname(fileURLToPath(import.meta.url));
 const siteDir = join(here, "..");
 
-// Where the mark sits on the card, and how big. Height only: the artwork is taller than it is
-// wide and carries its own silhouette, so it is sized by height and left to find its width — the
-// same rule the brand and hero marks follow in src/index.css. A width here would squash it.
-const MARK = { left: 90, top: 110, height: 148 };
+// Where the mark sits on the card, and how big. Height only, and the width follows from the
+// artwork's viewBox, which is square: 120px leaves a 28px gap before the name at x=238 and keeps
+// the tile centred on the name beside it (y 120 to 240, with the name's baseline at 198).
+const MARK = { left: 90, top: 120, height: 120 };
 
 // The pill's left edge, and the space left after the text ends. The dot sits 22px inside the
 // left edge and the text 46px, so 26 on the right reads as the same inset once the corner

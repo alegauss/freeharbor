@@ -53,7 +53,7 @@ export const product: ProductData = {
         "hidden": false
       },
       {
-        "caption": "Start engine with FreeWilly",
+        "caption": "Start engine with FreeHarbor",
         "hidden": false
       },
       {
@@ -79,7 +79,7 @@ export const product: ProductData = {
     "machine": 5
   },
   "help": [
-    "FreeWilly.exe installs and drives Docker on Windows.",
+    "FreeHarbor.exe installs and drives Docker on Windows.",
     "",
     "With no arguments it is the tray icon and the window. Everything else is a console",
     "verb and prints into the terminal it was started from.",

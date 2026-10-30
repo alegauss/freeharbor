@@ -17,7 +17,7 @@ export function Ad({ format = "in-content", slot }: { format?: AdFormat; slot: s
 
   return (
     // Dropped from the Markdown twin (S5) for the reason the call to action is: an agent
-    // sent to evaluate FreeWilly is not the reader this is for, and someone else's product
+    // sent to evaluate FreeHarbor is not the reader this is for, and someone else's product
     // is forty words it would pay for on every page.
     <div className="ad-band" data-twin="omit">
       <div className="vg-site-wrap">
@@ -29,10 +29,10 @@ export function Ad({ format = "in-content", slot }: { format?: AdFormat; slot: s
           // §8, as an attribute: the loader never touches localStorage, so the recency
           // memory it would otherwise keep is not a thing this site has to declare.
           data-ad-memory="off"
-          // The catalogue cannot exclude us on its own — FreeWilly's own campaign points at
+          // The catalogue cannot exclude us on its own — FreeHarbor's own campaign points at
           // the GitHub repository rather than at this domain, so the loader's host check
           // never recognises the page it is standing on.
-          data-ad-exclude="freewilly"
+          data-ad-exclude="freeharbor"
         />
       </div>
     </div>

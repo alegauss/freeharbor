@@ -67,7 +67,7 @@ test("no twin leaks the nav, the footer or the call to action (S5)", () => {
 
 test("the landing twin carries the hero session (the whole product an agent can grep)", () => {
   const md = readFileSync(join(distDir, "index.md"), "utf8");
-  assert.ok(md.includes("freewilly read context"), "landing twin missing the session");
+  assert.ok(md.includes("freeharbor read context"), "landing twin missing the session");
 });
 
 test("the sitemap lists every route exactly once, and nothing else (DD84)", () => {

@@ -38,11 +38,11 @@
   --stopped: #556069;
   --red: #c9353a;
 
-  /* the ocean, back layer to front. These are the three blues the mark is drawn in, read off
-     build/logo-source.png rather than picked to match it — the page's water is the logo's. */
-  --wave-1: #91cddd;
-  --wave-2: #62b9cd;
-  --wave-3: #3da7b7;
+  /* the ocean, back layer to front. The front two are the mark's own cyan, the two stops of its
+     gradient in build/logo.mjs, and the back one is a tint of them: the page's water is the logo's. */
+  --wave-1: #8ed6f9;
+  --wave-2: #21b8f5;
+  --wave-3: #149ff0;
   --wave-foam: #ffffff;
 
   color-scheme: light;
@@ -59,10 +59,10 @@
 
   /* the same water at night: the mark's hues, taken down until they sit on the dark ground
      without glowing — a wave is scenery, and scenery that outshines the copy is a bug */
-  --wave-1: #2f6d7c;
-  --wave-2: #275c6b;
-  --wave-3: #1e4b59;
-  --wave-foam: #5fa8b8;
+  --wave-1: #1f5f86;
+  --wave-2: #1a5179;
+  --wave-3: #13436a;
+  --wave-foam: #5aaedc;
 
   color-scheme: dark;
 }
@@ -140,7 +140,7 @@ html {
 }
 
 /* ============================================================================
-   The ocean â€” the mark is an orca cresting a wave, so the hero closes into water
+   The ocean â€” the mark is a ship riding the waves, so the hero closes into water
    and the footer opens out of it. The geometry is in components/ui/Waves.tsx; the
    colour, the depth order and the speeds are here, because that is what is tuned.
 

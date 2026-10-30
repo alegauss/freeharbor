@@ -24,8 +24,8 @@ import { Waves } from "./ui/Waves";
 // here is this product's half of it: which links, which words, and the water the footer opens
 // out of.
 
-// A mark, not a tile: the orca is taller than it is wide and carries its own silhouette.
-const brand: SiteBrand = { href: "/freewilly/", name: "FreeWilly", logo: "/freewilly/logo.svg", logoShape: "mark" };
+// A tile: the mark is drawn on its own navy rounded square, so the default shape is the right one.
+const brand: SiteBrand = { href: "/freeharbor/", name: "FreeHarbor", logo: "/freeharbor/logo.svg" };
 
 const themeLabel = (next: string) => `Switch to ${next} theme`;
 

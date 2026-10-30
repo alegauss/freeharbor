@@ -5,7 +5,7 @@
 > Status: 📋 designed, not started · deps: none — DD40 is the floor the rest stand on
 > Scope: this document is the **constitution for the published surface** — who reads it,
 > the laws a page is judged by, the page map, the build, and the decomposition into
-> DD40–DD51. [DD23](DD23-agent-first-freewilly.md) is the constitution for the agent
+> DD40–DD51. [DD23](DD23-agent-first-freeharbor.md) is the constitution for the agent
 > surface and [DD34](DD34-window-constitution.md) for the desktop one; this is the
 > constitution for the *third* surface, the one both audiences meet first.
 > Each task keeps its own rationale in `IMPROVEMENTS.md`; this is the premise under all
@@ -268,7 +268,7 @@ Three facts about this repository shape it:
   its output directory would delete them. So the site builds to `site/dist/` and the
   published tree is assembled from there — never written into `docs/`.
 - **The base path is derived, not chosen.** The site is served at
-  <https://alegauss.github.io/freewilly/>, so Vite's `base` is `/freewilly/` and every
+  <https://alegauss.github.io/freeharbor/>, so Vite's `base` is `/freeharbor/` and every
   canonical, sitemap entry and asset path carries that prefix. This was written as *the URL
   does not change*, and DD59 falsified it: GitHub Pages derives the prefix from the
   repository name, so renaming the repository moved every published address at once.

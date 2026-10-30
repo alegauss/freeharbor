@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FreeHarbor.Core/FreeHarbor.Core.csproj" />
+    <Project Path="src/FreeHarbor.Shim/FreeHarbor.Shim.csproj" />
+    <Project Path="src/FreeHarbor.Tray/FreeHarbor.Tray.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FreeHarbor.Preflight.Tests/FreeHarbor.Preflight.Tests.csproj" />
+  </Folder>
+</Solution>

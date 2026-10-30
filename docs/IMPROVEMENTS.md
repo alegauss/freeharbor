@@ -4,19 +4,19 @@
 
 ### §DD288 Admitting clients below the engine API floor
 
-Met in Turing (viglet/turing 2026.3, its T1108). The FreeWilly engine (Docker 29.7.2)
+Met in Turing (viglet/turing 2026.3, its T1108). The FreeHarbor engine (Docker 29.7.2)
 refuses any client below API 1.40. Testcontainers' bundled docker-java opens with 1.32,
 so on this machine every Testcontainers suite reads Docker as absent and skips its
 container tests, until each project pins a newer version itself (Turing added
 `docker-java.properties` with `api.version=1.44`). The same holds for any older tool or
 SDK that pins its API version.
 
-This is Moby's own floor, not a FreeWilly defect, and the engine stays unmodified (the
+This is Moby's own floor, not a FreeHarbor defect, and the engine stays unmodified (the
 non-goal against forking it). But dockerd takes its minimum from the
 `DOCKER_MIN_API_VERSION` environment variable, which the process that starts the engine
-inside the `freewilly` distribution can set without changing the engine.
+inside the `freeharbor` distribution can set without changing the engine.
 
-What FreeWilly should do: offer the minimum API version as an engine setting, default
+What FreeHarbor should do: offer the minimum API version as an engine setting, default
 unchanged (Moby's own), that sets `DOCKER_MIN_API_VERSION` when the engine starts, with
 the preflight-style explanation of what it admits and why one would lower it (old
 Testcontainers, old SDKs). `read health` then shows the effective minimum (see the
@@ -38,7 +38,7 @@ containers, and leaving it alone keeps today's floor.
 ### §DD283 Measuring the winget install before promising it
 
 winget-pkgs validates a new package by installing it silently on a Microsoft VM.
-FreeWilly's PrepareToInstall refuses with exit 7 when the preflight blocks, and WSL2 or
+FreeHarbor's PrepareToInstall refuses with exit 7 when the preflight blocks, and WSL2 or
 hardware virtualization is very likely off on that VM. That refusal is DD130's decision
 and is right for a person, so it is not loosened on a guess.
 
@@ -46,26 +46,26 @@ The measurement comes first: enable LocalManifestFiles, run `winget install --ma
 build\winget` in Windows Sandbox, which has no WSL2, and in the test guest, which has
 it. If the Sandbox run exits 7 with the systemNotSupported message, the first PR says so
 and asks for manual validation. The README and the site name `winget install
-alegauss.FreeWilly` only after the PR merges, because an install line that finds nothing
-is worse than none.
+alegauss.FreeHarbor` only after the PR merges, because an install line that finds
+nothing is worse than none.
 
 ### §DD290 DD290 — Seeing the winget submission through to a working install
 
 From the portfolio review of 30/10/2026 (visibility, `produtos/freewilly.md`). DD282
 shipped the submission path, and the first pull request to winget-pkgs is now open,
-waiting for the moderators. Until it merges, `winget show alegauss.FreeWilly` finds
+waiting for the moderators. Until it merges, `winget show alegauss.FreeHarbor` finds
 nothing, and the README and the site rightly do not mention winget. The work is to
 follow that pull request to its end, not to build anything new.
 
 While it waits: answer the moderators' review comments, and if the validation VM fails
 the install (the risk DD283 set aside, since the preflight exits 7 without WSL2), record
 what it reported and fix the manifest or the installer's silent path. Once merged:
-confirm `winget install alegauss.FreeWilly` installs the current release on a clean
-machine, then add `winget install alegauss.FreeWilly` to the README's download line and
+confirm `winget install alegauss.FreeHarbor` installs the current release on a clean
+machine, then add `winget install alegauss.FreeHarbor` to the README's download line and
 to the site, and check that the next release's automatic submission (DD282) produces an
 update pull request rather than a new package.
 
-Done when `winget show alegauss.FreeWilly` lists the latest release and the README and
+Done when `winget show alegauss.FreeHarbor` lists the latest release and the README and
 the site name the command.
 
 ### §DD292 DD292 — Distributing through the Microsoft Store
@@ -77,7 +77,7 @@ for all of the author's Windows apps is the Microsoft Store, which signs the MSI
 package itself, instead of buying a code signing certificate. claude-tray tests the path
 first (visibility VS58); this line waits for what that test learns.
 
-FreeWilly has restrictions of its own to check against the Store's rules: it enables or
+FreeHarbor has restrictions of its own to check against the Store's rules: it enables or
 relies on the WSL2 feature, which can require elevation; it creates and registers its
 own WSL distribution and downloads the engine from upstream at install time; and its
 per-user, no-admin install is the selling point, so the package must keep it. If MSIX
@@ -85,15 +85,15 @@ cannot host the preflight and the WSL registration, the answer may be a Store li
 that points to the existing installer, or no Store at all; the outcome is written down
 either way.
 
-Done when FreeWilly is in the Store with its install still working without admin, or the
-reason it cannot be is recorded here and in the product sheet.
+Done when FreeHarbor is in the Store with its install still working without admin, or
+the reason it cannot be is recorded here and in the product sheet.
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
 ### §DD289 The engine minimum API version is never shown
 
 Met in Turing (viglet/turing 2026.3, its T1108), running Testcontainers integration
-tests (`mvn verify`, Testcontainers 2.0.5) against the FreeWilly engine (Docker 29.7.2,
+tests (`mvn verify`, Testcontainers 2.0.5) against the FreeHarbor engine (Docker 29.7.2,
 API 1.55, minimum API 1.40).
 
 Testcontainers' bundled docker-java opens with API version 1.32. The engine answers `400
@@ -102,12 +102,12 @@ concludes Docker is unavailable, and every `@Testcontainers(disabledWithoutDocke
 true)` test is reported as skipped. The build ends green, and nothing on the machine
 says why.
 
-`freewilly read health` and `read context` print the engine's API version (`engine API
+`freeharbor read health` and `read context` print the engine's API version (`engine API
 version 1.55`, `api=1.55`) but not its minimum. `DockerApi` already reads
 `MinApiVersion` (the sample machine carries `1.24`), so the fact is in hand and only
 unprinted. The one number that explains a refused client is the one an agent cannot see.
 
-What FreeWilly should do:
+What FreeHarbor should do:
 
 - Print the minimum beside the version in `read health` and `read context`
   (`engine API version 1.55 (accepts 1.40 and later)`).
@@ -134,7 +134,7 @@ backed by SUSE and Red Hat. The README and the site open on the licence ("no hea
 threshold, no revenue threshold"), which those two also satisfy, and mention "per-user
 install, no admin prompt" only as a small note under the download link.
 
-What separates FreeWilly is who can install it: a developer on a managed corporate
+What separates FreeHarbor is who can install it: a developer on a managed corporate
 laptop, with no admin rights, whose company crossed Docker Desktop's limits. The
 README's first paragraph and the site's hero should open on that reader and that
 situation, with the licence as the reason the company allows it, and say plainly the one

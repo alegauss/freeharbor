@@ -42,6 +42,6 @@ held = 60
 wired = "0.2.473"
 
 [project]
-name = "FreeWilly"
+name = "FreeHarbor"
 description = "A Docker Desktop replacement with no seat, revenue or licence threshold."
 icon = "🐳"

@@ -83,7 +83,7 @@ function entriesIn(field) {
 }
 
 test("the step count is ProvisioningStep's own member count", () => {
-  const provisioner = source("src", "FreeWilly.Core", "Engine", "EngineProvisioner.cs");
+  const provisioner = source("src", "FreeHarbor.Core", "Engine", "EngineProvisioner.cs");
   const body = provisioner.slice(provisioner.indexOf("public enum ProvisioningStep"));
   const members = [...body.slice(0, body.indexOf("\n}")).matchAll(/^\s{4}([A-Z][A-Za-z]*),/gm)];
 
@@ -95,7 +95,7 @@ test("the acquire steps and the pinned artefacts are the same set", () => {
   // What "one per artefact" rests on. A sixth artefact with no step to acquire it, or a step
   // acquiring something the manifest no longer pins, makes that sentence false in a way only
   // this direction catches.
-  const manifest = JSON.parse(source("src", "FreeWilly.Core", "Engine", "engine-manifest.json"));
+  const manifest = JSON.parse(source("src", "FreeHarbor.Core", "Engine", "engine-manifest.json"));
   const ids = Object.keys(manifest).filter((key) => key !== "comment");
 
   assert.deepEqual([...product.provisioning.acquire].sort(), [...ids].sort());
@@ -103,7 +103,7 @@ test("the acquire steps and the pinned artefacts are the same set", () => {
 });
 
 test("every pinned version and host is the manifest's, verbatim", () => {
-  const manifest = JSON.parse(source("src", "FreeWilly.Core", "Engine", "engine-manifest.json"));
+  const manifest = JSON.parse(source("src", "FreeHarbor.Core", "Engine", "engine-manifest.json"));
 
   for (const [id, version] of Object.entries(product.artefacts.versions)) {
     assert.equal(version, manifest[id].version, `${id} version`);
@@ -122,7 +122,7 @@ test("the preflight rows are the ones PreflightInspection declares and Run retur
   // row the page counts and the product never prints. The first run of the generator undercounted
   // both by one and agreed with itself — Wsl2 carries a digit, and a letters-only pattern dropped
   // it from each — which is why the ids are asserted here and not just the number.
-  const inspection = source("src", "FreeWilly.Core", "Preflight", "PreflightInspection.cs");
+  const inspection = source("src", "FreeHarbor.Core", "Preflight", "PreflightInspection.cs");
   const declared = [
     ...inspection.matchAll(/public const string [A-Za-z0-9]+ = "([a-z0-9-]+)";/g),
   ].map((m) => m[1]);
@@ -144,7 +144,7 @@ test("the tray menu is what TrayMenu builds, item for item", () => {
   // what ships — DD140 moved the window to the front and the page's own drawing kept the old
   // order for two tasks. The hidden item is separated here rather than filtered away: what the
   // heading must not count is the one thing about this menu a reader cannot verify by opening it.
-  const trayMenu = source("src", "FreeWilly.Tray", "TrayMenu.cs");
+  const trayMenu = source("src", "FreeHarbor.Tray", "TrayMenu.cs");
   const captions = Object.fromEntries(
     [...trayMenu.matchAll(/internal const string (\w+Text) = "([^"]+)";/g)].map((m) => [
       m[1],
@@ -172,7 +172,7 @@ test("the window's destinations are the ones the nav strip carries", () => {
   // count and then names the destinations one by one, so a page added to the strip and not to
   // the sentence leaves the site counting to four on a window that shows five. That is exactly
   // the drift DD160 corrected, and it happened again the moment a destination was added.
-  const strip = source("src", "FreeWilly.Tray", "Ui", "MainWindow.xaml");
+  const strip = source("src", "FreeHarbor.Tray", "Ui", "MainWindow.xaml");
   const carried = [...strip.matchAll(/<RadioButton[^>]*?Content="([^"]+)"/gs)].map((m) => m[1]);
 
   assert.ok(carried.length > 0, "no destinations parsed out of MainWindow.xaml");
@@ -346,7 +346,7 @@ test("the help block on the page is a slice of the real help text", () => {
 test("the generated help text is CommandLine's, with its verb constants resolved", () => {
   // Resolved rather than raw: HelpText is an interpolated raw string, so an unresolved hole
   // would put "{PreflightVerb}" on the page where a verb belongs.
-  const commandLine = source("src", "FreeWilly.Tray", "Cli", "CommandLine.cs");
+  const commandLine = source("src", "FreeHarbor.Tray", "Cli", "CommandLine.cs");
 
   assert.ok(
     !product.help.some((line) => /\{[A-Za-z]+\}/.test(line)),

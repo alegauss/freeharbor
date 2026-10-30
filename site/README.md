@@ -1,4 +1,4 @@
-# FreeWilly site
+# FreeHarbor site
 
 The public site — a self-contained Vite + React 19 + TypeScript + Tailwind v4 workspace,
 and this repository's first Node workspace. It is standalone: `dotnet build` neither builds
@@ -10,7 +10,7 @@ constitution under Block H).
 
 ```
 npm install        # once
-npm run dev        # dev server at /freewilly/
+npm run dev        # dev server at /freeharbor/
 npm run build      # generate → tsc → client → SSR → og image + prerender
 npm test           # the site's own claims, against what the build produced
 npm run typecheck  # tsc -b, no emit
@@ -25,7 +25,7 @@ route with no page fails it. `npm test` then asserts the built output, so it run
 build rather than instead of it. CI runs both on every push.
 
 GitHub Pages derives the base path from the repository name, so Vite's `base` is
-`/freewilly/` and every asset path carries that prefix. Renaming the repository moves every
+`/freeharbor/` and every asset path carries that prefix. Renaming the repository moves every
 published URL at once — the prefix is written once, in [vite.config.ts](vite.config.ts).
 
 ## Where things live (DD40)

@@ -9,7 +9,7 @@
   // The published single file and not the Debug build. The capture is of the menu this product
   // ships, and the thing that ships is the self-contained .exe — a preview taken of a Debug build
   // is a picture of something nobody installs. build\build.cmd produces it.
-  "executable": "src/FreeWilly.Tray/bin/Release/net10.0-windows/win-x64/publish/FreeWilly.exe",
+  "executable": "src/FreeHarbor.Tray/bin/Release/net10.0-windows/win-x64/publish/FreeHarbor.exe",
 
   "sourceRoot": "src",
 
@@ -21,7 +21,7 @@
   "timeouts": {
     // Measured, and the number the script it replaces arrived at: a cold start of the single-file
     // self-contained .exe took longer than 2500 ms to put its menu up on that machine, and the run
-    // refused with "no FreeWilly window" on an application that was fine. A deadline polled every
+    // refused with "no FreeHarbor window" on an application that was fine. A deadline polled every
     // 25 ms, so a warm start still returns as soon as the window exists.
     "launch": 30000,
     "stop": 5000,

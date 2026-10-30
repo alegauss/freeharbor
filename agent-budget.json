@@ -12,7 +12,7 @@
   ],
 
   "method": {
-    "tokens": "characters / 4, rounded up (FreeWilly.Core.Agent.TokenEstimate)",
+    "tokens": "characters / 4, rounded up (FreeHarbor.Core.Agent.TokenEstimate)",
     "calls": "one per thing the caller asked for: a request on the baseline, where the agent is the one making every request, and a verb invocation on the surface, where the requests behind it are made by this process and cost the reader nothing",
     "requests": "one per request the daemon received, counted by the fake daemon itself - equal to calls on the baseline by construction, and recorded separately on the surface so a verb that started re-reading the machine is visible even while its printed payload stays the same size",
     "caveat": [
@@ -46,7 +46,7 @@
     ],
     "measured": {
       "calls": 6,
-      "tokens": 11711
+      "tokens": 11641
     },
     "shapes": {
       "about": [
@@ -82,7 +82,7 @@
     "measured": {
       "calls": 4,
       "requests": 16,
-      "tokens": 812
+      "tokens": 814
     },
     "ratio": {
       "about": [
@@ -90,7 +90,7 @@
         "against the two `measured` blocks so no one of the three can move on its own."
       ],
       "calls": 1.5,
-      "tokens": 14.4
+      "tokens": 14.3
     },
     "caveat": [
       "Task-for-task, not payload-for-payload, and the difference is not a rounding error. `read doctor`",

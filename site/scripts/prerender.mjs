@@ -38,7 +38,7 @@ const written = prerenderSite({
   ogImage: OG_IMAGE,
   // The Markdown twin, converted from the same component tree as clean static HTML.
   twin: (path) => htmlToMarkdown(renderStatic(path)),
-  manifest: { name: "FreeWilly", base: "/freewilly/", llms: "llms.txt" },
+  manifest: { name: "FreeHarbor", base: "/freeharbor/", llms: "llms.txt" },
   git: { cwd: siteDir },
   log: console.log,
 });

@@ -1,28 +1,28 @@
-; Inno Setup script for FreeWilly (DD14).
+; Inno Setup script for FreeHarbor (DD14).
 ;
 ; Build, from the repository root:
 ;   build\build-installer.cmd
 ; or by hand:
-;   dotnet publish src\FreeWilly.Tray -c Release
+;   dotnet publish src\FreeHarbor.Tray -c Release
 ;   "%LocalAppData%\Programs\Inno Setup 6\ISCC.exe" build\installer.iss
-; Output: dist\FreeWilly-Setup.exe
+; Output: dist\FreeHarbor-Setup.exe
 ;
 ; Every relative path below resolves against THIS file's directory (build\), so the ones pointing
 ; at the repository root are "..\"-relative.
 
-#define MyAppName "FreeWilly"
-#define MyAppPublisher "FreeWilly contributors"
+#define MyAppName "FreeHarbor"
+#define MyAppPublisher "FreeHarbor contributors"
 
 ; Still the old repository. Renaming it moves every published URL at once and is not this file's to
 ; do — DD59 waits on the GitHub rename itself.
-#define MyAppUrl "https://github.com/alegauss/freewilly"
+#define MyAppUrl "https://github.com/alegauss/freeharbor"
 
-#define MyAppExeName "FreeWilly.exe"
-#define MyPublishDir "..\src\FreeWilly.Tray\bin\Release\net10.0-windows\win-x64\publish"
+#define MyAppExeName "FreeHarbor.exe"
+#define MyPublishDir "..\src\FreeHarbor.Tray\bin\Release\net10.0-windows\win-x64\publish"
 
 ; DD141's forwarder, published separately because it is the one thing here that cannot be the tray's
 ; binary: a command a shell waits for has to be console-subsystem, and a tray application is not.
-#define MyShimDir "..\src\FreeWilly.Shim\bin\Release\net10.0\win-x64\publish"
+#define MyShimDir "..\src\FreeHarbor.Shim\bin\Release\net10.0\win-x64\publish"
 
 ; Read straight off the published .exe, which got it from <Version> in Directory.Build.props. There
 ; is no second version to bump here, and a PackagingTests case holds that string to "x.y.z" with no
@@ -40,7 +40,7 @@
 ; DD57 kept the previous id for exactly that reason and left the old product name visible inside it.
 ; DD86 changed it once, and could: nothing has been released, so there is no copy on any machine
 ; whose identity this is. That window closes with the first published tag.
-AppId={{6B0E4D2A-9C77-4A31-8F5E-FREEWILLY0001}
+AppId={{6B0E4D2A-9C77-4A31-8F5E-FREEHARBOR0001}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -62,7 +62,7 @@ PrivilegesRequiredOverridesAllowed=dialog
 ;
 ; Inno records the directory against the AppId, so an upgrade reuses whatever the previous install
 ; chose and a fresh one gets this. DD57 weighed changing the AppId and did not: see the note over it.
-DefaultDirName={localappdata}\FreeWilly
+DefaultDirName={localappdata}\FreeHarbor
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 AllowNoIcons=yes
@@ -75,9 +75,9 @@ ArchitecturesInstallIn64BitMode=x64compatible
 
 UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName} {#MyAppVersion}
-SetupIconFile=..\src\FreeWilly.Tray\FreeWilly.ico
+SetupIconFile=..\src\FreeHarbor.Tray\FreeHarbor.ico
 OutputDir=..\dist
-OutputBaseFilename=FreeWilly-Setup
+OutputBaseFilename=FreeHarbor-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -111,7 +111,7 @@ Name: "startupicon"; Description: "Start {#MyAppName} with Windows"; GroupDescri
 ; `docker` is not a command, Start engine has no distribution to boot, and the only thing that
 ; changes either is a verb the wizard never named. Unticking leaves exactly that install, on purpose
 ; — a quarter of a gigabyte over somebody's tethered connection is theirs to decline, and
-; `FreeWilly.exe --provision` does the same work later.
+; `FreeHarbor.exe --provision` does the same work later.
 ;
 ; Downloading is not starting. The engine is still not running when Setup closes, and no service is
 ; registered: a resident background service is a stated non-goal, and an installer that leaves a
@@ -119,7 +119,7 @@ Name: "startupicon"; Description: "Start {#MyAppName} with Windows"; GroupDescri
 Name: "engine"; Description: "Download and install the container engine (about 250 MB)"; \
     GroupDescription: "Container engine:"
 
-Name: "pathentry"; Description: "Put docker and freewilly on my PATH"; GroupDescription: "Command line:"
+Name: "pathentry"; Description: "Put docker and freeharbor on my PATH"; GroupDescription: "Command line:"
 
 [Files]
 ; The product itself, and DD14's whole shape: one .exe to publish, to sign, to install and to hand
@@ -139,11 +139,11 @@ Source: "{#MyPublishDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversio
 ; while there is still nothing on it to undo.
 Source: "{#MyPublishDir}\{#MyAppExeName}"; Flags: dontcopy
 
-; DD24. The agent surface is reached as `freewilly read ...`, which is the literal string an
-; allowlist entry matches - `Bash(freewilly read:*)`. The .exe lives in {app} and only {app}\bin is
+; DD24. The agent surface is reached as `freeharbor read ...`, which is the literal string an
+; allowlist entry matches - `Bash(freeharbor read:*)`. The .exe lives in {app} and only {app}\bin is
 ; on PATH, so without this the one command the whole read/do split exists to make grantable does not
 ; resolve at all. A forwarder rather than a second PATH entry: one name on PATH, one thing to remove.
-Source: "freewilly.cmd"; DestDir: "{app}\bin"; Flags: ignoreversion; Tasks: pathentry
+Source: "freeharbor.cmd"; DestDir: "{app}\bin"; Flags: ignoreversion; Tasks: pathentry
 
 ; DD141. The `docker` a shell actually runs: the vendor's CLI, plus the one sentence its failure
 ; could not know. A stopped engine reaches an agent as docker's own connection error — written for a
@@ -151,7 +151,7 @@ Source: "freewilly.cmd"; DestDir: "{app}\bin"; Flags: ignoreversion; Tasks: path
 ; error is printed.
 ;
 ; A second published binary, and the only one. It has to be, and the reason is the subsystem: a
-; command a shell waits for must be subsystem 3, FreeWilly.exe is a tray application and therefore
+; command a shell waits for must be subsystem 3, FreeHarbor.exe is a tray application and therefore
 ; subsystem 2, and Windows hands the prompt back before a windowed process has printed anything.
 ; A copy of the one .exe under this name would have broken every script to improve one message.
 ;
@@ -184,7 +184,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; \
     ValueData: """{app}\{#MyAppExeName}"" --tray"; \
     Flags: uninsdeletevalue; Tasks: startupicon
 
-; The engine's own Run value, which this installer never writes — `freewilly --autostart on` does,
+; The engine's own Run value, which this installer never writes — `freeharbor --autostart on` does,
 ; and only if the user asks (DD97). It is named here so the uninstaller takes it: two settings mean
 ; two values, and leaving one behind is an entry pointing at an executable that has been deleted.
 ;
@@ -192,7 +192,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; \
 ; here instead would turn the engine autostart ON for everyone, and off-by-default is not a
 ; preference in this product — it is the whole complaint about Docker Desktop.
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; \
-    ValueType: none; ValueName: "FreeWilly Engine"; \
+    ValueType: none; ValueName: "FreeHarbor Engine"; \
     Flags: uninsdeletevalue
 
 ; EnginePaths says putting the CLI folder on PATH is the installer's job, and this is it. HKCU, so
@@ -269,7 +269,7 @@ const
   // with a test holding the two equal. The uninstall unregisters it by name rather than deriving
   // which one is there: a derivation that got it wrong would leave a distribution no uninstaller
   // knows about.
-  DistroName = 'freewilly';
+  DistroName = 'freeharbor';
 
   // Every step EngineProvisioner runs, so the bar below is a count rather than a guess. A test holds
   // this equal to ProvisioningStep's member count: a step added there and not here leaves a
@@ -331,7 +331,7 @@ var
 /// Whether the thing that started Setup asked for the app to be launched again (DD154).
 function RelaunchAsked: Boolean;
 begin
-  // Silent only. An interactive install already offers "Start FreeWilly now" as a checkbox, and a
+  // Silent only. An interactive install already offers "Start FreeHarbor now" as a checkbox, and a
   // run that answered both would start two trays — the second raises the first one's window and
   // exits (DD81), so it is harmless and still not what either entry means.
   //
@@ -443,7 +443,7 @@ begin
   Y := TaskBox(TasksPage, 'Container engine:',
        'Download and install the container engine (about 250 MB)', True, Y, WantEngine);
   TaskBox(TasksPage, 'Command line:',
-       'Put docker and freewilly on my PATH', True, Y, WantPathEntry);
+       'Put docker and freeharbor on my PATH', True, Y, WantPathEntry);
 end;
 
 /// One task's term, named whether it was ticked or not.
@@ -478,7 +478,7 @@ var
   Current: string;
 begin
   // Idempotent: a reinstall must not append the same folder a second time. Semicolons on both ends
-  // so \FreeWilly\bin is not matched inside \FreeWilly\bin2.
+  // so \FreeHarbor\bin is not matched inside \FreeHarbor\bin2.
   if not RegQueryStringValue(HKEY_CURRENT_USER, 'Environment', 'Path', Current) then
     Current := '';
   Result := Pos(';' + Lowercase(ExpandConstant('{app}\bin')) + ';',
@@ -761,7 +761,7 @@ begin
   // for them — an em dash in a detail, an arrow in a remedy — and an ANSI write turns those into
   // question marks.
   SetArrayLength(Written, 5);
-  Written[0] := 'FreeWilly preflight';
+  Written[0] := 'FreeHarbor preflight';
   Written[1] := '';
 
   // One sentence, and it is the verdict rather than a guess at what the reader is doing: a report
@@ -848,7 +848,7 @@ end;
 // >>> page-probe (DD145)
 //
 // Everything between this marker and its closing one is compiled a second time, on its own, by
-// tests\FreeWilly.Cases\PreflightPage.cs: it wraps this block in a Setup that shows the page,
+// tests\FreeHarbor.Cases\PreflightPage.cs: it wraps this block in a Setup that shows the page,
 // reports every control's rectangle, and closes itself. That is what turns "read the Pascal and
 // hope" into a check — and the two failures below were both found that way rather than by reading.
 //
@@ -995,7 +995,7 @@ begin
   RegWriteStringValue(
     HKEY_CURRENT_USER,
     'Software\Microsoft\Windows\CurrentVersion\RunOnce',
-    'FreeWilly Setup',
+    'FreeHarbor Setup',
     '"' + ExpandConstant('{srcexe}') + '"');
 end;
 
@@ -1157,7 +1157,7 @@ begin
   // Five seconds rather than none, and a comment Windows shows in its own dialog: this closes
   // everything the user has open, so the one thing it must not be is instant and unattributed.
   Exec(ExpandConstant('{sys}\shutdown.exe'),
-       '/r /t 5 /c "FreeWilly Setup is restarting Windows to finish turning on WSL2."',
+       '/r /t 5 /c "FreeHarbor Setup is restarting Windows to finish turning on WSL2."',
        '', SW_HIDE, ewNoWait, Code);
 end;
 
@@ -1292,7 +1292,7 @@ end;
 //
 // Both paths need this and for the same reason: a file cannot be replaced or deleted while the
 // process holding it is alive. DD121 wrote it for the uninstall, where an undeletable
-// FreeWilly.exe leaves a root nobody owns and no uninstaller left to offer to take it. DD236 found
+// FreeHarbor.exe leaves a root nobody owns and no uninstaller left to offer to take it. DD236 found
 // the install failing on the same rock, having been left with only the backstop.
 //
 // The backstop is CloseApplications, and what it cannot do is the whole argument. Restart Manager
@@ -1573,13 +1573,13 @@ begin
   if Result or WizardSilent then
     Exit;
 
-  if MsgBox('FreeWilly is installed, but the engine is not.' + #13#10#13#10
+  if MsgBox('FreeHarbor is installed, but the engine is not.' + #13#10#13#10
           + 'This machine passed the preflight, so the download or the WSL2 import is what '
           + 'stopped — a connection that dropped, a proxy, or a checksum that did not match. '
           + 'Nothing is half-installed: every step is repeatable, and what is already verified '
           + 'on disk is not fetched again.' + #13#10#13#10
           + 'To try again, open a terminal and run:' + #13#10
-          + '    freewilly --provision' + #13#10#13#10
+          + '    freeharbor --provision' + #13#10#13#10
           + 'The step it stopped at is the last line of:' + #13#10
           + ProvisionLogPath + #13#10#13#10
           + 'Open it now?',
@@ -1639,7 +1639,7 @@ end;
 // ---------------------------------------------------------------------------------------------
 //
 // An uninstall that cannot delete the program it is uninstalling is not an uninstall. The tray holds
-// {app}\FreeWilly.exe open, so what used to happen was: the Run value went, the PATH entry went, the
+// {app}\FreeHarbor.exe open, so what used to happen was: the Run value went, the PATH entry went, the
 // Add/Remove Programs entry went, and then the one file could not be deleted — leaving a root nobody
 // owns and no uninstaller left to offer to take it.
 //
@@ -1752,8 +1752,8 @@ begin
     // the tick rather than as a second, separate thing.
     if OwnedDataExists then
       Y := Paragraph(Form,
-          'It holds every image, container and volume FreeWilly created, and there is no undo. '
-        + 'Left alone it stays on disk, and reinstalling FreeWilly picks it up again.'#13#10
+          'It holds every image, container and volume FreeHarbor created, and there is no undo. '
+        + 'Left alone it stays on disk, and reinstalling FreeHarbor picks it up again.'#13#10
         + ExpandConstant('{app}'), Left + ScaleX(16), Y, Width - ScaleX(16))
     else
       Y := Paragraph(Form,
@@ -1874,7 +1874,7 @@ begin
   // usPostUninstall — where it stood — meant Inno met a root still holding distro\ and downloads\,
   // left it alone as it should, and then this emptied it a moment too late. Measured: an uninstall
   // that removed the registration, the distribution, the virtual disk and every file, and left an
-  // empty C:\Users\...\FreeWilly standing with nothing left that would ever offer to take it.
+  // empty C:\Users\...\FreeHarbor standing with nothing left that would ever offer to take it.
   //
   // So the only thing left for this step is to check the work, and it cannot check the root: the
   // uninstaller is still running out of it, unins000.exe is still in it, and Inno deletes both
@@ -1883,7 +1883,7 @@ begin
   if UninstallSilent or not RemoveTheDistribution or not OwnedDataExists then
     Exit;
 
-  MsgBox('FreeWilly is uninstalled, but part of the WSL2 distribution could not be deleted:'
+  MsgBox('FreeHarbor is uninstalled, but part of the WSL2 distribution could not be deleted:'
        + #13#10#13#10
        + ExpandConstant('{app}') + #13#10#13#10
        + 'Something was still holding a file inside it — most often WSL2 itself, which keeps the '

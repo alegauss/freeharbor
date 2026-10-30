@@ -31,7 +31,7 @@ export function Landing() {
     <>
       <Nav />
       <SiteHero
-        icon={{ src: "/freewilly/logo.svg", alt: "FreeWilly logo", logoShape: "mark" }}
+        icon={{ src: "/freeharbor/logo.svg", alt: "FreeHarbor logo" }}
         badge={hero.badge}
         title={hero.titleLead}
         titleAccent={hero.titleAccent}
@@ -80,7 +80,7 @@ export function Landing() {
         description="Each section above has a page to link at, whether from a README, an issue, or a search result."
         goLabel="Read the page →"
         items={features.map((f) => ({
-          href: `/freewilly/features/${f.slug}/`,
+          href: `/freeharbor/features/${f.slug}/`,
           heading: f.heading,
           description: f.description,
         }))}

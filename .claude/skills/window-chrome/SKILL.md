@@ -1,6 +1,6 @@
 ---
 name: window-chrome
-description: How FreeWilly's WPF windows are formatted. Use whenever touching MainWindow, LogWindow, XAML, styles, colours, fonts, or anything a user sees — and before adding a new window, page, row or chip.
+description: How FreeHarbor's WPF windows are formatted. Use whenever touching MainWindow, LogWindow, XAML, styles, colours, fonts, or anything a user sees — and before adding a new window, page, row or chip.
 ---
 
 # Window chrome — claude-tray is the reference
@@ -15,7 +15,7 @@ Its source lives in `src/Ui/`. The files worth reading first are `Brand.cs`,
 
 ## What has already been borrowed, and how
 
-**`Brand.cs` → `src/FreeWilly.Tray/Ui/Palette.cs` (DD34).** A colour whose meaning is
+**`Brand.cs` → `src/FreeHarbor.Tray/Ui/Palette.cs` (DD34).** A colour whose meaning is
 not a free choice is declared **once, as bytes**, and each edge converts:
 
 - GDI+ (`System.Drawing.Color`) for the tray icon
@@ -48,15 +48,15 @@ Found by capturing the window and comparing, not by reasoning. Do not undo them:
 
 ## Always capture before and after
 
-`FreeWilly.exe --capture-window <png> [containers|images|volumes]` renders the window
+`FreeHarbor.exe --capture-window <png> [containers|images|volumes]` renders the window
 off-screen and needs no desktop. A change that is meant to be invisible must produce a
 **byte-identical** PNG:
 
 ```
-dotnet publish src/FreeWilly.Tray -c Release
-FreeWilly.exe --capture-window before.png containers
+dotnet publish src/FreeHarbor.Tray -c Release
+FreeHarbor.exe --capture-window before.png containers
 # ...change...
-FreeWilly.exe --capture-window after.png containers
+FreeHarbor.exe --capture-window after.png containers
 cmp before.png after.png
 ```
 

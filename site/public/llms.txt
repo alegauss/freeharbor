@@ -1,21 +1,21 @@
-# FreeWilly
+# FreeHarbor
 
 > A free Windows (10/11) desktop app for installing and driving Docker without Docker
 > Desktop. It installs upstream Moby (pinned by version and SHA-256) into a WSL2
 > distribution it owns, serves the Windows named pipe `\\.\pipe\docker_engine` that the
 > `docker` CLI, Compose and every other client already look for, and shows containers in
-> one window. Per-user install under `%LOCALAPPDATA%\FreeWilly` with no administrator
+> one window. Per-user install under `%LOCALAPPDATA%\FreeHarbor` with no administrator
 > prompt, no Windows service, no telemetry and no account. Built in C# (.NET 10: WinForms
 > tray, WPF window on the built-in Fluent theme, and an Engine API client with no NuGet
 > dependency).
 
 **There is an installer to download**, from
-[the release page](https://github.com/alegauss/freewilly/releases/latest), with a
+[the release page](https://github.com/alegauss/freeharbor/releases/latest), with a
 `SHA256SUMS.txt` beside it. It is per-user and asks for no administrator prompt. Building
 from source is still one command and is how a contributor works on this, but it is no longer
 how anybody has to run it. The line-by-line picture, with the reason each exists, is in
-[`docs/ROADMAP.md`](https://github.com/alegauss/freewilly/blob/main/docs/ROADMAP.md) and
-[`docs/CHANGELOG.md`](https://github.com/alegauss/freewilly/blob/main/docs/CHANGELOG.md).
+[`docs/ROADMAP.md`](https://github.com/alegauss/freeharbor/blob/main/docs/ROADMAP.md) and
+[`docs/CHANGELOG.md`](https://github.com/alegauss/freeharbor/blob/main/docs/CHANGELOG.md).
 
 This is an unofficial, open-source community project. It is not affiliated with, endorsed
 by, or sponsored by Docker, Inc. "Docker" and "Docker Desktop" are trademarks of Docker,
@@ -29,21 +29,21 @@ This site answers a coding agent in files it can grep, not only in hydrated mark
 route has a Markdown twin beside it, the same page converted from the same render, with
 the navigation, the footer and the call to action dropped. Read `<route>/index.md` instead
 of the HTML: the landing page is
-[`/index.md`](https://alegauss.github.io/freewilly/index.md). The full list of routes,
+[`/index.md`](https://alegauss.github.io/freeharbor/index.md). The full list of routes,
 their twins and their byte sizes is in
-[`manifest.json`](https://alegauss.github.io/freewilly/manifest.json).
+[`manifest.json`](https://alegauss.github.io/freeharbor/manifest.json).
 
 ## Why it exists
 
 The engine is free and always was: Moby and the `docker` CLI are Apache-2.0. What costs
 money, and what a managed corporate laptop often cannot install, is the desktop wrapper
-around them. FreeWilly is a different wrapper: same upstream engine, no licence to count
+around them. FreeHarbor is a different wrapper: same upstream engine, no licence to count
 seats against, nothing resident, and an uninstall that cannot take anything of yours with
 it.
 
 ## Features
 
-- **Preflight (`freewilly --preflight`)**: five rows, each with the action that fixes it:
+- **Preflight (`freeharbor --preflight`)**: five rows, each with the action that fixes it:
   Windows build (19041 or later), hardware virtualization, WSL2, any rival container engine
   that owns the `docker` command or the `docker_engine` pipe, and where this user's own
   `docker` context points. It changes nothing, prints a person-readable report or `--json`
@@ -52,16 +52,16 @@ it.
   bit *before* the firmware bit, because Windows reports the firmware bit as false once a
   hypervisor has claimed it, and the naive order tells a plainly virtualizing machine to go
   and enable virtualization in its BIOS.
-- **Unattended provisioning (`freewilly --provision`)**: eleven named steps, stopping
+- **Unattended provisioning (`freeharbor --provision`)**: eleven named steps, stopping
   at the first failure rather than reporting six consequences of one cause. Downloads and
   verifies Alpine's minirootfs, Docker's static Linux engine binaries, Docker's Windows
   CLI zip and the Compose and Buildx plugins against digests recorded in this repository (not
   served by the same host as the file); reads the engine tarball's member list locally to
   check the required binaries are
-  present before WSL is touched; imports a WSL2 distribution named `freewilly` that this
+  present before WSL is touched; imports a WSL2 distribution named `freeharbor` that this
   tool owns rather than the user's own distro; installs the binaries inside it with one
   non-interactive `sh` script under `set -e` (apk adds `iptables` and `socat`, `wsl.conf`
-  sets `systemd=false`); and places `docker.exe` in `%LOCALAPPDATA%\FreeWilly\bin` for an
+  sets `systemd=false`); and places `docker.exe` in `%LOCALAPPDATA%\FreeHarbor\bin` for an
   installer to put on PATH. `--plan` prints every pinned version, digest and path and
   reaches nothing; `--acquire` downloads and verifies and stops before WSL2 is involved.
 - **Start, stop, and a state that is never ahead of the truth (`--run`, `--stop`,
@@ -70,7 +70,7 @@ it.
   provisioned, the daemon starts and dies, or the daemon runs and nothing on Windows serves
   the pipe) are named separately because they have three different remedies.
 - **The `docker_engine` named pipe**: a Linux `dockerd` cannot create a Windows named pipe,
-  so FreeWilly serves it and forwards each connection over `wsl.exe`'s stdio to `socat`
+  so FreeHarbor serves it and forwards each connection over `wsl.exe`'s stdio to `socat`
   inside the distribution and on to `/var/run/docker.sock`. The pipe's ACL grants the
   current user account and nobody else, which is the reason it is a pipe and not a
   forwarded TCP port, since the Engine API is equivalent to root on the machine and any
@@ -95,7 +95,7 @@ it.
   disc for running, a ring with a gap for starting, a plain ring for stopped. At 16 pixels a
   hue is a hint, and these three stay distinguishable in a screenshot printed in black and
   white. The menu is deliberately short, at five items: open window, start engine, stop
-  engine, "start engine with FreeWilly", and quit. A sixth installs an update and is hidden
+  engine, "start engine with FreeHarbor", and quit. A sixth installs an update and is hidden
   until one exists, and the check that finds it runs on every launch with nothing to enable
   (DD171). **Quitting the tray takes the engine with it**: a running engine holds a WSL2
   virtual machine, and until DD128 the only way to get that memory back was to remember a
@@ -121,9 +121,9 @@ it.
   blocks back. Current Windows builds have sparse virtual disks turned off, and where the
   hand-back is refused for that reason the page offers the one route left: it asks for
   administrator rights, shuts every WSL distribution down rather than only this product's, and
-  costs nothing at all if the prompt is declined. `freewilly read health` answers the same
-  question in one call, `freewilly --fsck` runs the same check from a terminal and
-  `freewilly --compact` the same compaction, with `--as-administrator` for the elevated
+  costs nothing at all if the prompt is declined. `freeharbor read health` answers the same
+  question in one call, `freeharbor --fsck` runs the same check from a terminal and
+  `freeharbor --compact` the same compaction, with `--as-administrator` for the elevated
   route. Every heading sorts and
   every list has a filter box, over the rows already in hand rather than a second call to the
   daemon.
@@ -146,31 +146,31 @@ it.
 ## Installation
 
 - **An installer, from the release page**:
-  <https://github.com/alegauss/freewilly/releases/latest>. The asset carries its version in
-  its name (`FreeWilly-Setup-<x.y.z>.exe`), and `SHA256SUMS.txt` beside it is what a
+  <https://github.com/alegauss/freeharbor/releases/latest>. The asset carries its version in
+  its name (`FreeHarbor-Setup-<x.y.z>.exe`), and `SHA256SUMS.txt` beside it is what a
   download is checked against. Windows 10 build 19041 or later, 64-bit; no prerequisite,
   because the executable carries its own .NET runtime.
-- **Per-user, no administrator prompt.** It installs into `%LOCALAPPDATA%\FreeWilly`, which
+- **Per-user, no administrator prompt.** It installs into `%LOCALAPPDATA%\FreeHarbor`, which
   is what reaches a managed laptop. The WSL2 feature the engine needs may still want
   elevation of its own, and the installer runs the preflight and says so rather than failing
   halfway through a download.
-- **Uninstalling asks about what was created.** The `freewilly` WSL2 distribution holds every
+- **Uninstalling asks about what was created.** The `freeharbor` WSL2 distribution holds every
   image, container and volume, so it is never removed without a question, and an unattended
   uninstall keeps it.
 - **From source**: `dotnet build`, then `build\build.cmd` for the single-file `.exe`; needs
   the .NET 10 SDK and Windows, and the installer additionally needs Inno Setup 6. Stated in
   the repository's own
-  [README](https://github.com/alegauss/freewilly/blob/main/README.md#building). It is how a
+  [README](https://github.com/alegauss/freeharbor/blob/main/README.md#building). It is how a
   contributor works on this, and no longer how anybody has to run it.
 
 ## Layout
 
-- `src/FreeWilly.Core`: the preflight judgement, the engine lifecycle and provisioning, and
+- `src/FreeHarbor.Core`: the preflight judgement, the engine lifecycle and provisioning, and
   the Engine API client. No UI.
-- `src/FreeWilly.Tray`: the WinForms tray icon, the WPF window, and every verb: one
+- `src/FreeHarbor.Tray`: the WinForms tray icon, the WPF window, and every verb: one
   executable is the tray, the window, `--preflight`, `--provision`, `--run` and the
-  `freewilly read`/`do` agent surface. There is no second tool to find.
-- `src/FreeWilly.Shim`: the `docker.exe` forwarder. A separate project because a command a
+  `freeharbor read`/`do` agent surface. There is no second tool to find.
+- `src/FreeHarbor.Shim`: the `docker.exe` forwarder. A separate project because a command a
   shell waits for has to be a console application, and the tray is a windowed one.
 - `site/`: the public site (Vite + React + Tailwind); its build emits this file, a Markdown
   twin per route and `manifest.json`.
@@ -188,7 +188,7 @@ it.
   off until DD171, and a check nobody turns on is a check nobody has. The request carries the
   product name and version and nothing about the user, and an installer it offers is checked
   against the SHA-256 published beside it before it is run.
-- Everything installed lives under `%LOCALAPPDATA%\FreeWilly` (verified downloads, the
+- Everything installed lives under `%LOCALAPPDATA%\FreeHarbor` (verified downloads, the
   distribution's disk, `bin\docker.exe`).
 - Nothing is uploaded, nothing is measured, and there is no account.
 
@@ -217,10 +217,10 @@ servers, with no per-user licence.
 
 ## Links
 
-- [Website](https://alegauss.github.io/freewilly/): project page
-- [Manifest](https://alegauss.github.io/freewilly/manifest.json): the routes and their Markdown twins
-- [GitHub repository](https://github.com/alegauss/freewilly): source code
-- [Roadmap](https://github.com/alegauss/freewilly/blob/main/docs/ROADMAP.md): what is open, and why each line exists
-- [Changelog](https://github.com/alegauss/freewilly/blob/main/docs/CHANGELOG.md): what has shipped
-- [Contributing](https://github.com/alegauss/freewilly/blob/main/CONTRIBUTING.md): how the governed docs work
+- [Website](https://alegauss.github.io/freeharbor/): project page
+- [Manifest](https://alegauss.github.io/freeharbor/manifest.json): the routes and their Markdown twins
+- [GitHub repository](https://github.com/alegauss/freeharbor): source code
+- [Roadmap](https://github.com/alegauss/freeharbor/blob/main/docs/ROADMAP.md): what is open, and why each line exists
+- [Changelog](https://github.com/alegauss/freeharbor/blob/main/docs/CHANGELOG.md): what has shipped
+- [Contributing](https://github.com/alegauss/freeharbor/blob/main/CONTRIBUTING.md): how the governed docs work
 - [Sponsor](https://www.viglet.org): Viglet, open source search and content management

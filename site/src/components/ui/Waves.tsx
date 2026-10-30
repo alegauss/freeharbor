@@ -1,6 +1,6 @@
-// The ocean the mark swims in. The product logo is an orca cresting a wave, so the page it
-// introduces surfaces out of water and settles back into it: one band closing the hero, one
-// opening the footer, drawn in the mark's own three blues and its foam.
+// The harbour water the mark floats on. The product logo is a cargo ship riding two waves, so the
+// page it introduces surfaces out of water and settles back into it: one band closing the hero,
+// one opening the footer, drawn in the mark's own blues and its foam.
 //
 // Seamlessness here is arithmetic, not luck. Every crest is drawn twice across a 2880-unit
 // viewBox laid out at 200% of the band, so 1440 units is exactly one band width; the drift

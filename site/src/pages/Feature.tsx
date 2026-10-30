@@ -15,7 +15,7 @@ function Figure({ kind }: { kind: FeatureRecord["figure"] }) {
             <i />
             <i />
             <i />
-            <span>freewilly --preflight</span>
+            <span>freeharbor --preflight</span>
           </div>
           <pre
             // eslint-disable-next-line react/no-danger
@@ -38,7 +38,7 @@ export function FeaturePage({ record }: { record: FeatureRecord }) {
       <Nav />
       <header className="page-hero" id="top">
         <div className="vg-site-wrap">
-          <a className="feature-back" href="/freewilly/#pipe">
+          <a className="feature-back" href="/freeharbor/#pipe">
             ← Features
           </a>
           <div className="vg-site-eyebrow">{record.eyebrow}</div>
@@ -75,7 +75,7 @@ export function FeaturePage({ record }: { record: FeatureRecord }) {
                 )}
                 {record.slug === "agent-surface" && s.heading === "Configure it" && (
                   <p>
-                    <a className="feature-link" href="/freewilly/claude-code/">
+                    <a className="feature-link" href="/freeharbor/claude-code/">
                       The /claude-code page →
                     </a>
                   </p>
@@ -86,14 +86,14 @@ export function FeaturePage({ record }: { record: FeatureRecord }) {
 
           <div className="feature-nav reveal">
             {prev ? (
-              <a className="feature-nav-link" href={`/freewilly/features/${prev.slug}/`}>
+              <a className="feature-nav-link" href={`/freeharbor/features/${prev.slug}/`}>
                 ← {prev.heading}
               </a>
             ) : (
               <span />
             )}
             {next ? (
-              <a className="feature-nav-link next" href={`/freewilly/features/${next.slug}/`}>
+              <a className="feature-nav-link next" href={`/freeharbor/features/${next.slug}/`}>
                 {next.heading} →
               </a>
             ) : (

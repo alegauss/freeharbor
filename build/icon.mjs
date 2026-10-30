@@ -1,4 +1,4 @@
-// The app icon, rasterised from site/public/logo.svg into src/FreeWilly.Tray/FreeWilly.ico.
+// The app icon, rasterised from site/public/logo.svg into src/FreeHarbor.Tray/FreeHarbor.ico.
 //
 // Not part of any build: the .ico is committed, because a build that needs Node and the site's
 // dependencies to produce a Windows resource is a build that fails on a machine with only the .NET
@@ -36,9 +36,9 @@ const small = readFileSync(join(root, "build", "icon.svg"), "utf8");
 const sizes = [16, 24, 32, 48, 64, 128, 256];
 
 // An .ico is a file of separate pictures, not one picture resampled, which is the whole reason it
-// carries every size: the small entries can be a *different drawing*. Below 48 the mark's three
-// cyan tones average into one and its eye closes, so those entries come from build/icon.svg, which
-// is the same artwork traced with the wave as one tone and the eye grown to survive the size.
+// carries every size: the small entries can be a *different drawing*. Below 48 the mark's gradient
+// is one colour anyway and its porthole is under a pixel, so those entries come from build/icon.svg,
+// which is the same artwork in flat colours with the ship grown to survive the size.
 const pngs = sizes.map((size) => {
   const svg = size < 48 ? small : mark;
   const rendered = new Resvg(svg, { fitTo: { mode: "width", value: size } });
@@ -68,6 +68,6 @@ const entries = sizes.map((size, index) => {
   return entry;
 });
 
-const out = join(root, "src", "FreeWilly.Tray", "FreeWilly.ico");
+const out = join(root, "src", "FreeHarbor.Tray", "FreeHarbor.ico");
 writeFileSync(out, Buffer.concat([header, ...entries, ...pngs]));
 console.log(`${out}  ${sizes.length} sizes, ${offset} bytes`);

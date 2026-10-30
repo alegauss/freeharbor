@@ -1,6 +1,6 @@
 @echo off
 REM ==========================================================================
-REM update-release.cmd - raises FreeWilly's release number and builds the
+REM update-release.cmd - raises FreeHarbor's release number and builds the
 REM release from it in one step.
 REM   1) Updates <Version> in Directory.Build.props - the one place that holds
 REM      it (DD14); the installer and release.yml both read it back off the
@@ -59,7 +59,7 @@ if errorlevel 1 (
 REM The number that actually travelled into the .exe. A tag naming a version the build did not
 REM produce ships an installer whose file name and whose Add/Remove Programs entry disagree, and
 REM release.yml refuses it - after the tag is public. Refuse it here instead.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$e='src\FreeWilly.Tray\bin\Release\net10.0-windows\win-x64\publish\FreeWilly.exe'; $v=(Get-Item $e).VersionInfo.ProductVersion.Trim(); if ($v -ne '%~1') { Write-Host ('*** the published .exe says ' + $v + ', not %~1 ***'); exit 1 }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$e='src\FreeHarbor.Tray\bin\Release\net10.0-windows\win-x64\publish\FreeHarbor.exe'; $v=(Get-Item $e).VersionInfo.ProductVersion.Trim(); if ($v -ne '%~1') { Write-Host ('*** the published .exe says ' + $v + ', not %~1 ***'); exit 1 }"
 if errorlevel 1 (
     echo.
     echo *** ERROR: the built .exe does not carry v%~1. ***
