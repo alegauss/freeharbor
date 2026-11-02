@@ -15,7 +15,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@viglet/viglet-design-system": "2026.3.23",
+    "@viglet/viglet-design-system": "2026.3.24",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
@@ -25,7 +25,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
-    "node-html-parser": "^9.0.5",
+    "node-html-parser": "^9.0.6",
     "tailwindcss": "^4.1.4",
     "typescript": "^7.0.2",
     "vite": "^8.3.5"
