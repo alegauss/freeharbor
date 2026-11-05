@@ -108,6 +108,113 @@ public sealed class ComposeExtension
         return result.Succeeded ? Parse(result.Output, folder) : null;
     }
 
+    /// <summary>The compose file an edit of the block is written into (DD296).</summary>
+    /// <param name="files">The project's files, in compose's order.</param>
+    /// <returns>
+    /// The last file that already has a block, because compose merges later files over earlier ones
+    /// and a write anywhere before it would be hidden; otherwise the first file, the project's own.
+    /// </returns>
+    public static string TargetFile(IReadOnlyList<string> files)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        ArgumentOutOfRangeException.ThrowIfZero(files.Count);
+
+        foreach (var file in files.Reverse())
+        {
+            try
+            {
+                if (File.Exists(file) && Start(File.ReadAllText(file).ReplaceLineEndings("\n").Split('\n')) >= 0)
+                {
+                    return file;
+                }
+            }
+            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+            {
+                // A file this machine cannot read has no block anyone could have seen; try the next.
+            }
+        }
+
+        return files[0];
+    }
+
+    /// <summary>A compose file's text with its <c>x-freeharbor</c> block replaced, and nothing else changed.</summary>
+    /// <param name="text">The compose file as it is.</param>
+    /// <param name="details">What the block should say.</param>
+    /// <param name="folder">The compose file's folder, which icon paths are written relative to.</param>
+    /// <returns>The new text, and the block before and after, for the diff the dialog shows.</returns>
+    /// <remarks>
+    /// <b>Text, and only the block's lines.</b> This is somebody's file, so it is not parsed and
+    /// written back, which would lose its comments, its order and its anchors. The block is a
+    /// top-level key, so it runs from its own line to the next line that starts in the first column;
+    /// those lines are replaced and every other byte stays, line endings included. A file with no
+    /// block gets one appended at the end.
+    /// </remarks>
+    public static (string Text, string Before, string After) Rewrite(
+        string text, ProjectFileDetails details, string folder)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        ArgumentNullException.ThrowIfNull(details);
+        ArgumentNullException.ThrowIfNull(folder);
+
+        var newline = text.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
+        var lines = text.ReplaceLineEndings("\n").Split('\n').ToList();
+        var block = (Key + ":\n" + ProjectFile.Body(details, folder, indent: "  "))
+            .ReplaceLineEndings("\n").TrimEnd('\n').Split('\n');
+
+        var start = Start(lines);
+        string before;
+        if (start < 0)
+        {
+            before = "";
+            while (lines.Count > 0 && lines[^1].Length == 0)
+            {
+                lines.RemoveAt(lines.Count - 1);
+            }
+
+            lines.Add("");
+            lines.AddRange(block);
+            lines.Add("");
+        }
+        else
+        {
+            var end = start + 1;
+            while (end < lines.Count
+                   && (lines[end].Length == 0 || lines[end][0] == ' ' || lines[end][0] == '\t'))
+            {
+                end++;
+            }
+
+            // Blank lines at the end of the block belong to the gap before the next key.
+            while (end > start + 1 && lines[end - 1].Trim().Length == 0)
+            {
+                end--;
+            }
+
+            before = string.Join("\n", lines.GetRange(start, end - start));
+            lines.RemoveRange(start, end - start);
+            lines.InsertRange(start, block);
+        }
+
+        return (string.Join(newline, lines), before, string.Join("\n", block));
+    }
+
+    /// <summary>Where the block starts: a line that is the key in the first column, or -1.</summary>
+    private static int Start(IReadOnlyList<string> lines)
+    {
+        for (var i = 0; i < lines.Count; i++)
+        {
+            var line = lines[i];
+            if (line.StartsWith(Key + ":", StringComparison.Ordinal)
+                && line[(Key.Length + 1)..].Trim() is var rest
+                && (rest.Length == 0 || rest[0] == '#'))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     /// <summary>Read the block out of what <c>compose config --format json</c> wrote.</summary>
     /// <param name="json">Compose's answer.</param>
     /// <param name="folder">The project's folder, which a relative icon path is under.</param>

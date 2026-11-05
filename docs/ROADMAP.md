@@ -11,7 +11,7 @@
 
 ## Block C — The window (claude-tray's elements)
 
-- ⏳ **DD296** (deps: DD294 ✅, DD295 ✅) **A container from someone else's compose file or a docker run cannot be given a title, icon or link** — Writing x-freeharbor with its one-time diff, the services rail and editing links are left. → §DD296
+- ⏳ **DD296** (deps: DD294 ✅, DD295 ✅) **A container from someone else's compose file or a docker run cannot be given a title, icon or link** — The services rail that switches between a project and its services, and editing links, are left. → §DD296
 - 📋 **DD297** (deps: DD294 ✅) **A project header names the project and a count, with no icon, no description and no way to open what it serves** — A group header carries icon, description, an Open button and Start/Stop; port links become chips; standalone containers sit in their own block, one verb per row. → §DD297
 - 📋 **DD298** (deps: DD297) **A project of twenty containers and ten links fills the page, and its two broken services sit among eighteen healthy ones** — One primary link and two pinned ones are buttons, the rest a filterable menu; services fold into freeharbor.group tiers, and a healthy tier stays folded. → §DD298
 - 📋 **DD299** (deps: DD294 ✅) **Nothing shows one project whole: its endpoints, every service, and why the one that stopped stopped** — Clicking a project or a standalone container opens a detail page with its endpoints, every service, recent output and the daemon's words for a failure. → §DD299

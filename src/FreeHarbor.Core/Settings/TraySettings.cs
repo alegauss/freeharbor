@@ -48,6 +48,15 @@ public sealed record TraySettings
     /// </remarks>
     public string? EngineMinimumApi { get; init; }
 
+    /// <summary>
+    /// The compose projects whose file the user has seen FreeHarbor change, and allowed (DD296).
+    /// </summary>
+    /// <remarks>
+    /// Writing a details block into somebody's compose file shows the change first, once per
+    /// project; a project here is one that answered yes, so later saves write without asking.
+    /// </remarks>
+    public IReadOnlyList<string> ComposeWritesAllowed { get; init; } = [];
+
     /// <summary>Read the settings.</summary>
     /// <param name="path">The file <see cref="Write"/> wrote.</param>
     /// <returns>What it held, or the defaults where there is nothing usable.</returns>

@@ -203,22 +203,8 @@ public static class ProjectFile
         var folder = Path.Combine(projectFolder, Folder);
         var text = new System.Text.StringBuilder();
         text.AppendLine("# Written by FreeHarbor. Titles, descriptions and icons for this compose project;")
-            .AppendLine("# it overrides the compose file and can be committed for the whole team.");
-        Lines(text, details.Project, folder, indent: "");
-        if (details.Services.Count > 0)
-        {
-            text.AppendLine("services:");
-            foreach (var (name, fields) in details.Services.OrderBy(pair => pair.Key, StringComparer.Ordinal))
-            {
-                if (fields.IsEmpty)
-                {
-                    continue;
-                }
-
-                text.Append("  ").Append(Quoted(name)).AppendLine(":");
-                Lines(text, fields, folder, indent: "    ");
-            }
-        }
+            .AppendLine("# it overrides the compose file and can be committed for the whole team.")
+            .Append(Body(details, folder, indent: ""));
 
         try
         {
@@ -234,6 +220,32 @@ public static class ProjectFile
         {
             return null;
         }
+    }
+
+    /// <summary>The keys of a project file, at an indent: the file's own body, or an <c>x-freeharbor</c> block's.</summary>
+    /// <param name="details">What to write.</param>
+    /// <param name="folder">The folder icon paths are written relative to.</param>
+    /// <param name="indent">The indent of the top-level keys.</param>
+    /// <returns>The lines, each ending in a newline.</returns>
+    internal static string Body(ProjectFileDetails details, string folder, string indent)
+    {
+        var text = new System.Text.StringBuilder();
+        Lines(text, details.Project, folder, indent);
+        var services = details.Services
+            .Where(pair => !pair.Value.IsEmpty)
+            .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+            .ToList();
+        if (services.Count > 0)
+        {
+            text.Append(indent).AppendLine("services:");
+            foreach (var (name, fields) in services)
+            {
+                text.Append(indent).Append("  ").Append(Quoted(name)).AppendLine(":");
+                Lines(text, fields, folder, indent + "    ");
+            }
+        }
+
+        return text.ToString();
     }
 
     private static void Lines(System.Text.StringBuilder text, DetailFields fields, string folder, string indent)

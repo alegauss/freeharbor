@@ -19,8 +19,9 @@ namespace FreeHarbor.Tray.Ui;
 /// whose folder this machine can open can also take it in <c>.freeharbor/project.yaml</c>, which the
 /// whole team gets when it is committed. Saving there keeps every field of the file the dialog did
 /// not change, and clears what the store held for the same key, because the store is read first and
-/// would otherwise hide the save. The compose file's own <c>x-freeharbor</c> block is not a target
-/// yet: writing into somebody's compose file needs the one-time diff the roadmap keeps open.</para>
+/// would otherwise hide the save. The compose file's own <c>x-freeharbor</c> block is a target
+/// too, and that one is somebody's file: the change is shown once per project before it is made,
+/// and only the block's own lines are touched.</para>
 /// </remarks>
 internal partial class EditDetailsWindow : Window
 {
@@ -54,6 +55,10 @@ internal partial class EditDetailsWindow : Window
         if (CanSaveToFile(row))
         {
             SaveTo.Items.Add(new SaveTarget(".freeharbor (the whole team)", ToFile: true));
+            if (ComposeFiles(row).Count > 0)
+            {
+                SaveTo.Items.Add(new SaveTarget("the compose file (x-freeharbor)", ToFile: true, ToCompose: true));
+            }
         }
 
         SaveTo.SelectedIndex = 0;
@@ -186,16 +191,22 @@ internal partial class EditDetailsWindow : Window
         IconSource.Text = choice.Value is null ? $"from {_beneath.IconSource}" : ContainerDetails.EditedHere;
         Counter.Text = $"{DescriptionBox.Text.Length} / {DescriptionBox.MaxLength}";
 
-        var toFile = SaveTo.SelectedItem is SaveTarget { ToFile: true };
-        Lands.Text = toFile
-            ? $"Saves in {ProjectFile.Folder}/{ProjectFile.FileName} in the project folder."
-            : "Saves in FreeHarbor on this machine.";
-        Lands.ToolTip = toFile
-            ? Path.Combine(_row.WorkingDir ?? "", ProjectFile.Folder, ProjectFile.FileName)
-            : null;
-        LandsDetail.Text = toFile
-            ? "Anyone with the project sees these details once the file is committed."
-            : "Only you see these details, and nothing in the project changes.";
+        var target = SaveTo.SelectedItem as SaveTarget;
+        var compose = target is { ToCompose: true } ? ComposeExtension.TargetFile(ComposeFiles(_row)) : null;
+        Lands.Text = compose is not null
+            ? $"Saves in the {ComposeExtension.Key} block of {Path.GetFileName(compose)}."
+            : target is { ToFile: true }
+                ? $"Saves in {ProjectFile.Folder}/{ProjectFile.FileName} in the project folder."
+                : "Saves in FreeHarbor on this machine.";
+        Lands.ToolTip = compose
+            ?? (target is { ToFile: true }
+                ? Path.Combine(_row.WorkingDir ?? "", ProjectFile.Folder, ProjectFile.FileName)
+                : null);
+        LandsDetail.Text = compose is not null
+            ? "Only that block changes; the rest of the file is left exactly as it is."
+            : target is { ToFile: true }
+                ? "Anyone with the project sees these details once the file is committed."
+                : "Only you see these details, and nothing in the project changes.";
 
         var icon = choice.Value switch
         {
@@ -283,7 +294,16 @@ internal partial class EditDetailsWindow : Window
             return;
         }
 
-        if (SaveTo.SelectedItem is SaveTarget { ToFile: true } && _row.WorkingDir is { } folder)
+        if (SaveTo.SelectedItem is SaveTarget { ToCompose: true } && _row.WorkingDir is { } composeFolder)
+        {
+            if (!SaveToCompose(composeFolder, choice.Value))
+            {
+                return;
+            }
+
+            _ = _store.Save(key, new DetailFields(null, null, null));
+        }
+        else if (SaveTo.SelectedItem is SaveTarget { ToFile: true } && _row.WorkingDir is { } folder)
         {
             var file = ProjectFile.For(folder)
                 ?? new ProjectFileDetails(new DetailFields(null, null, null), new Dictionary<string, DetailFields>());
@@ -314,10 +334,88 @@ internal partial class EditDetailsWindow : Window
         DialogResult = true;
     }
 
+    /// <summary>The compose files a row's project was brought up with, those this machine can open.</summary>
+    private static List<string> ComposeFiles(ContainerRow row) =>
+    [
+        .. (row.ConfigFiles ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(file => Path.IsPathFullyQualified(file) && File.Exists(file)),
+    ];
+
+    /// <summary>Write the edit into the compose file's block, after showing the change once per project.</summary>
+    /// <param name="folder">The folder compose ran in.</param>
+    /// <param name="icon">The chosen icon, or null for automatic.</param>
+    /// <returns>Whether it was written; false where the user said no or the file could not be written.</returns>
+    private bool SaveToCompose(string folder, string? icon)
+    {
+        var files = ComposeFiles(_row);
+        var target = ComposeExtension.TargetFile(files);
+
+        // Owned by this dialog, so a confirmation always appears above it (DD227).
+        Window owner = this;
+
+        // What the block says now, from compose itself, so a field this dialog did not change keeps
+        // the value it had, however the author spelled it. Half a second, and only on Save.
+        var current = new ComposeExtension(new Core.Agent.BundledComposeCli()).Read(folder, files)
+            ?? new ProjectFileDetails(new DetailFields(null, null, null), new Dictionary<string, DetailFields>());
+        var services = new Dictionary<string, DetailFields>(current.Services, StringComparer.Ordinal);
+        var project = current.Project;
+        if (_row.IsProject)
+        {
+            project = ForTheFile(current.Project, _beneath, TitleBox.Text, DescriptionBox.Text, icon);
+        }
+        else if (_row.Service is { } service)
+        {
+            services[service] = ForTheFile(
+                services.GetValueOrDefault(service), _beneath, TitleBox.Text, DescriptionBox.Text, icon);
+        }
+
+        try
+        {
+            var bytes = File.ReadAllBytes(target);
+            var bom = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
+            var (text, before, after) = ComposeExtension.Rewrite(
+                File.ReadAllText(target), new ProjectFileDetails(project, services), Path.GetDirectoryName(target)!);
+
+            var paths = new Core.Engine.EnginePaths();
+            var settings = Core.Settings.TraySettings.Read(paths.Settings);
+            var name = _row.Project ?? "";
+            if (!settings.ComposeWritesAllowed.Contains(name, StringComparer.Ordinal))
+            {
+                var answer = System.Windows.MessageBox.Show(
+                    owner,
+                    $"FreeHarbor will change {target}.\n\n"
+                    + (before.Length == 0 ? "It adds this block at the end:\n\n" : $"This block:\n\n{before}\n\nbecomes:\n\n")
+                    + after
+                    + "\n\nNothing else in the file changes. This is asked once for this project.",
+                    "Change the compose file?",
+                    MessageBoxButton.OKCancel,
+                    MessageBoxImage.Question);
+                if (answer != MessageBoxResult.OK)
+                {
+                    return false;
+                }
+
+                (settings with { ComposeWritesAllowed = [.. settings.ComposeWritesAllowed, name] })
+                    .Write(paths.Settings);
+            }
+
+            File.WriteAllText(target, text, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: bom));
+            Saved = true;
+            return true;
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            System.Windows.MessageBox.Show(owner, $"{target} could not be written: {failure.Message}", "Edit details",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return false;
+        }
+    }
+
     /// <summary>One place Save can write.</summary>
     /// <param name="Label">What the list shows.</param>
-    /// <param name="ToFile">Whether it is the project's <c>.freeharbor</c> file rather than the store.</param>
-    private sealed record SaveTarget(string Label, bool ToFile)
+    /// <param name="ToFile">Whether it is a file in the project rather than the store.</param>
+    /// <param name="ToCompose">Whether that file is the compose file's block rather than <c>.freeharbor</c>.</param>
+    private sealed record SaveTarget(string Label, bool ToFile, bool ToCompose = false)
     {
         public override string ToString() => Label;
     }
