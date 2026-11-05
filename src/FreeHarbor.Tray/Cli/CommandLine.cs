@@ -171,6 +171,7 @@ public static class CommandLine
             "--api",
             "--watch",
             "--autostart",
+            "--min-api",
         };
 
     /// <summary>What a command line asked for.</summary>
@@ -327,6 +328,9 @@ public static class CommandLine
           --api            version and containers, read through the Engine API
           --watch          print /events as they happen, until Ctrl+C
           --autostart      on | off | status  - off unless you turn it on
+          --min-api        <version> | default | status  - the oldest Engine API the engine
+                           admits; 1.24 lets clients like Testcontainers' docker-java in,
+                           and it applies from the engine's next start
 
           {VersionVerb}        what this build calls itself
           {HelpVerb}           this, and {HelpShortVerb} does the same

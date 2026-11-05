@@ -109,6 +109,7 @@
 - ✅ **DD278** **six callers spell their own version of what a wsl call said, and none falls back to the exit code** — The six restatements now call one Detail that carries the separator, so a wsl call which exited non-zero and wrote nothing names its exit code instead of resolving to nothing.
 - ✅ **DD279** **the relay's dispose joins its accept thread for five seconds inside a teardown budget of four** — The relay's join now takes the same budget as the calls around it, so the last wait that could outlast a session ending no longer stops the steps behind it running.
 - ✅ **DD280** **the filesystem check refuses on a distribution that will not start, which is the one whose filesystem needs it** — A distribution that will not start is checked by the UUID read off its ext4.vhdx and a launch under the hold that attaches the disk; it repaired the disk it was measured on.
+- ✅ **DD288** **The engine refuses clients below API 1.40 and FreeHarbor offers no way to admit them** — freeharbor --min-api 1.24 sets DOCKER_MIN_API_VERSION at engine start, so a 1.32 client lists containers (design recorded in `src/FreeHarbor.Core/Engine/EngineApiFloor.cs`).
 
 ## Block B — The daemon client (talk to the engine)
 

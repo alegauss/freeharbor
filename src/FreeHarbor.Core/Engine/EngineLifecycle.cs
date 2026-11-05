@@ -1110,6 +1110,7 @@ public sealed class WslDaemonProcess : IDaemonProcess
     private static readonly TimeSpan LastWordsWait = TimeSpan.FromMilliseconds(500);
 
     private readonly string _distribution;
+    private readonly string _settingsPath;
 
     // Two buffers and not one, and that is the whole of DD192. They held a single list, and
     // Sentence handed the mixture to a decoder that picks one encoding for the whole of what it is
@@ -1130,12 +1131,30 @@ public sealed class WslDaemonProcess : IDaemonProcess
     /// The owned distribution, or <see langword="null"/> to ask the machine which one this install
     /// owns — which is the legacy name where an older install is being adopted (DD55).
     /// </param>
-    public WslDaemonProcess(string? distribution = null)
+    /// <param name="settingsPath">
+    /// The settings file whose <see cref="Settings.TraySettings.EngineMinimumApi"/> the launch
+    /// applies, or <see langword="null"/> for this install's own.
+    /// </param>
+    public WslDaemonProcess(string? distribution = null, string? settingsPath = null)
     {
-        distribution ??= new EnginePaths().DistributionName;
+        var paths = new EnginePaths();
+        distribution ??= paths.DistributionName;
         ArgumentException.ThrowIfNullOrWhiteSpace(distribution);
         _distribution = distribution;
+        _settingsPath = settingsPath ?? paths.Settings;
     }
+
+    /// <summary>The command the distribution's shell runs to become the daemon.</summary>
+    /// <param name="minimum">The stored API floor, or <see langword="null"/> for Moby's own.</param>
+    /// <returns>The script <c>/bin/sh -c</c> is given.</returns>
+    /// <remarks>
+    /// Internal and separate because <see cref="Launch"/> cannot be reached without a real
+    /// <c>wsl.exe</c>, and this string is the whole of what DD288 changed about it.
+    /// </remarks>
+    internal static string LaunchScript(string? minimum) =>
+        EngineApiFloor.ShellPrefix(minimum)
+        + $"exec /usr/local/bin/dockerd -H unix://{EngineLifecycle.SocketPath} "
+        + $">>{EngineLifecycle.LogPath} 2>&1";
 
     /// <inheritdoc/>
     public bool Alive => _process is { HasExited: false };
@@ -1260,12 +1279,13 @@ public sealed class WslDaemonProcess : IDaemonProcess
             // host was started from — the install's own, for an update or an uninstall.
             WorkingDirectory = Environment.SystemDirectory,
         };
+        // Read at every launch and not once per process (DD288): the tray lives for the session, and
+        // a floor lowered from the command line has to reach the next start it makes.
+        var minimum = Settings.TraySettings.Read(_settingsPath).EngineMinimumApi;
         foreach (var argument in new[]
                  {
                      "-d", _distribution, "-u", "root", "--exec",
-                     "/bin/sh", "-c",
-                     $"exec /usr/local/bin/dockerd -H unix://{EngineLifecycle.SocketPath} "
-                     + $">>{EngineLifecycle.LogPath} 2>&1",
+                     "/bin/sh", "-c", LaunchScript(minimum),
                  })
         {
             startInfo.ArgumentList.Add(argument);

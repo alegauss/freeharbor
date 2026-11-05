@@ -211,7 +211,13 @@ internal sealed class TrayApplication : ApplicationContext
     /// </remarks>
     private void Save(TraySettings wanted)
     {
-        _settings = wanted;
+        // Onto what the file holds now and not onto what the tray read at launch (DD288). The menu
+        // owns one setting; the engine's API floor is set from the command line while the tray is
+        // running, and writing back the launch-time copy would put the old floor back on every tick.
+        _settings = TraySettings.Read(_paths.Settings) with
+        {
+            StartWithTheTray = wanted.StartWithTheTray,
+        };
         _settings.Write(_paths.Settings);
     }
 

@@ -2,12 +2,9 @@
 
 ## Priority
 
-- DD288
 - DD289
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
-
-- 📋 **DD288** (deps: —) **The engine refuses clients below API 1.40 and FreeHarbor offers no way to admit them** — Tools pinned to an older API, like Testcontainers' docker-java at 1.32, read Docker as absent until each project pins a newer version. → §DD288
 
 ## Block B — The daemon client (talk to the engine)
 

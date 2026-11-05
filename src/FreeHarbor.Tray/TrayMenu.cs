@@ -121,7 +121,7 @@ internal sealed class TrayMenu
         _onLaunch.Checked = opened.StartWithTheTray;
 
         _onLaunch.CheckedChanged += (_, _) =>
-            save?.Invoke(new TraySettings { StartWithTheTray = _onLaunch.Checked });
+            save?.Invoke(opened with { StartWithTheTray = _onLaunch.Checked });
 
         Strip = new ContextMenuStrip();
 

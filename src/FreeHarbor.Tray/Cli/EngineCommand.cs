@@ -43,9 +43,10 @@ internal static class EngineCommand
     {
         var mode = args.Length == 0 ? "--help" : args[0];
 
-        // --autostart takes a value, and --fsck, --compact and --compact-drill each take a flag;
-        // everything else is a verb on its own.
-        var allowed = mode is "--autostart" or "--fsck" or "--compact" or "--compact-drill" ? 2 : 1;
+        // --autostart and --min-api take a value, and --fsck, --compact and --compact-drill each
+        // take a flag; everything else is a verb on its own.
+        var allowed = mode is "--autostart" or "--min-api" or "--fsck" or "--compact"
+            or "--compact-drill" ? 2 : 1;
         if (args.Length > allowed)
         {
             return Complain($"unexpected argument {args[allowed]}");
@@ -66,6 +67,7 @@ internal static class EngineCommand
             "--compact" => Compact(args.Length > 1 ? args[1] : ""),
             "--compact-drill" => CompactDrill(args.Length > 1 ? args[1] : ""),
             "--autostart" => AutostartMode(args.Length > 1 ? args[1] : "status"),
+            "--min-api" => MinimumApi(args.Length > 1 ? args[1] : "status"),
             "-h" or "--help" => Help(Ok),
             _ => Complain($"unknown argument {mode}"),
         };
@@ -1110,6 +1112,53 @@ internal static class EngineCommand
             default:
                 return Complain($"--autostart takes on, off or status, not {mode}");
         }
+    }
+
+    /// <summary>Read or set the oldest Engine API version the engine admits (DD288).</summary>
+    /// <param name="mode">A version such as <c>1.24</c>, <c>default</c>, or <c>status</c>.</param>
+    /// <param name="settingsPath">The settings file, or <see langword="null"/> for this install's.</param>
+    /// <param name="output">Where to write, or <see langword="null"/> for the console.</param>
+    /// <returns>The exit code: <see cref="Usage"/> for a version the setting does not take.</returns>
+    /// <remarks>
+    /// It does not restart the engine. A restart stops every container, and a setting that did that
+    /// as a side effect would be a verb in disguise; the line it prints says how the change lands.
+    /// </remarks>
+    internal static int MinimumApi(string mode, string? settingsPath = null, System.IO.TextWriter? output = null)
+    {
+        settingsPath ??= new EnginePaths().Settings;
+        output ??= Console.Out;
+        var settings = Core.Settings.TraySettings.Read(settingsPath);
+
+        switch (mode)
+        {
+            case "status":
+                break;
+            case "default":
+                settings = settings with { EngineMinimumApi = null };
+                settings.Write(settingsPath);
+                break;
+            default:
+                if (!EngineApiFloor.TryRead(mode, out var version))
+                {
+                    return Complain(
+                        $"--min-api takes a version from {EngineApiFloor.Lowest} to "
+                        + $"{EngineApiFloor.MobyDefault}, default or status, not {mode}");
+                }
+
+                settings = settings with { EngineMinimumApi = version };
+                settings.Write(settingsPath);
+                break;
+        }
+
+        var stored = EngineApiFloor.TryRead(settings.EngineMinimumApi, out var floor) ? floor : null;
+        output.WriteLine(stored is null
+            ? $"  min-api   {EngineApiFloor.MobyDefault}  the engine's own floor; clients asking for an older API are refused"
+            : $"  min-api   {stored}  set here; clients asking for API {stored} or newer are admitted");
+        output.WriteLine(
+            $"  {"",-8}  lower it for tools pinned to an old API, such as Testcontainers' docker-java at 1.32;");
+        output.WriteLine(
+            $"  {"",-8}  {EngineApiFloor.Variable} is set when the engine starts, so stop and start it to apply");
+        return Ok;
     }
 
     /// <summary>What would be downloaded and where things would go. Reaches nothing.</summary>

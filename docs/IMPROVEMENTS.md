@@ -2,29 +2,6 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
-### §DD288 Admitting clients below the engine API floor
-
-Met in Turing (viglet/turing 2026.3, its T1108). The FreeHarbor engine (Docker 29.7.2)
-refuses any client below API 1.40. Testcontainers' bundled docker-java opens with 1.32,
-so on this machine every Testcontainers suite reads Docker as absent and skips its
-container tests, until each project pins a newer version itself (Turing added
-`docker-java.properties` with `api.version=1.44`). The same holds for any older tool or
-SDK that pins its API version.
-
-This is Moby's own floor, not a FreeHarbor defect, and the engine stays unmodified (the
-non-goal against forking it). But dockerd takes its minimum from the
-`DOCKER_MIN_API_VERSION` environment variable, which the process that starts the engine
-inside the `freeharbor` distribution can set without changing the engine.
-
-What FreeHarbor should do: offer the minimum API version as an engine setting, default
-unchanged (Moby's own), that sets `DOCKER_MIN_API_VERSION` when the engine starts, with
-the preflight-style explanation of what it admits and why one would lower it (old
-Testcontainers, old SDKs). `read health` then shows the effective minimum (see the
-companion line on printing it).
-
-Done when lowering the setting to 1.24 lets a client asking for API 1.32 list
-containers, and leaving it alone keeps today's floor.
-
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)
@@ -302,7 +279,7 @@ What FreeHarbor should do:
   (`engine API version 1.55 (accepts 1.40 and later)`).
 - Where the engine's own log records a client refused for its API version, say so in
   `read health` with the version it asked for, and the remedy (a newer client, or the
-  client's `api.version` / `DOCKER_API_VERSION` setting).
+  client's `api.version` / `DOCKER_API_VERSION`, or `freeharbor --min-api`).
 
 Also observed, not yet understood: with `DOCKER_API_VERSION=1.44` set, Testcontainers'
 detection still failed on about one run in two, then succeeded consistently once the

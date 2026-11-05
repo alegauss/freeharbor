@@ -37,6 +37,17 @@ public sealed record TraySettings
     /// <summary>Whether opening the tray also starts the engine (DD135).</summary>
     public bool StartWithTheTray { get; init; } = EngineShipsOn;
 
+    /// <summary>
+    /// The oldest Engine API version the daemon admits, or <see langword="null"/> for Moby's own
+    /// (DD288).
+    /// </summary>
+    /// <remarks>
+    /// Read by the launcher when the engine starts, so a change waits for the next start. The value
+    /// is checked there too (<see cref="Engine.EngineApiFloor.ShellPrefix"/>), and one it refuses
+    /// starts the engine at the default.
+    /// </remarks>
+    public string? EngineMinimumApi { get; init; }
+
     /// <summary>Read the settings.</summary>
     /// <param name="path">The file <see cref="Write"/> wrote.</param>
     /// <returns>What it held, or the defaults where there is nothing usable.</returns>
