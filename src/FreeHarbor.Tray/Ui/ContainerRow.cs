@@ -62,10 +62,20 @@ public sealed record ContainerRow(
     /// Its title, description, icon and links, resolved once by <see cref="ContainerDetails"/> (DD294).
     /// </summary>
     /// <remarks>
-    /// Null on a project's header, whose details are DD295's. Every property the tile and the title
-    /// draw reads this one, so no binding resolves a label on its own.
+    /// On a project's header these are the project's own (DD295), from its project file or its
+    /// compose name. Every property the tile and the title draw reads this one, so no binding
+    /// resolves a label on its own.
     /// </remarks>
     public ResolvedDetails? Details { get; init; }
+
+    /// <summary>
+    /// The details of the project this container is in, which its header draws (DD295).
+    /// </summary>
+    /// <remarks>
+    /// Carried on every container rather than looked up by the header, because the header is built
+    /// from its children and the folder the project file is in is a label only a container has.
+    /// </remarks>
+    public ResolvedDetails? ProjectDetails { get; init; }
 
     /// <summary>What the name cell draws: the resolved title, or the name on a header.</summary>
     public string Title => Details?.Title ?? Name;
@@ -79,11 +89,12 @@ public sealed record ContainerRow(
     /// <summary>
     /// The name cell's tooltip: the container's own name, which the title replaced on screen.
     /// </summary>
-    public string NameEvidence => Details is null || string.Equals(Title, Name, StringComparison.Ordinal)
+    public string NameEvidence => IsProject || Details is null
+        || string.Equals(Title, Name, StringComparison.Ordinal)
         ? Name
         : $"{Name} ({Image})";
 
-    /// <summary>Whether the row has an icon tile: every container, and no header yet.</summary>
+    /// <summary>Whether the row has an icon tile: every container and every project header.</summary>
     public bool HasTile => Details is not null;
 
     /// <summary>The tile's hue.</summary>
@@ -183,6 +194,11 @@ public sealed record ContainerRow(
         return new ContainerRow(project, "", "", "", [], ProjectId(project))
         {
             IsProject = true,
+
+            // DD295. Its children all read one project file, so the first one's copy is the
+            // project's; a header with no children has only its compose name.
+            Details = children.Select(child => child.ProjectDetails).FirstOrDefault(details => details is not null)
+                ?? ContainerDetails.ResolveProject(project, null),
             Project = project,
             Running = children.Count(child => child.IsRunning),
             Total = children.Count,
@@ -441,10 +457,9 @@ public sealed record ContainerRow(
                 nameof(IsLive), nameof(ChipFill), nameof(ChipText), nameof(ImageIsGone),
                 nameof(ImageNote), nameof(ImageEvidence),
 
-                // DD294: a header has no details until DD295 gives projects their own, so it
-                // answers every one of these with nothing and draws no tile.
-                nameof(Details), nameof(Description), nameof(HasDescription), nameof(HasTile),
-                nameof(TileFill), nameof(TileGlyph), nameof(TilePicture), nameof(TileLetter),
+                // DD295: a header draws its project's details from its own Details, so the copy each
+                // container carries for it is a container's alone.
+                nameof(ProjectDetails),
             };
 
         /// <summary>What only a header answers. A container returns each of these empty.</summary>
@@ -470,6 +485,10 @@ public sealed record ContainerRow(
             {
                 nameof(Name), nameof(Id), nameof(Project), nameof(IsProject), nameof(IsContainer),
                 nameof(Title), nameof(NameEvidence),
+
+                // DD294 and DD295: a container's details or a project's, drawn by the same tile.
+                nameof(Details), nameof(Description), nameof(HasDescription), nameof(HasTile),
+                nameof(TileFill), nameof(TileGlyph), nameof(TilePicture), nameof(TileLetter),
                 nameof(Indent), nameof(Pending), nameof(Failure), nameof(IsPending),
                 nameof(HasFailure), nameof(AnyUp), nameof(CanStart), nameof(CanStop),
                 nameof(CanRestart), nameof(CanRemove), nameof(CanShell), nameof(ShellReason),
@@ -728,7 +747,17 @@ public sealed record ContainerRow(
     /// <summary>Project one summary.</summary>
     /// <param name="container">What the API returned.</param>
     /// <returns>The row.</returns>
-    public static ContainerRow From(ContainerSummary container)
+    public static ContainerRow From(ContainerSummary container) => From(container, null);
+
+    /// <summary>Project one summary, reading its project's files (DD295).</summary>
+    /// <param name="container">What the API returned.</param>
+    /// <param name="files">
+    /// What the project file in a folder says, or <see langword="null"/> to read none. The window
+    /// passes <see cref="ProjectFile.For"/>; a test passes what it wants the folder to hold.
+    /// </param>
+    /// <returns>The row.</returns>
+    public static ContainerRow From(
+        ContainerSummary container, Func<string?, ProjectFileDetails?>? files)
     {
         ArgumentNullException.ThrowIfNull(container);
 
@@ -749,6 +778,15 @@ public sealed record ContainerRow(
         // (DD106). Blank is treated as absent: a label present and empty names no project, and a
         // group headed by the empty string is a group nobody can read.
         var project = Label(container, Core.Agent.ContextPack.ProjectLabel);
+        var service = Label(container, Core.Agent.ContextPack.ServiceLabel);
+
+        // DD295: the project's own file, found from the folder compose stamped on the container.
+        var file = project is null ? null : files?.Invoke(Label(container, ProjectFile.WorkingDirLabel));
+        DetailFields? ofService = null;
+        if (file is not null && service is not null)
+        {
+            _ = file.Services.TryGetValue(service, out ofService);
+        }
 
         return new ContainerRow(
             container.DisplayName,
@@ -759,9 +797,12 @@ public sealed record ContainerRow(
             container.Id)
         {
             Project = project,
-            Details = ContainerDetails.Resolve(container),
+            Details = ContainerDetails.Resolve(container, overrides: ofService),
+            ProjectDetails = project is null
+                ? null
+                : ContainerDetails.ResolveProject(project, file?.Project),
             ImageIsGone = container.ImageIsGone,
-            Service = Label(container, Core.Agent.ContextPack.ServiceLabel),
+            Service = service,
             DependsOn = ComposeOrder.DependenciesIn(
                 Label(container, ComposeOrder.DependsOnLabel)),
         };

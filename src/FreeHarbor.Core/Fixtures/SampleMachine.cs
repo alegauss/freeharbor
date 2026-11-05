@@ -157,6 +157,7 @@ public sealed class SampleMachine : IEngineClient
         {
             ["com.docker.compose.project"] = "sample",
             ["com.docker.compose.service"] = service,
+            [Details.ProjectFile.WorkingDirLabel] = ProjectFolder,
         };
 
         // Absent rather than empty where a service waits for nothing, because that is what compose
@@ -168,6 +169,33 @@ public sealed class SampleMachine : IEngineClient
 
         return labels;
     }
+
+    /// <summary>The folder the sample project was brought up from, which exists on no machine.</summary>
+    public const string ProjectFolder = @"C:\Users\example\shop";
+
+    /// <summary>
+    /// What the sample project's own <c>.freeharbor/project.yaml</c> says (DD295), by folder.
+    /// </summary>
+    /// <param name="folder">The folder a container names as its working directory.</param>
+    /// <returns>The sample's details for its own folder, and nothing for any other.</returns>
+    /// <remarks>
+    /// Parsed from the text a user would write rather than built as records, so a capture exercises
+    /// the reader as well as the screen. The worker is renamed and the rest left to their labels,
+    /// which is the override the file exists for.
+    /// </remarks>
+    public static Details.ProjectFileDetails? ProjectFiles(string? folder) =>
+        string.Equals(folder, ProjectFolder, StringComparison.OrdinalIgnoreCase)
+            ? Details.ProjectFile.Parse(
+                """
+                title: Storefront
+                description: Shop API, the worker behind it and the Postgres they share
+                services:
+                  worker:
+                    title: Order worker
+                    description: Charges cards and sends receipts
+                """,
+                Path.Combine(ProjectFolder, Details.ProjectFile.Folder))
+            : null;
 
     private static PortBinding Published(int host, int inside) => new()
     {

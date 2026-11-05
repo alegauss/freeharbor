@@ -73,12 +73,45 @@ public sealed class IconTileTests
     }
 
     [Fact]
-    public void A_project_header_has_no_tile_until_projects_have_details()
+    public void A_project_with_no_file_is_headed_by_its_compose_name_on_a_monogram()
     {
-        var child = ContainerRow.From(Container("example/app:1", "shop-api-1"));
+        var child = ContainerRow.From(Container("example/app:1", "shop-api-1",
+            new() { ["com.docker.compose.project"] = "shop" }));
         var header = ContainerRow.ProjectHeader("shop", [child], collapsed: false);
 
-        Assert.False(header.HasTile);
+        Assert.True(header.HasTile);
         Assert.Equal("shop", header.Title);
+        Assert.Equal("S", header.TileLetter);
+        Assert.Equal("shop", header.NameEvidence);
+    }
+
+    [Fact]
+    public void A_project_file_titles_the_header_and_renames_its_service()
+    {
+        var folder = @"C:\work\shop";
+        var file = ProjectFile.Parse(
+            """
+            title: Storefront
+            description: Shop API and the Postgres behind it
+            services:
+              api:
+                title: Back office
+            """,
+            folder);
+        var child = ContainerRow.From(
+            Container("example/app:1", "shop-api-1", new()
+            {
+                ["com.docker.compose.project"] = "shop",
+                ["com.docker.compose.service"] = "api",
+                [ProjectFile.WorkingDirLabel] = folder,
+                ["freeharbor.title"] = "Label title",
+            }),
+            dir => string.Equals(dir, folder, StringComparison.Ordinal) ? file : null);
+        var header = ContainerRow.ProjectHeader("shop", [child], collapsed: false);
+
+        // The file beats the label: it is read on every refresh, where a label needs a recreate.
+        Assert.Equal("Back office", child.Title);
+        Assert.Equal("Storefront", header.Title);
+        Assert.Equal("Shop API and the Postgres behind it", header.Description);
     }
 }

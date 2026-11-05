@@ -41,6 +41,17 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     }
 
     /// <summary>
+    /// What a project's own file says, by the folder compose recorded (DD295).
+    /// </summary>
+    /// <remarks>
+    /// Read from disk unless <c>--fixture</c> sets the sample's, because the folder the sample names
+    /// exists on no machine that captures it. A property and not a constructor seam, so the shell
+    /// that builds this page carries none of it.
+    /// </remarks>
+    internal Func<string?, Core.Details.ProjectFileDetails?> ProjectFiles { get; set; } =
+        Core.Details.ProjectFile.For;
+
+    /// <summary>
     /// Re-read the list. Called when an event says the list changed, never on a timer and never
     /// from a refresh button: the stream is what makes this correct.
     /// </summary>
@@ -69,7 +80,11 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
                 // `ContainerRow.From` to read each container's project label and then this line
                 // built the same rows again three lines below, so every row was made twice per
                 // refresh and half of them discarded after one property was read.
-                var projected = containers.Select(ContainerRow.From).ToList();
+                // DD295: each project's own file is read here too, one stat per project when nothing
+                // changed, so an edit to it shows on the next event with nothing recreated.
+                var projected = containers
+                    .Select(container => ContainerRow.From(container, ProjectFiles))
+                    .ToList();
 
                 // Before the dressing and never after, because `Dress` reads exactly the state this
                 // is about to drop. The project headers' ids go in too (DD107): a header carries its

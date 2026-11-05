@@ -100,9 +100,16 @@ public static class ContainerDetails
     /// <summary>Resolve one container.</summary>
     /// <param name="container">The container, as the list endpoint reported it.</param>
     /// <param name="imageLabels">Its image's labels from an inspect, or <see langword="null"/>.</param>
+    /// <param name="overrides">
+    /// Its service's fields from the project's files (DD295), which come before every label: a file
+    /// beside the compose file is somebody naming this service on purpose, and it is read on every
+    /// refresh where a label needs a recreate to change.
+    /// </param>
     /// <returns>Its details. Never null, and no field a screen needs is blank.</returns>
     public static ResolvedDetails Resolve(
-        ContainerSummary container, IReadOnlyDictionary<string, string>? imageLabels = null)
+        ContainerSummary container,
+        IReadOnlyDictionary<string, string>? imageLabels = null,
+        DetailFields? overrides = null)
     {
         ArgumentNullException.ThrowIfNull(container);
 
@@ -131,9 +138,10 @@ public static class ContainerDetails
             ? service
             : container.DisplayName;
 
-        var title = First("freeharbor.title", "homepage.name", "org.opencontainers.image.title")
+        var title = overrides?.Title
+            ?? First("freeharbor.title", "homepage.name", "org.opencontainers.image.title")
             ?? name;
-        var description = First(
+        var description = overrides?.Description ?? First(
             "freeharbor.description", "homepage.description", "org.opencontainers.image.description");
 
         var links = Links(labels, image, container.Ports);
@@ -149,11 +157,37 @@ public static class ContainerDetails
         return new ResolvedDetails(
             title,
             description,
-            Icon(First("freeharbor.icon", "homepage.icon"), container.Image, title),
+            Icon(overrides?.Icon ?? First("freeharbor.icon", "homepage.icon"), container.Image, title),
             HueOf(name),
             links,
             primary,
             First("freeharbor.group"));
+    }
+
+    /// <summary>Resolve a compose project as a whole (DD295).</summary>
+    /// <param name="project">The project's compose name.</param>
+    /// <param name="fields">What its project files say about it, or <see langword="null"/>.</param>
+    /// <returns>
+    /// Its details: the file's title or the compose name, the file's description or none, the file's
+    /// icon or a monogram. No links: a project's Open is its primary service's, which is DD297's.
+    /// </returns>
+    /// <remarks>
+    /// No labels here, because no label describes a project: labels are a container's, and a
+    /// project is not one. That gap is the whole reason the project files exist.
+    /// </remarks>
+    public static ResolvedDetails ResolveProject(string project, DetailFields? fields)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(project);
+
+        var title = fields?.Title ?? project;
+        return new ResolvedDetails(
+            title,
+            fields?.Description,
+            Icon(fields?.Icon, image: "", title),
+            HueOf(project),
+            [],
+            null,
+            null);
     }
 
     /// <summary>Which hue a name sits on: the same one on every machine and every run.</summary>

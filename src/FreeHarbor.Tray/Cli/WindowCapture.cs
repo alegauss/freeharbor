@@ -121,6 +121,13 @@ internal static class WindowCapture
             ThemeMode = System.Windows.ThemeMode.Dark,
         };
 
+        // DD295: the sample project names a folder no capturing machine has, so its project file
+        // comes from the fixture too. Set before the first refresh, which is the first read of it.
+        if (fixture)
+        {
+            window.Containers.ProjectFiles = FreeHarbor.Core.Fixtures.SampleMachine.ProjectFiles;
+        }
+
         var code = Failed;
         window.Show();
 

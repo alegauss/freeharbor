@@ -1,0 +1,249 @@
+namespace FreeHarbor.Core.Details;
+
+/// <summary>The fields a project file can set for a project or one of its services (DD295).</summary>
+/// <param name="Title">The title, or <see langword="null"/>.</param>
+/// <param name="Description">The line of what it is for, or <see langword="null"/>.</param>
+/// <param name="Icon">
+/// A bundled icon's name or an absolute path to a picture, already resolved against the folder the
+/// file sits in; or <see langword="null"/>.
+/// </param>
+public sealed record DetailFields(string? Title, string? Description, string? Icon)
+{
+    /// <summary>Whether this sets nothing at all.</summary>
+    public bool IsEmpty => Title is null && Description is null && Icon is null;
+}
+
+/// <summary>What one project file says.</summary>
+/// <param name="Project">The project's own fields.</param>
+/// <param name="Services">Each service's fields, by the service's compose name.</param>
+public sealed record ProjectFileDetails(
+    DetailFields Project, IReadOnlyDictionary<string, DetailFields> Services);
+
+/// <summary>
+/// Reads <c>.freeharbor/project.yaml</c>, the project file FreeHarbor owns (DD295).
+/// </summary>
+/// <remarks>
+/// <b>A reader for this file's shape and nothing wider.</b> ComposeUp refuses a YAML parser for a
+/// compose file because the CLI is the authority on what somebody's file means. This file is ours and
+/// its shape is fixed: three scalar keys, and a <c>services</c> map of the same three per service
+/// (docs/specs/DD294-containers-redesign.md, section 8). So this reads maps of plain, quoted or
+/// commented scalars by indentation. A list, an anchor or a multi-line scalar is not part of the
+/// format; the line holding it is skipped rather than guessed at.
+///
+/// <para><b>Absence is ordinary.</b> The folder compose recorded can be gone, moved or a WSL path
+/// Windows cannot open, so every failure answers <see langword="null"/> and the labels speak
+/// instead.</para>
+///
+/// <para><b>Read, never cached past a change.</b> <see cref="For"/> keeps what it read beside the
+/// file's write time and reads again when that moves, so an edit shows on the next refresh with no
+/// <c>compose up</c>, and an unchanged file costs one stat per refresh.</para>
+/// </remarks>
+public static class ProjectFile
+{
+    /// <summary>The folder the file lives in, inside the project's own.</summary>
+    public const string Folder = ".freeharbor";
+
+    /// <summary>The file's name.</summary>
+    public const string FileName = "project.yaml";
+
+    /// <summary>The compose label naming the folder compose ran in.</summary>
+    public const string WorkingDirLabel = "com.docker.compose.project.working_dir";
+
+    private static readonly Dictionary<string, (DateTime Written, ProjectFileDetails? Details)> Seen =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>What the project file in a folder says, read again only when it changed.</summary>
+    /// <param name="projectFolder">The folder compose recorded as <c>working_dir</c>.</param>
+    /// <returns>The details, or <see langword="null"/> where there is no readable file.</returns>
+    public static ProjectFileDetails? For(string? projectFolder)
+    {
+        if (string.IsNullOrWhiteSpace(projectFolder))
+        {
+            return null;
+        }
+
+        string path;
+        DateTime written;
+        try
+        {
+            if (!Path.IsPathFullyQualified(projectFolder))
+            {
+                return null;
+            }
+
+            path = Path.Combine(projectFolder, Folder, FileName);
+            var info = new FileInfo(path);
+            if (!info.Exists)
+            {
+                return null;
+            }
+
+            written = info.LastWriteTimeUtc;
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException
+            or ArgumentException or NotSupportedException or System.Security.SecurityException)
+        {
+            return null;
+        }
+
+        lock (Seen)
+        {
+            if (Seen.TryGetValue(path, out var known) && known.Written == written)
+            {
+                return known.Details;
+            }
+        }
+
+        var details = Read(path);
+        lock (Seen)
+        {
+            Seen[path] = (written, details);
+        }
+
+        return details;
+    }
+
+    /// <summary>Read one project file.</summary>
+    /// <param name="path">The file.</param>
+    /// <returns>What it says, or <see langword="null"/> where it cannot be read.</returns>
+    public static ProjectFileDetails? Read(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        try
+        {
+            var folder = Path.GetDirectoryName(Path.GetFullPath(path))!;
+            return Parse(File.ReadAllText(path), folder);
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException
+            or ArgumentException or NotSupportedException or System.Security.SecurityException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Read a project file's text.</summary>
+    /// <param name="text">The file's contents.</param>
+    /// <param name="folder">The <c>.freeharbor</c> folder, which relative icon paths are under.</param>
+    /// <returns>What it says. Never null: an empty file sets nothing.</returns>
+    public static ProjectFileDetails Parse(string text, string folder)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        ArgumentNullException.ThrowIfNull(folder);
+
+        var root = Tree(text);
+        var services = new Dictionary<string, DetailFields>(StringComparer.Ordinal);
+        if (root.TryGetValue("services", out var node) && node is Dictionary<string, object> map)
+        {
+            foreach (var (name, value) in map)
+            {
+                if (value is Dictionary<string, object> service && Fields(service, folder) is { IsEmpty: false } fields)
+                {
+                    services[name] = fields;
+                }
+            }
+        }
+
+        return new ProjectFileDetails(Fields(root, folder), services);
+    }
+
+    private static DetailFields Fields(Dictionary<string, object> map, string folder)
+    {
+        string? Scalar(string key) =>
+            map.TryGetValue(key, out var value) && value is string text && text.Length > 0 ? text : null;
+
+        var icon = Scalar("icon");
+        if (icon is not null && !Uri.TryCreate(icon, UriKind.Absolute, out _)
+            && (icon.Contains('/', StringComparison.Ordinal) || icon.Contains('\\', StringComparison.Ordinal)
+                || Path.HasExtension(icon)))
+        {
+            // A path, relative to the .freeharbor folder; a bare word stays a bundled icon's name.
+            icon = Path.GetFullPath(Path.Combine(folder, icon));
+        }
+
+        return new DetailFields(Scalar("title"), Scalar("description"), icon);
+    }
+
+    /// <summary>Indented maps of scalars, the whole of what the format uses.</summary>
+    private static Dictionary<string, object> Tree(string text)
+    {
+        var root = new Dictionary<string, object>(StringComparer.Ordinal);
+        var stack = new List<(int Indent, Dictionary<string, object> Map)> { (-1, root) };
+
+        foreach (var raw in text.ReplaceLineEndings("\n").Split('\n'))
+        {
+            var line = raw.TrimEnd();
+            var content = line.TrimStart(' ');
+            if (content.Length == 0 || content[0] == '#' || content.StartsWith('-') || content.Contains('\t'))
+            {
+                continue;
+            }
+
+            var colon = content.IndexOf(':', StringComparison.Ordinal);
+            if (colon <= 0)
+            {
+                continue;
+            }
+
+            var indent = line.Length - content.Length;
+            while (stack.Count > 1 && stack[^1].Indent >= indent)
+            {
+                stack.RemoveAt(stack.Count - 1);
+            }
+
+            var key = Unquote(content[..colon].Trim());
+            var rest = WithoutComment(content[(colon + 1)..]).Trim();
+            var parent = stack[^1].Map;
+            if (rest.Length == 0)
+            {
+                var child = new Dictionary<string, object>(StringComparer.Ordinal);
+                parent[key] = child;
+                stack.Add((indent, child));
+            }
+            else
+            {
+                parent[key] = Unquote(rest);
+            }
+        }
+
+        return root;
+    }
+
+    private static string WithoutComment(string value)
+    {
+        var quote = '\0';
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (quote == '\0' && (c == '"' || c == '\''))
+            {
+                quote = c;
+            }
+            else if (c == quote)
+            {
+                quote = '\0';
+            }
+            else if (quote == '\0' && c == '#' && (i == 0 || value[i - 1] == ' '))
+            {
+                return value[..i];
+            }
+        }
+
+        return value;
+    }
+
+    private static string Unquote(string value)
+    {
+        if (value.Length >= 2 && value[0] == '\'' && value[^1] == '\'')
+        {
+            return value[1..^1].Replace("''", "'", StringComparison.Ordinal);
+        }
+
+        if (value.Length >= 2 && value[0] == '"' && value[^1] == '"')
+        {
+            return value[1..^1].Replace("\\\"", "\"", StringComparison.Ordinal)
+                .Replace("\\\\", "\\", StringComparison.Ordinal);
+        }
+
+        return value;
+    }
+}
