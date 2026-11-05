@@ -311,6 +311,31 @@ public sealed record ContainerRow(
     /// </remarks>
     public DetailLink? OpenLink { get; init; }
 
+    /// <summary>Every link a project's services serve, by service name (DD298); empty on a container.</summary>
+    public IReadOnlyList<Endpoint> ProjectLinks { get; init; } = [];
+
+    /// <summary>How many links a project needs before the rest go behind a menu.</summary>
+    /// <remarks>The spec's threshold: under three links nothing about a large project applies.</remarks>
+    public const int LinkMenuFrom = 3;
+
+    /// <summary>Whether the header draws its links' menu beside Open: three links or more.</summary>
+    public bool HasLinkMenu => ProjectLinks.Count >= LinkMenuFrom;
+
+    /// <summary>
+    /// The pinned links drawn as buttons beside Open on a header with a menu: at most two, and never
+    /// the one Open already follows.
+    /// </summary>
+    public IReadOnlyList<Endpoint> PinnedLinks => HasLinkMenu
+        ? [.. ProjectLinks
+            .Where(link => link.IsPinned && !string.Equals(link.Url, OpenLink?.Url, StringComparison.Ordinal))
+            .Take(2)]
+        : [];
+
+    /// <summary>What the menu's button says: how many links it holds.</summary>
+    public string LinkMenuLabel => HasLinkMenu
+        ? $"{ProjectLinks.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} ▾"
+        : "";
+
     /// <summary>
     /// Whether the row draws an Open button: a project's header, or a container outside compose.
     /// </summary>
@@ -424,6 +449,11 @@ public sealed record ContainerRow(
                 .OrderBy(child => child.Name, StringComparer.Ordinal)
                 .Select(child => child.OpenLink)
                 .FirstOrDefault(link => link is not null),
+
+            // DD298: every link, so a project of ten can put the rest behind a menu.
+            ProjectLinks = [.. children
+                .OrderBy(child => child.Name, StringComparer.Ordinal)
+                .SelectMany(DetailView.EndpointsOf)],
             Collapsed = collapsed,
         };
     }
@@ -710,6 +740,9 @@ public sealed record ContainerRow(
 
                 // DD298: only a header can be a tier, and only a tier counts problems.
                 nameof(IsTier), nameof(Problems),
+
+                // DD298: a project's links, and the menu that holds them once there are many.
+                nameof(ProjectLinks), nameof(HasLinkMenu), nameof(PinnedLinks), nameof(LinkMenuLabel),
             };
 
         /// <summary>

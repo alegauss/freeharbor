@@ -14,6 +14,9 @@ public sealed record OutputLine(string Text, bool IsError);
 /// <param name="Url">Where Open goes, or <see langword="null"/> where it does not speak HTTP.</param>
 public sealed record Endpoint(string Label, string Service, string Address, string? Url)
 {
+    /// <summary>Whether its service's <c>freeharbor.pinned</c> label names it (DD298).</summary>
+    public bool IsPinned { get; init; }
+
     /// <summary>Whether the card offers Open: only an address a browser can show.</summary>
     public bool CanOpen => Url is not null;
 
@@ -65,6 +68,60 @@ public sealed record DetailView(
     /// </summary>
     public IReadOnlyList<Endpoint> SecondaryLinks =>
         [.. Endpoints.Where(endpoint => !string.Equals(endpoint.Url, Head.OpenLink?.Url, StringComparison.Ordinal))];
+
+    /// <summary>How many services make a project large, the spec's threshold for its card (DD298).</summary>
+    public const int LargeFrom = 5;
+
+    /// <summary>Whether the card draws a health bar instead of every service.</summary>
+    public bool IsLarge => Services.Count >= LargeFrom;
+
+    /// <summary>
+    /// The health bar: one shape per container, the problems last, so the eye finds them at the end
+    /// of the row rather than among eighteen healthy ones.
+    /// </summary>
+    public IReadOnlyList<ContainerRow> HealthBlocks =>
+        [.. Services.OrderBy(service => service.Tone is RowTone.Bad or RowTone.Warn ? 1 : 0)];
+
+    /// <summary>
+    /// The services a card lists: every one on a small project, only those needing attention on a
+    /// large one.
+    /// </summary>
+    public IReadOnlyList<ContainerRow> CardServices => IsLarge
+        ? [.. Services.Where(service => service.Tone is RowTone.Bad or RowTone.Warn)]
+        : Services;
+
+    /// <summary>What the button that opens the project's page from a large card says.</summary>
+    public string ShowAllLabel => $"Show all {Services.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
+    /// <summary>How many links a menu holds before it offers a filter box (DD298).</summary>
+    public const int LinkFilterFrom = 6;
+
+    /// <summary>The links a menu's filter keeps: those whose name, service or address holds the text.</summary>
+    /// <param name="links">Every link.</param>
+    /// <param name="filter">What the box holds, or nothing.</param>
+    /// <returns>The links, in their order.</returns>
+    public static IReadOnlyList<Endpoint> Matching(IReadOnlyList<Endpoint> links, string? filter)
+    {
+        ArgumentNullException.ThrowIfNull(links);
+        if (string.IsNullOrWhiteSpace(filter))
+        {
+            return links;
+        }
+
+        var text = filter.Trim();
+        return
+        [
+            .. links.Where(link => link.Label.Contains(text, StringComparison.OrdinalIgnoreCase)
+                || link.Service.Contains(text, StringComparison.OrdinalIgnoreCase)
+                || link.Address.Contains(text, StringComparison.OrdinalIgnoreCase)),
+        ];
+    }
+
+    /// <summary>
+    /// The chips a card draws after Open: every other link, or on a project with many only its
+    /// pinned ones, the rest being behind the menu (DD298).
+    /// </summary>
+    public IReadOnlyList<Endpoint> CardLinks => Head.HasLinkMenu ? Head.PinnedLinks : SecondaryLinks;
 
     /// <summary>
     /// The cards view (DD300): one page's worth of content per project, in the list's order, and the
@@ -239,11 +296,14 @@ public sealed record DetailView(
     /// The ports and not the links the resolver made from them, because a port knows what it is
     /// inside the container and so whether it speaks HTTP (DD297); the link made from it does not.
     /// </remarks>
-    private static IEnumerable<Endpoint> EndpointsOf(ContainerRow service)
+    internal static IEnumerable<Endpoint> EndpointsOf(ContainerRow service)
     {
         if (service.Details is { } details && details.LinksSource is not ("published ports" or "none" or ""))
         {
-            return details.Links.Select(link => new Endpoint(link.Name, service.Title, Bare(link.Url), link.Url));
+            return details.Links.Select(link => new Endpoint(link.Name, service.Title, Bare(link.Url), link.Url)
+            {
+                IsPinned = details.Pinned.Contains(link.Name, StringComparer.Ordinal),
+            });
         }
 
         return service.Ports

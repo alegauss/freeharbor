@@ -289,6 +289,16 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
         }
     }
 
+    /// <summary>A large card's Show all opens the project's page, where every service is (DD298).</summary>
+    private void ShowAllServices(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: DetailView view })
+        {
+            _detailKey = view.Key;
+            Show();
+        }
+    }
+
     /// <summary>
     /// Draw the cards over the same shaped rows the list just drew, or put them away.
     /// </summary>
@@ -624,6 +634,71 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
                 WorkingDirectory = Environment.SystemDirectory,
             })?.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Open a large project's menu of every link: Pinned, then All, with a filter box past five (DD298).
+    /// </summary>
+    /// <remarks>
+    /// Built here on each click rather than bound in markup: its items are the filter's answer, and
+    /// a menu rebuilt as it is typed into is code either way.
+    /// </remarks>
+    private void OpenLinkMenu(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Button { Tag: ContainerRow { ProjectLinks: { Count: > 0 } links } } button)
+        {
+            return;
+        }
+
+        var menu = new System.Windows.Controls.ContextMenu
+        {
+            PlacementTarget = button,
+            Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom,
+        };
+        var box = new System.Windows.Controls.TextBox { MinWidth = 240, ToolTip = "Filter links" };
+        var fixedItems = links.Count >= DetailView.LinkFilterFrom
+            ? new object[] { new System.Windows.Controls.MenuItem { Header = box, StaysOpenOnClick = true } }
+            : [];
+
+        void Fill()
+        {
+            menu.Items.Clear();
+            foreach (var item in fixedItems)
+            {
+                menu.Items.Add(item);
+            }
+
+            var shown = DetailView.Matching(links, box.Text);
+            Section("PINNED", [.. shown.Where(link => link.IsPinned)]);
+            Section("ALL", shown);
+        }
+
+        void Section(string caption, IReadOnlyList<Endpoint> section)
+        {
+            if (section.Count == 0)
+            {
+                return;
+            }
+
+            menu.Items.Add(new System.Windows.Controls.MenuItem { Header = caption, IsEnabled = false });
+            foreach (var link in section)
+            {
+                var item = new System.Windows.Controls.MenuItem
+                {
+                    Header = $"{link.Label}  ·  {link.Service}  ·  {link.Address}",
+                    Tag = link.Url ?? link.CopyText,
+                    ToolTip = link.CanOpen ? link.Url : $"Copy {link.CopyText}",
+                };
+                item.Click += link.CanOpen ? OpenPort : CopyAddress;
+                menu.Items.Add(item);
+            }
+        }
+
+        box.TextChanged += (_, _) => Fill();
+        Fill();
+        button.ContextMenu = menu;
+        menu.IsOpen = true;
+        _ = box.Focus();
     }
 
     /// <summary>Copy the address of a port that does not speak HTTP (DD297).</summary>

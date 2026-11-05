@@ -132,6 +132,20 @@ tiers:         ▸ Edge            2 containers · gateway, admin           (all
   page.
 - **Fixed:** a healthy tier starts folded; a problem is never folded away.
 
+As built (DD298):
+
+- A link is pinned by its service's `freeharbor.pinned` label, naming up to two of its
+  links by name, comma-separated.
+- From three links, a header and a card show Open, the pinned links and an `n ▾` menu of
+  every link under Pinned and All, with a filter box from six.
+- Tiers come in first-seen order by container name, never by the sort. A service with no
+  group in a grouped project goes in a last tier named Other. What is remembered is the
+  healthy tiers somebody opened, so a tier that goes bad opens on its own.
+- No per-project tier filter. The page's state chips (DD300) narrow every project over the
+  rows in hand already, and a second filter would be two controls writing one state.
+- From five services, a card draws one shape per container with problems last, lists only
+  the services that need attention, and Show all opens the detail page.
+
 ## 4. The detail page (DD299)
 
 Board: [detail.png](DD294-containers-redesign/detail.png).

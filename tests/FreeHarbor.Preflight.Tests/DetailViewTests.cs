@@ -238,6 +238,101 @@ public sealed class DetailViewTests
         }
     }
 
+    // ---- a large project's links (DD298) --------------------------------------------------------
+
+    private static ContainerSummary Linked(string name, string pinned, params string[] links)
+    {
+        var labels = new Dictionary<string, string>(StringComparer.Ordinal) { [ContextPack.ProjectLabel] = "plat" };
+        foreach (var link in links)
+        {
+            labels[$"freeharbor.url.{link}"] = $"http://localhost/{link}";
+        }
+
+        if (pinned.Length > 0)
+        {
+            labels["freeharbor.pinned"] = pinned;
+        }
+
+        // The first link named is the one Open follows, as a project marks it.
+        labels["freeharbor.primary"] = links[0];
+
+        return Summary(name, project: "plat") with { Labels = labels };
+    }
+
+    [Fact]
+    public void A_project_with_three_links_puts_them_behind_a_menu_and_keeps_two_pinned_beside_open()
+    {
+        var rows = Rows(
+            Linked("gateway", "Admin, Grafana, Docs", "Gateway", "Admin", "Grafana", "Docs"),
+            Linked("worker", "", "Queue"));
+        var header = ContainerRow.ProjectHeader("plat", [.. rows], collapsed: false);
+
+        Assert.True(header.HasLinkMenu);
+        Assert.Equal("5 ▾", header.LinkMenuLabel);
+
+        // Two at most, never the one Open follows, and in the service's own order.
+        Assert.Equal(["Admin", "Grafana"], header.PinnedLinks.Select(link => link.Label));
+        Assert.DoesNotContain(header.PinnedLinks, link => link.Url == header.OpenLink?.Url);
+    }
+
+    [Fact]
+    public void Under_three_links_there_is_no_menu_and_a_card_keeps_its_chips()
+    {
+        var rows = Rows(Linked("gateway", "Admin", "Gateway", "Admin"));
+        var header = ContainerRow.ProjectHeader("plat", [.. rows], collapsed: false);
+
+        Assert.False(header.HasLinkMenu);
+        Assert.Empty(header.PinnedLinks);
+
+        var card = Assert.Single(DetailView.Cards(rows, ByState).Projects);
+        Assert.Equal(["Admin"], card.CardLinks.Select(link => link.Label));
+    }
+
+    [Fact]
+    public void A_large_cards_health_bar_puts_problems_last_and_lists_only_them()
+    {
+        var rows = Rows(
+            Summary("a", project: "big"),
+            Summary("b", "exited", "big"),
+            Summary("c", project: "big"),
+            Summary("d", project: "big"),
+            Summary("e", project: "big"));
+
+        var card = Assert.Single(DetailView.Cards(rows, ByState).Projects);
+
+        Assert.True(card.IsLarge);
+        Assert.Equal("b-id", card.HealthBlocks[^1].Id);
+        Assert.Equal(["b-id"], card.CardServices.Select(row => row.Id));
+        Assert.Equal("Show all 5", card.ShowAllLabel);
+    }
+
+    [Fact]
+    public void A_small_card_lists_every_service()
+    {
+        var rows = Rows(Summary("a", project: "small"), Summary("b", "exited", "small"));
+
+        var card = Assert.Single(DetailView.Cards(rows, ByState).Projects);
+
+        Assert.False(card.IsLarge);
+        Assert.Equal(2, card.CardServices.Count);
+    }
+
+    [Fact]
+    public void The_link_menus_filter_matches_name_service_and_address()
+    {
+        IReadOnlyList<Endpoint> links =
+        [
+            new("Gateway", "edge", "localhost:8000", "http://localhost:8000"),
+            new("API docs", "edge", "localhost:8000/docs", "http://localhost:8000/docs"),
+            new("Database", "db", "localhost:5432", null),
+        ];
+
+        Assert.Equal(3, DetailView.Matching(links, " ").Count);
+        Assert.Equal(["API docs"], DetailView.Matching(links, "docs").Select(link => link.Label));
+        Assert.Equal(["Database"], DetailView.Matching(links, "DB").Select(link => link.Label));
+        Assert.Equal(["Database"], DetailView.Matching(links, "5432").Select(link => link.Label));
+    }
+
     [Fact]
     public void A_page_about_something_gone_is_no_page()
     {

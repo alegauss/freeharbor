@@ -58,6 +58,12 @@ public sealed record ResolvedDetails(
 
     /// <summary>Where the links came from: a layer, <c>labels</c>, <c>published ports</c> or <c>none</c>.</summary>
     public string LinksSource { get; init; } = "";
+
+    /// <summary>
+    /// The links a <c>freeharbor.pinned</c> label names, comma-separated, at most two (DD298): drawn
+    /// as buttons beside Open on a project with many links, where the rest go behind a menu.
+    /// </summary>
+    public IReadOnlyList<string> Pinned { get; init; } = [];
 }
 
 /// <summary>One source of details beyond the labels, named for the dialog that shows it (DD296).</summary>
@@ -206,6 +212,9 @@ public static class ContainerDetails
             DescriptionSource = description is null ? "none" : descriptionSource,
             IconSource = iconFrom,
             LinksSource = linksSource,
+            Pinned = First("freeharbor.pinned").Value is { } pinned
+                ? [.. pinned.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Take(2)]
+                : [],
         };
     }
 

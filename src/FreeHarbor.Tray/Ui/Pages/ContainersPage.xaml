@@ -83,6 +83,19 @@
             </Setter>
         </Style>
 
+        <!-- DD298, DD300: one endpoint as a chip, a link to open or an address to copy. Shared by a
+             card's links and a large project's pinned ones, so the two cannot draw it differently. -->
+        <DataTemplate x:Key="EndpointChip">
+            <Grid Margin="0,0,0,6">
+                <Button Content="{Binding Label}" Tag="{Binding Url}" Click="OpenPort"
+                        ToolTip="{Binding Url}" Style="{StaticResource PortLink}"
+                        Visibility="{Binding CanOpen, Converter={StaticResource Shown}}" />
+                <Button Content="{Binding Label}" Tag="{Binding CopyText}" Click="CopyAddress"
+                        ToolTip="{Binding CopyText}" Style="{StaticResource PortCopy}"
+                        Visibility="{Binding CopiesOnly, Converter={StaticResource Shown}}" />
+            </Grid>
+        </DataTemplate>
+
         <!-- DD299: one entry in the detail page's rail. The tile at the rail's 24 px, the title, and
              the state's shape on the right; the whole entry is the click. -->
         <DataTemplate x:Key="RailItem">
@@ -365,6 +378,16 @@
                         Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
                         Margin="0,0,6,0" MinWidth="0"
                         Visibility="{Binding ShowsOpen, Converter={StaticResource Shown}}" />
+                <!-- DD298: a large project's pinned links and the menu holding every link. -->
+                <ItemsControl ItemsSource="{Binding PinnedLinks}" ItemTemplate="{StaticResource EndpointChip}"
+                              VerticalAlignment="Center">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+                <Button Content="{Binding LinkMenuLabel}" Tag="{Binding}" Click="OpenLinkMenu"
+                        Style="{DynamicResource RowAction}" ToolTip="Every link"
+                        Visibility="{Binding HasLinkMenu, Converter={StaticResource Shown}}" />
             <ItemsControl ItemsSource="{Binding PortChips}" VerticalAlignment="Center">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
@@ -578,26 +601,36 @@
                           Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
                           Margin="0,0,6,6" MinWidth="0"
                           Visibility="{Binding Head.ShowsOpen, Converter={StaticResource Shown}}" />
-                  <ItemsControl ItemsSource="{Binding SecondaryLinks}">
+                  <ItemsControl ItemsSource="{Binding CardLinks}" ItemTemplate="{StaticResource EndpointChip}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                  </ItemsControl>
+                  <!-- DD298: past three links, the rest are behind this menu. -->
+                  <Button Content="{Binding Head.LinkMenuLabel}" Tag="{Binding Head}" Click="OpenLinkMenu"
+                          Style="{DynamicResource RowAction}" Margin="0,0,6,6" ToolTip="Every link"
+                          Visibility="{Binding Head.HasLinkMenu, Converter={StaticResource Shown}}" />
+                </WrapPanel>
+
+                <!-- DD298: a large project's health bar, one shape per container and the problems
+                     last, then only the services that need attention, and Show all. -->
+                <DockPanel Margin="0,8,0,0" Visibility="{Binding IsLarge, Converter={StaticResource Shown}}">
+                  <Button DockPanel.Dock="Right" Content="{Binding ShowAllLabel}" Tag="{Binding}"
+                          Click="ShowAllServices" Style="{StaticResource TextLink}" VerticalAlignment="Center" />
+                  <ItemsControl ItemsSource="{Binding HealthBlocks}" VerticalAlignment="Center">
                     <ItemsControl.ItemsPanel>
                       <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                       <DataTemplate>
-                        <Grid Margin="0,0,0,6">
-                          <Button Content="{Binding Label}" Tag="{Binding Url}" Click="OpenPort"
-                                  ToolTip="{Binding Url}" Style="{StaticResource PortLink}"
-                                  Visibility="{Binding CanOpen, Converter={StaticResource Shown}}" />
-                          <Button Content="{Binding Label}" Tag="{Binding CopyText}" Click="CopyAddress"
-                                  ToolTip="{Binding CopyText}" Style="{StaticResource PortCopy}"
-                                  Visibility="{Binding CopiesOnly, Converter={StaticResource Shown}}" />
-                        </Grid>
+                        <TextBlock Text="{Binding ChipShape}" FontSize="12" Margin="0,0,3,0"
+                                   ToolTip="{Binding Title}"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>
                   </ItemsControl>
-                </WrapPanel>
-
-                <ItemsControl ItemsSource="{Binding Services}" Margin="0,8,0,0">
+                </DockPanel>
+                <ItemsControl ItemsSource="{Binding CardServices}" Margin="0,8,0,0">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate>
                       <TextBlock FontSize="12" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"

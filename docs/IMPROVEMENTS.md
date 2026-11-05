@@ -65,30 +65,6 @@ the cause is shown, not when a rerun goes green.
 
 ## Block C — The window (claude-tray's elements)
 
-### §DD298 A large compose project
-
-The enriched list and the cards both assume a project of a handful of services. A real
-platform project runs twenty containers and publishes ten URLs, and the same layout then
-shows a wall of identical green rows and a row of ten buttons.
-
-Links: the link marked `freeharbor.primary` (otherwise the first) is a split button,
-with Open on one side and a count with a menu on the other. Up to two links marked
-pinned sit beside it as buttons. The menu lists every link under Pinned and All, with a
-filter box once there are more than five.
-
-Services in the list: a `freeharbor.group` label splits the project into tiers (Edge,
-APIs, Workers, Data). A tier where everything runs stays folded behind a one-line
-summary and an all running chip, and a tier with a problem opens. The group's own filter
-(All, Running, Problems) narrows over the rows in hand, as L5 requires. Without the
-label there is one tier and the behaviour is the plain list.
-
-Services in a card: a health bar with one block per container, problems drawn last and
-in their own shape, then only the services that need attention, and Show all, which
-opens the detail page.
-
-Fold state is remembered per project, like the fold DD112 narrows. Layout:
-docs/specs/DD294-containers-redesign.md section 3.
-
 ### §DD301 The settings destination
 
 The edit screen saves to one of three places, and that choice is the user's to make once
@@ -117,6 +93,26 @@ fallback.
 
 Settings persist in the DD39 store and the page draws from the fixture (L6). Layout:
 docs/specs/DD294-containers-redesign.md section 7.
+
+### §DD319 A save that meets a brief lock
+
+On 5 November 2026 `DetailStoreTests.A_save_is_read_back_by_a_store_opened_later` failed
+once in a full run and passed three times alone. The assertion that failed was `Save`
+returning false, so `DetailStore.Save` caught an `IOException`, either from
+`File.WriteAllText` on `details.json.tmp` or from the `File.Move` over the real file.
+
+On Windows the usual cause is a scanner or the indexer holding a file it just saw
+written, for a few milliseconds. The same window hits the edit dialog: a Save the user
+pressed reports that nothing reached the disk, and the edit lives only until the window
+closes.
+
+What to build: retry the write and the move a few times with a short backoff (three
+tries, 50 ms apart, say) before returning false, the way an atomic replace on Windows
+generally has to. Keep the false return for a lock that outlasts the retries, because
+the dialog already says so.
+
+The test that found it stays as it is. A retry inside the store is the fix; a retry in
+the test would hide the same failure from the user.
 
 ## Block D — Container operations (what a user came to do)
 
