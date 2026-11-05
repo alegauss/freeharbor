@@ -73,6 +73,25 @@ public sealed class ContextPackTests
     }
 
     [Fact]
+    public void The_engine_line_names_the_oldest_api_the_engine_admits()
+    {
+        // DD289. A client refused for asking too old an API is explained by this number alone: the
+        // engine logs nothing when it refuses one.
+        var text = ContextPack.Render(Facts() with { MinApiVersion = "1.40" });
+
+        Assert.Contains("api=v1.43(min=1.40)", text.Split(Environment.NewLine)[0],
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_json_pack_carries_the_minimum_too()
+    {
+        var json = ContextPack.RenderJson(Facts() with { MinApiVersion = "1.40" });
+
+        Assert.Contains("\"minApiVersion\":\"1.40\"", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void A_context_pointing_elsewhere_says_so_on_the_engine_line() =>
         // DD20's fact, carried where a session reads it first: a CLI aimed at another pipe is why the
         // tool looks broken with nothing wrong with it.

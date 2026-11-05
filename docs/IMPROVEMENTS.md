@@ -2,6 +2,26 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
+### §DD303 Testcontainers detection misses with an accepted API version
+
+Met in Turing (viglet/turing 2026.3, its T1108), carried over from DD289's design when
+it shipped. With `DOCKER_API_VERSION=1.44` set, so the API floor was no longer the
+cause, Testcontainers' Docker detection still failed on about one run in two, then
+succeeded consistently once the version came from a `docker-java.properties` file
+instead.
+
+Not understood yet, and two readings fit. One is client-side: docker-java may read the
+environment variable at a different point from the properties file, or not on every
+path. The other is this engine: DD142 named bursts where every client fails together,
+and the host journal on this machine shows the relay "stopped accepting" episodes that
+DD142 counts. A detection probe that lands inside such a burst reads Docker as absent.
+
+What to do first: reproduce with the properties file removed, and set the run's
+timestamps against the host journal (`%LOCALAPPDATA%\FreeHarbor\engine.log`). Failures
+that line up with refused pipe instances are FreeHarbor's and belong with DD142's
+mechanism; failures on a quiet journal are docker-java's and go back to Turing as a
+client note.
+
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)
@@ -255,39 +275,6 @@ Done when FreeHarbor is in the Store with its install still working without admi
 the reason it cannot be is recorded here and in the product sheet.
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
-
-### §DD289 The engine minimum API version is never shown
-
-Met in Turing (viglet/turing 2026.3, its T1108), running Testcontainers integration
-tests (`mvn verify`, Testcontainers 2.0.5) against the FreeHarbor engine (Docker 29.7.2,
-API 1.55, minimum API 1.40).
-
-Testcontainers' bundled docker-java opens with API version 1.32. The engine answers `400
-client version 1.32 is too old. Minimum supported API version is 1.40`, Testcontainers
-concludes Docker is unavailable, and every `@Testcontainers(disabledWithoutDocker =
-true)` test is reported as skipped. The build ends green, and nothing on the machine
-says why.
-
-`freeharbor read health` and `read context` print the engine's API version (`engine API
-version 1.55`, `api=1.55`) but not its minimum. `DockerApi` already reads
-`MinApiVersion` (the sample machine carries `1.24`), so the fact is in hand and only
-unprinted. The one number that explains a refused client is the one an agent cannot see.
-
-What FreeHarbor should do:
-
-- Print the minimum beside the version in `read health` and `read context`
-  (`engine API version 1.55 (accepts 1.40 and later)`).
-- Where the engine's own log records a client refused for its API version, say so in
-  `read health` with the version it asked for, and the remedy (a newer client, or the
-  client's `api.version` / `DOCKER_API_VERSION`, or `freeharbor --min-api`).
-
-Also observed, not yet understood: with `DOCKER_API_VERSION=1.44` set, Testcontainers'
-detection still failed on about one run in two, then succeeded consistently once the
-version came from a `docker-java.properties` file. Worth checking against DD142 (every
-client failing together in bursts) before assuming a client-side cause.
-
-Workaround in Turing: `turing-app/src/test/resources/docker-java.properties` with
-`api.version=1.44`.
 
 ## Block H — The public surface (the site a reader and an agent both read)
 

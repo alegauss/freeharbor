@@ -59,7 +59,7 @@ public sealed class SampleMachineReport : IMachineReport
         new MachineGroup("Engine",
         [
             new MachineReading("pipe", @"answers on \\.\pipe\docker_engine"),
-            new MachineReading("API version", "1.55"),
+            new MachineReading("API version", "1.55 (accepts 1.40 and later)"),
         ]),
         ]);
 

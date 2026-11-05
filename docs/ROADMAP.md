@@ -2,9 +2,9 @@
 
 ## Priority
 
-- DD289
-
 ## Block A — The Windows engine (Docker without Docker Desktop)
+
+- 💭 **DD303** (deps: —) **Testcontainers detects the engine on about one run in two even with an API version the engine accepts** — Whether the misses are docker-java's or the pipe's DD142 bursts decides who fixes it, and nobody has set the runs against the journal. → §DD303
 
 ## Block B — The daemon client (talk to the engine)
 
@@ -29,8 +29,6 @@
 - 📋 **DD292** (deps: visibility VS58) **Every first download meets a SmartScreen warning, because the installer is not signed** — The Store signs the MSIX package itself, and claude-tray tests that path first, so this follows what that test learns. → §DD292
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
-
-- 📋 **DD289** (deps: —) **read health and read context show the engine API version but not its minimum, so a refused old client goes unexplained** — Testcontainers suites skip every container test on this engine and nothing on the machine says why. → §DD289
 
 ## Block H — The public surface (the site a reader and an agent both read)
 

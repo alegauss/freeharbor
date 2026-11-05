@@ -185,7 +185,10 @@ public sealed class LiveMachineReport(
 
     /// <summary>Ask the engine the one question only it can answer.</summary>
     /// <param name="cancellation">Cancellation.</param>
-    /// <returns>Whether it answered, and what version it said it was.</returns>
+    /// <returns>
+    /// Whether it answered, and what version it said it was, with the oldest it still answers where
+    /// it said that too (DD289).
+    /// </returns>
     /// <remarks>
     /// Asked once and shared between the verdict and the reading, because a page that pinged twice
     /// could show an engine answering under a verdict saying it was not.
@@ -204,7 +207,8 @@ public sealed class LiveMachineReport(
                 return (false, null);
             }
 
-            return (true, (await api.VersionAsync(cancellation).ConfigureAwait(false)).ApiVersion);
+            var version = await api.VersionAsync(cancellation).ConfigureAwait(false);
+            return (true, Speaks(version.ApiVersion, version.MinApiVersion));
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -213,6 +217,20 @@ public sealed class LiveMachineReport(
             return (false, null);
         }
     }
+
+    /// <summary>The API version reading: the newest the engine speaks and the oldest it admits.</summary>
+    /// <param name="newest">What <c>/version</c> said as <c>ApiVersion</c>.</param>
+    /// <param name="oldest">What it said as <c>MinAPIVersion</c>, or empty where it said nothing.</param>
+    /// <returns>The value, such as <c>1.55 (accepts 1.40 and later)</c>.</returns>
+    /// <remarks>
+    /// DD289. The minimum is the one number that explains a refused client: Testcontainers'
+    /// docker-java asks for 1.32, the engine answers 400, and the suite reports its container tests
+    /// as skipped with nothing on the machine saying why. dockerd does not log that refusal at its
+    /// default level (measured on 29.7.2), so the floor stated here is the whole explanation there
+    /// is, and <c>freeharbor --min-api</c> is how it is lowered (DD288).
+    /// </remarks>
+    internal static string Speaks(string newest, string oldest) =>
+        oldest.Length == 0 ? newest : $"{newest} (accepts {oldest} and later)";
 
     private static IReadOnlyList<MachineReading> Engine((bool Answered, string? Version) engine) =>
     [

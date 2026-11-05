@@ -82,7 +82,7 @@
     "measured": {
       "calls": 4,
       "requests": 16,
-      "tokens": 814
+      "tokens": 816
     },
     "ratio": {
       "about": [
@@ -142,6 +142,10 @@
       "enough that three restarts are not the ten-minute loop the doctor fails a container for. The",
       "figure is unchanged because `3d` is the width it was measured at: this bought no tokens and",
       "nothing about the surface moved, which is the only reason a raise is not being argued for here.",
+      "",
+      "814 became 816 with DD289, and the two tokens are the engine floor: the context pack's",
+      "engine line reads `api=1.55(min=1.24)` now, because a client refused for asking too old an",
+      "API is explained by that number and by nothing the engine logs.",
       "",
       "The band on the baseline stays. It is there for a different reason - a fixture somebody shrinks",
       "- and is honest about being one."

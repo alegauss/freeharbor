@@ -163,4 +163,13 @@ public sealed class MachineReportTests
     [InlineData(59264744L * 1024, "56.5 GB")]
     public void A_size_reads_the_way_every_other_tool_prints_one(long bytes, string expected) =>
         Assert.Equal(expected, MachineReport.Size(bytes));
+
+    [Fact]
+    public void The_api_reading_names_the_oldest_client_the_engine_admits() =>
+        // DD289: the number that explains a Testcontainers suite skipping every container test.
+        Assert.Equal("1.55 (accepts 1.40 and later)", LiveMachineReport.Speaks("1.55", "1.40"));
+
+    [Fact]
+    public void An_engine_that_states_no_minimum_reads_as_its_version_alone() =>
+        Assert.Equal("1.55", LiveMachineReport.Speaks("1.55", ""));
 }

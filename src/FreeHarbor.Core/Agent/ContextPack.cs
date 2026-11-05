@@ -18,6 +18,9 @@ namespace FreeHarbor.Core.Agent;
 /// </param>
 /// <param name="Images">Every image, for the disk line.</param>
 /// <param name="VolumeCount">How many volumes there are.</param>
+/// <param name="MinApiVersion">
+/// The oldest Engine API version the engine admits, or empty where it was not read (DD289).
+/// </param>
 public sealed record ContextFacts(
     string EngineState,
     string Distribution,
@@ -27,7 +30,8 @@ public sealed record ContextFacts(
     IReadOnlyList<ContainerSummary> Containers,
     IReadOnlyDictionary<string, ContainerInspect> Diagnoses,
     IReadOnlyList<ImageSummary> Images,
-    int VolumeCount);
+    int VolumeCount,
+    string MinApiVersion = "");
 
 /// <summary>
 /// One deterministic, budgeted payload answering what a session asks first.
@@ -146,6 +150,7 @@ public static class ContextPack
                 state = facts.EngineState,
                 distribution = facts.Distribution,
                 apiVersion = facts.ApiVersion,
+                minApiVersion = facts.MinApiVersion.Length == 0 ? null : facts.MinApiVersion,
                 context = facts.ContextName,
                 contextReachesEngine = facts.ContextReachesEngine,
             },
@@ -220,7 +225,11 @@ public static class ContextPack
             "engine",
             facts.EngineState,
             $"wsl:{facts.Distribution}",
-            $"api={facts.ApiVersion}",
+            // The floor beside the version (DD289): a client refused for asking too old an API is
+            // explained by this number and by nothing else the engine prints.
+            facts.MinApiVersion.Length == 0
+                ? $"api={facts.ApiVersion}"
+                : $"api={facts.ApiVersion}(min={facts.MinApiVersion})",
             context);
     }
 

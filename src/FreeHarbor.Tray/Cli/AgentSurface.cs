@@ -451,7 +451,8 @@ public static class AgentSurface
                 Containers: containers,
                 Diagnoses: diagnoses,
                 Images: engine.ImagesAsync().GetAwaiter().GetResult(),
-                VolumeCount: engine.VolumesAsync().GetAwaiter().GetResult().Count);
+                VolumeCount: engine.VolumesAsync().GetAwaiter().GetResult().Count,
+                MinApiVersion: version.MinApiVersion);
 
             if (!brief)
             {
