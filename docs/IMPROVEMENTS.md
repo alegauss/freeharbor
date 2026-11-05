@@ -46,33 +46,6 @@ times in a row without this test failing.
 
 ## Block C — The window (claude-tray's elements)
 
-### §DD296 The edit details screen
-
-Labels and file sources only help someone who owns the file, and most containers come
-from someone else's compose file or a one-off `docker run`. So the window gets an edit
-screen, reached from a row's overflow, a card's menu, the detail page and the "Add icon
-and description" link.
-
-The dialog always says what is being edited. Its header names the compose project and
-the full path of its files, with Copy path and Open folder. The pane names the target
-(project or service) and the key a save is stored under (`storefront / db`), then the
-container name, image and short id. The left rail lists the project and each service
-with its service and container name.
-
-It edits title, description, icon and links; each field shows its source, with Reset.
-Layout: docs/specs/DD294-containers-redesign.md section 6.
-
-Save asks nothing. It writes to one of three places, chosen in Settings and overridable
-per project from a Save to selector in the footer, which also says where the save will
-land:
-
-1. FreeHarbor's own store (the ArtefactStore DD39 uses), the default: personal, this machine only.
-2. `.freeharbor/project.yaml` in the project folder, which overrides the compose file.
-3. The compose file's `x-freeharbor` block, after a diff shown once per project.
-
-The key is project plus service, which survives a recreate. A standalone container
-always saves to the store, keyed by name, with a warning when docker made the name up.
-
 ### §DD297 The enriched list
 
 The list stays the default view, because it is the one that holds forty containers and

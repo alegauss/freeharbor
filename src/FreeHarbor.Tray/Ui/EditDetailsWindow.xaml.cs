@@ -88,9 +88,10 @@ internal partial class EditDetailsWindow : Window
     /// <param name="title">The title box.</param>
     /// <param name="description">The description box.</param>
     /// <param name="icon">The chosen icon: a bundled name, a path, or null for automatic.</param>
+    /// <param name="links">The links box, or null where the dialog never showed it.</param>
     /// <returns>The fields to store; empty where nothing differs from the sources.</returns>
     internal static DetailFields Difference(
-        ResolvedDetails beneath, string title, string description, string? icon)
+        ResolvedDetails beneath, string title, string description, string? icon, string? links = null)
     {
         ArgumentNullException.ThrowIfNull(beneath);
         ArgumentNullException.ThrowIfNull(title);
@@ -103,7 +104,45 @@ internal partial class EditDetailsWindow : Window
             keptDescription.Length == 0 || keptDescription == (beneath.Description ?? "")
                 ? null
                 : keptDescription,
-            icon);
+            icon,
+            links is null ? null : ChangedLinks(beneath, links));
+    }
+
+    /// <summary>The links a box spells, one per line: a name and an address, or an address alone.</summary>
+    /// <param name="text">The box.</param>
+    /// <returns>The links whose address is an absolute http or https URL, in order; others are dropped.</returns>
+    internal static IReadOnlyList<DetailLink> ParseLinks(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        var links = new List<DetailLink>();
+        foreach (var line in text.ReplaceLineEndings("\n").Split('\n'))
+        {
+            var parts = line.Trim().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0
+                || !Uri.TryCreate(parts[^1], UriKind.Absolute, out var url)
+                || (url.Scheme != Uri.UriSchemeHttp && url.Scheme != Uri.UriSchemeHttps))
+            {
+                continue;
+            }
+
+            var name = parts.Length > 1 ? string.Join(' ', parts[..^1]) : url.Authority;
+            links.Add(new DetailLink(name, parts[^1]));
+        }
+
+        return links;
+    }
+
+    /// <summary>The links as the box spells them.</summary>
+    /// <param name="links">The links.</param>
+    /// <returns>One line each.</returns>
+    internal static string LinksText(IEnumerable<DetailLink> links) =>
+        string.Join(Environment.NewLine, links.Where(link => link.Served).Select(link => $"{link.Name}  {link.Url}"));
+
+    private static IReadOnlyList<DetailLink>? ChangedLinks(ResolvedDetails beneath, string links)
+    {
+        var typed = ParseLinks(links);
+        var under = beneath.Links.Where(link => link.Served).Select(link => link with { Served = true });
+        return typed.Count == 0 || typed.SequenceEqual(under) ? null : typed;
     }
 
     /// <summary>Whether a row's edit can go into its project's <c>.freeharbor</c> folder.</summary>
@@ -119,17 +158,22 @@ internal partial class EditDetailsWindow : Window
     /// <param name="title">The title box.</param>
     /// <param name="description">The description box.</param>
     /// <param name="icon">The chosen icon, or null for automatic.</param>
+    /// <param name="links">The links box, or null where the dialog never showed it.</param>
     /// <returns>The fields to write: what changed, and the file's own value wherever nothing did.</returns>
     internal static DetailFields ForTheFile(
-        DetailFields? existing, ResolvedDetails beneath, string title, string description, string? icon)
+        DetailFields? existing, ResolvedDetails beneath, string title, string description, string? icon,
+        string? links = null)
     {
         ArgumentNullException.ThrowIfNull(beneath);
-        var changed = Difference(beneath, title, description, icon);
+        var changed = Difference(beneath, title, description, icon, links);
+        var linksUnchanged = links is null
+            || ParseLinks(links).SequenceEqual(beneath.Links.Where(link => link.Served));
         return new DetailFields(
             changed.Title ?? (title.Trim() == beneath.Title ? existing?.Title : null),
             changed.Description
                 ?? (description.Trim() == (beneath.Description ?? "") ? existing?.Description : null),
-            icon ?? existing?.Icon);
+            icon ?? existing?.Icon,
+            changed.Links ?? (linksUnchanged ? existing?.Links : null));
     }
 
     /// <summary>A project file's details with every pending edit applied to it.</summary>
@@ -137,14 +181,15 @@ internal partial class EditDetailsWindow : Window
     /// <param name="edits">Each target that changed, with what was typed for it.</param>
     /// <returns>The details to write: the file's own wherever no edit reached.</returns>
     internal static ProjectFileDetails Applied(
-        ProjectFileDetails file, IEnumerable<(ContainerRow Row, string Title, string Description, string? Icon)> edits)
+        ProjectFileDetails file,
+        IEnumerable<(ContainerRow Row, string Title, string Description, string? Icon, string? Links)> edits)
     {
         ArgumentNullException.ThrowIfNull(file);
         ArgumentNullException.ThrowIfNull(edits);
 
         var project = file.Project;
         var services = new Dictionary<string, DetailFields>(file.Services, StringComparer.Ordinal);
-        foreach (var (row, title, description, icon) in edits)
+        foreach (var (row, title, description, icon, links) in edits)
         {
             if (row.DetailsBeneath is not { } beneath)
             {
@@ -153,11 +198,13 @@ internal partial class EditDetailsWindow : Window
 
             if (row.IsProject)
             {
+                // A project's Open is its primary service's (DD297), so it keeps no links of its own.
                 project = ForTheFile(project, beneath, title, description, icon);
             }
             else if (row.Service is { } service)
             {
-                services[service] = ForTheFile(services.GetValueOrDefault(service), beneath, title, description, icon);
+                services[service] = ForTheFile(
+                    services.GetValueOrDefault(service), beneath, title, description, icon, links);
             }
         }
 
@@ -241,6 +288,8 @@ internal partial class EditDetailsWindow : Window
         var shown = row.Details ?? _beneath;
         TitleBox.Text = pending?.Title ?? shown.Title;
         DescriptionBox.Text = pending?.Description ?? shown.Description ?? "";
+        LinksBox.Text = pending?.Links ?? LinksText(shown.Links);
+        LinksBox.IsEnabled = !row.IsProject;
         _loading = false;
         Refresh();
     }
@@ -250,7 +299,8 @@ internal partial class EditDetailsWindow : Window
     {
         if (_row.DetailKey is { } key && IconBox.SelectedItem is IconChoice choice)
         {
-            _pending[key] = new Edit(_row, TitleBox.Text, DescriptionBox.Text, choice.Value);
+            _pending[key] = new Edit(
+                _row, TitleBox.Text, DescriptionBox.Text, choice.Value, _row.IsProject ? null : LinksBox.Text);
         }
     }
 
@@ -271,6 +321,11 @@ internal partial class EditDetailsWindow : Window
             ? _beneath.Description is null ? "none" : $"from {_beneath.DescriptionSource}"
             : ContainerDetails.EditedHere;
         IconSource.Text = choice.Value is null ? $"from {_beneath.IconSource}" : ContainerDetails.EditedHere;
+        LinksSource.Text = _row.IsProject
+            ? "a project opens its primary service's link"
+            : ChangedLinks(_beneath, LinksBox.Text) is null
+                ? _beneath.LinksSource == "none" ? "none" : $"from {_beneath.LinksSource}"
+                : ContainerDetails.EditedHere;
         Counter.Text = $"{DescriptionBox.Text.Length} / {DescriptionBox.MaxLength}";
 
         var target = SaveTo.SelectedItem as SaveTarget;
@@ -326,6 +381,8 @@ internal partial class EditDetailsWindow : Window
         DescriptionBox.Text = _beneath.Description ?? "";
 
     private void ResetIcon(object sender, RoutedEventArgs e) => IconBox.SelectedIndex = 0;
+
+    private void ResetLinks(object sender, RoutedEventArgs e) => LinksBox.Text = LinksText(_beneath.Links);
 
     private void ChooseFile(object sender, RoutedEventArgs e)
     {
@@ -385,7 +442,7 @@ internal partial class EditDetailsWindow : Window
     {
         Stash();
         var edits = _pending.Values
-            .Select(edit => (edit.Row, edit.Title, edit.Description, edit.Icon))
+            .Select(edit => (edit.Row, edit.Title, edit.Description, edit.Icon, edit.Links))
             .ToList();
         if (edits.Count == 0)
         {
@@ -417,7 +474,8 @@ internal partial class EditDetailsWindow : Window
         else
         {
             Saved = edits.All(edit => edit.Row.DetailsBeneath is { } beneath
-                && _store.Save(edit.Row.DetailKey!, Difference(beneath, edit.Title, edit.Description, edit.Icon)));
+                && _store.Save(
+                    edit.Row.DetailKey!, Difference(beneath, edit.Title, edit.Description, edit.Icon, edit.Links)));
         }
 
         DialogResult = true;
@@ -435,7 +493,8 @@ internal partial class EditDetailsWindow : Window
     /// <param name="edits">Each target that changed.</param>
     /// <returns>Whether it was written; false where the user said no or the file could not be written.</returns>
     private bool SaveToCompose(
-        string folder, IEnumerable<(ContainerRow Row, string Title, string Description, string? Icon)> edits)
+        string folder,
+        IEnumerable<(ContainerRow Row, string Title, string Description, string? Icon, string? Links)> edits)
     {
         var files = ComposeFiles(_row);
         var target = ComposeExtension.TargetFile(files);
@@ -491,7 +550,7 @@ internal partial class EditDetailsWindow : Window
     }
 
     /// <summary>What was typed for one target.</summary>
-    private sealed record Edit(ContainerRow Row, string Title, string Description, string? Icon);
+    private sealed record Edit(ContainerRow Row, string Title, string Description, string? Icon, string? Links);
 
     /// <summary>One entry in the rail: the target's title over what compose calls it.</summary>
     /// <param name="Row">The target.</param>

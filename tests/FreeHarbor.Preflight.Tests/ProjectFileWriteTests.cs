@@ -113,12 +113,13 @@ public sealed class ProjectFileWriteTests : IDisposable
 
         var written = EditDetailsWindow.Applied(file,
         [
-            (header, "Storefront", "Kept", null),
-            (api, "Shop API", "", null),
+            (header, "Storefront", "Kept", null, null),
+            (api, "Shop API", "", null, "Admin  http://localhost:8081/admin"),
         ]);
 
         Assert.Equal(new DetailFields("Storefront", "Kept", null), written.Project);
         Assert.Equal("Shop API", written.Services["api"].Title);
+        Assert.Equal([new DetailLink("Admin", "http://localhost:8081/admin")], written.Services["api"].Links!);
         Assert.Equal("Untouched", written.Services["db"].Title);
     }
 }

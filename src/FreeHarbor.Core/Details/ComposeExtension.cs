@@ -261,7 +261,17 @@ public sealed class ComposeExtension
                 ? text
                 : null;
 
-        return new DetailFields(Scalar("title"), Scalar("description"), ProjectFile.IconPath(Scalar("icon"), folder));
+        IReadOnlyList<DetailLink>? links = null;
+        if (element.TryGetProperty("links", out var named) && named.ValueKind == JsonValueKind.Object)
+        {
+            links = [.. named.EnumerateObject()
+                .Where(link => link.Value.ValueKind == JsonValueKind.String && link.Value.GetString() is { Length: > 0 })
+                .Select(link => new DetailLink(link.Name, link.Value.GetString()!))];
+        }
+
+        return new DetailFields(
+            Scalar("title"), Scalar("description"), ProjectFile.IconPath(Scalar("icon"), folder),
+            links is { Count: > 0 } ? links : null);
     }
 
     private static List<string> Files(string? configFiles) =>

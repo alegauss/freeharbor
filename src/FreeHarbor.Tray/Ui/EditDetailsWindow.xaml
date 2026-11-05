@@ -147,6 +147,20 @@
                 <TextBlock x:Name="DescriptionSource" Style="{StaticResource Source}" />
             </DockPanel>
             <TextBox x:Name="DescriptionBox" MaxLength="120" TextChanged="FieldChanged" />
+
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="Reset" Click="ResetLinks" Margin="8,10,0,0"
+                        Style="{StaticResource Small}" />
+                <TextBlock Text="LINKS" Style="{StaticResource Caption}" />
+                <TextBlock x:Name="LinksSource" Style="{StaticResource Source}" />
+            </DockPanel>
+            <!-- One per line, a name and then the address, the shape the files keep them in. -->
+            <TextBox x:Name="LinksBox" AcceptsReturn="True" TextWrapping="NoWrap" Height="72"
+                     VerticalScrollBarVisibility="Auto" TextChanged="FieldChanged"
+                     FontFamily="Cascadia Mono, Consolas, Courier New" FontSize="12" />
+            <TextBlock Text="One per line: a name, then the address. The first one is what Open follows."
+                       FontSize="11" Margin="0,4,0,0"
+                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
         </StackPanel>
         </Grid>
 

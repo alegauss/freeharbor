@@ -55,6 +55,9 @@ public sealed record ResolvedDetails(
 
     /// <summary>Where the icon came from.</summary>
     public string IconSource { get; init; } = "";
+
+    /// <summary>Where the links came from: a layer, <c>labels</c>, <c>published ports</c> or <c>none</c>.</summary>
+    public string LinksSource { get; init; } = "";
 }
 
 /// <summary>One source of details beyond the labels, named for the dialog that shows it (DD296).</summary>
@@ -169,7 +172,17 @@ public static class ContainerDetails
         var (iconValue, iconSource) = Layered(fields => fields.Icon, "freeharbor.icon", "homepage.icon");
         var (icon, iconFrom) = Icon(iconValue, iconSource, container.Image, title);
 
-        var links = Links(labels, image, container.Ports);
+        // A layer's links replace what labels and ports would give, the way a named label already
+        // replaces the ports: somebody said which addresses matter (DD296).
+        var layered = given.FirstOrDefault(layer => layer.Fields.HasLinks);
+        var links = layered is not null
+            ? [.. layered.Fields.Links!.Select(link => link with { Served = true })]
+            : Links(labels, image, container.Ports);
+        var linksSource = layered?.Source
+            ?? (labels.Keys.Any(key => key.StartsWith("freeharbor.url", StringComparison.Ordinal)
+                    || key == "homepage.href")
+                ? "labels"
+                : links.Any(link => link.Served) ? "published ports" : "none");
         var primaryName = First("freeharbor.primary").Value;
 
         // The image's project site is a link and never what Open follows: Open is for what this
@@ -192,6 +205,7 @@ public static class ContainerDetails
             TitleSource = titled is null ? (service is null ? "container name" : "service name") : titleSource,
             DescriptionSource = description is null ? "none" : descriptionSource,
             IconSource = iconFrom,
+            LinksSource = linksSource,
         };
     }
 

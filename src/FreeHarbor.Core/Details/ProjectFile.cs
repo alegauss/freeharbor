@@ -7,10 +7,32 @@ namespace FreeHarbor.Core.Details;
 /// A bundled icon's name or an absolute path to a picture, already resolved against the folder the
 /// file sits in; or <see langword="null"/>.
 /// </param>
-public sealed record DetailFields(string? Title, string? Description, string? Icon)
+/// <param name="Links">
+/// The links it serves, by name, which replace what labels and ports would give (DD296); or
+/// <see langword="null"/>, which leaves those to answer.
+/// </param>
+public sealed record DetailFields(
+    string? Title, string? Description, string? Icon, IReadOnlyList<DetailLink>? Links = null)
 {
     /// <summary>Whether this sets nothing at all.</summary>
-    public bool IsEmpty => Title is null && Description is null && Icon is null;
+    public bool IsEmpty => Title is null && Description is null && Icon is null && !HasLinks;
+
+    /// <summary>Whether it names any link.</summary>
+    public bool HasLinks => Links is { Count: > 0 };
+
+    /// <summary>Equal field for field, the links by their contents and order.</summary>
+    /// <param name="other">The other fields.</param>
+    /// <returns>Whether they say the same.</returns>
+    /// <remarks>
+    /// Written out because a list compares by reference, and a record read back from the store would
+    /// then never equal the one that was saved.
+    /// </remarks>
+    public bool Equals(DetailFields? other) =>
+        other is not null && Title == other.Title && Description == other.Description && Icon == other.Icon
+        && (Links ?? []).SequenceEqual(other.Links ?? []);
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => HashCode.Combine(Title, Description, Icon, Links?.Count ?? 0);
 }
 
 /// <summary>What one project file says.</summary>
@@ -153,7 +175,16 @@ public static class ProjectFile
         string? Scalar(string key) =>
             map.TryGetValue(key, out var value) && value is string text && text.Length > 0 ? text : null;
 
-        return new DetailFields(Scalar("title"), Scalar("description"), IconPath(Scalar("icon"), folder));
+        IReadOnlyList<DetailLink>? links = null;
+        if (map.TryGetValue("links", out var node) && node is Dictionary<string, object> named)
+        {
+            links = [.. named
+                .Where(pair => pair.Value is string url && url.Length > 0)
+                .Select(pair => new DetailLink(pair.Key, (string)pair.Value))];
+        }
+
+        return new DetailFields(
+            Scalar("title"), Scalar("description"), IconPath(Scalar("icon"), folder), links is { Count: > 0 } ? links : null);
     }
 
     /// <summary>An icon as a file gives it: a path resolved against the file's folder, or a name.</summary>
@@ -274,6 +305,15 @@ public static class ProjectFile
         }
 
         Line("icon", icon);
+
+        if (fields.HasLinks)
+        {
+            text.Append(indent).AppendLine("links:");
+            foreach (var link in fields.Links!)
+            {
+                text.Append(indent).Append("  ").Append(Quoted(link.Name)).Append(": ").AppendLine(Quoted(link.Url));
+            }
+        }
     }
 
     private static string Quoted(string value) =>
@@ -298,7 +338,9 @@ public static class ProjectFile
 
         static DetailFields Over(DetailFields top, DetailFields? under) => under is null
             ? top
-            : new DetailFields(top.Title ?? under.Title, top.Description ?? under.Description, top.Icon ?? under.Icon);
+            : new DetailFields(
+                top.Title ?? under.Title, top.Description ?? under.Description, top.Icon ?? under.Icon,
+                top.HasLinks ? top.Links : under.Links);
 
         var services = new Dictionary<string, DetailFields>(StringComparer.Ordinal);
         foreach (var (name, fields) in second.Services)
