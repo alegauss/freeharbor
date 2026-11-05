@@ -295,8 +295,39 @@ exception (enabling the WSL feature may need elevation once). A short, honest co
 row against Rancher and Podman (admin needed or not, own distribution, no resident
 service) answers the comment before it is written.
 
+Checked on 5 November 2026, and the premise does not hold. Podman 6 installs per-user by
+default, Podman Desktop has a current-user option, and `podman machine` serves
+`docker_engine`. Rancher Desktop installs per-user too, its privileged service aside.
+All need WSL enabled once. Which differentiator leads is a person's call.
+
 Done when the first screen of the README and of the site names the corporate laptop
 without admin, and the comparison with Rancher and Podman is on the page.
+
+### §DD304 Correcting the rival cells on the compare page
+
+Found while working DD291 on 5 November 2026. The `/compare` matrix in
+`site/src/lib/site-content.ts` scores three rival cells against FreeHarbor that current
+sources contradict:
+
+- **Per-user install, no admin prompt.** Rancher Desktop is ✗, but its Windows installer
+  offers a current-user install; only its privileged service (which binds ports beyond
+  127.0.0.1) needs admin. That is `~`. Podman Desktop is `~`, but it has a current-user
+  option that needs no admin, and Podman 6's MSI is per-user by default. That is ✓.
+- **Standard docker_engine pipe, no DOCKER_HOST.** Podman is ✗, but `podman machine`
+  claims `npipe:////./pipe/docker_engine` whenever nothing else holds it, and only falls
+  back to its own pipe on a conflict. That is ✓.
+
+Every one of these still needs WSL enabled once by an administrator, which is
+FreeHarbor's own caveat as well, so that is a footnote under the row and not a cell.
+
+`winsFooter` then names the per-user install and the standard pipe as the axis only this
+one wins, and after the correction it does not win them alone. Rewrite it to state what
+the corrected rows leave: nothing resident from boot (against Rancher), the read/do
+agent split, and Compose and Buildx pinned by digest. Do not invent a new claim to
+replace the lost ones.
+
+Done when the three cells and the footer match the sources, and the build's own page
+tests pass.
 
 ## Block I — The site on the design system
 

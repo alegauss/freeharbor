@@ -32,7 +32,7 @@
 
 ## Block H — The public surface (the site a reader and an agent both read)
 
-- 📋 **DD291** (deps: —) **The README and the site open on the licence, which Rancher and Podman also offer, not on installing without admin** — A developer on a managed corporate laptop is the reader only FreeHarbor serves, and the page has to say so before a comment names the rivals. → §DD291
+- 📋 **DD304** (deps: —) **The compare page scores Rancher and Podman lower than they are on per-user install and on the docker_engine pipe** — A comparison caught overclaiming loses the reader on every other row, and three cells say what current sources contradict. → §DD304
 
 ## Block I — The site on the design system
 
