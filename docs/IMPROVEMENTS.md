@@ -45,51 +45,53 @@ the product does not phone home. A link without a label is derived from a publis
 port. The SampleMachine fixture carries labelled and unlabelled containers, so captures
 show both. Design board: https://claude.ai/artifact/VgKD48AfuNnC1AyduJJExu
 
-### §DD295 Project metadata from x-freeharbor
+### §DD295 Project metadata from .freeharbor and x-freeharbor
 
 Labels describe a container, and a project is not a container: no label says what a
-compose project as a whole is. The compose spec reserves top-level keys starting with
-`x-` for extensions, and the engine ignores them, so FreeHarbor can read an
-`x-freeharbor:` block holding the project's `title`, `description` and `icon`, plus an
-optional `services:` map with the same fields per service.
+compose project as a whole is. Two file sources fill that gap, both carrying a project's
+`title`, `description` and `icon` plus a `services:` map with the same fields per
+service.
 
-The file is found through `com.docker.compose.project.config_files` and `working_dir`,
-which compose writes on every container. The path can be gone, moved or unreadable (a
-WSL path, a deleted checkout), so absence is ordinary and falls through to the label
-resolution. When several files are listed, the blocks merge in compose's own order.
+1. `.freeharbor/project.yaml` in the project folder, with its icons in `.freeharbor/icons/` by relative path. It is FreeHarbor's own format, not a compose file, so no tool mistakes it for one, and it overrides the compose file the way `compose.override.yaml` does, without touching it. Committed, it gives a whole team the same names and icons.
+2. An `x-freeharbor:` block in the compose file itself. The compose spec reserves `x-` keys for extensions and the engine ignores them.
 
-This source has one advantage labels lack: the file is read, not baked into the
-container, so editing it changes the window on the next refresh, with no `compose up`
-and no downtime. That makes it the target the edit screen's Copy to compose writes to.
-An icon path resolves relative to the compose file's directory.
+Both are found from what compose writes on every container: `working_dir` for the folder
+and `com.docker.compose.project.config_files` for the files. The path can be gone, moved
+or unreadable (a WSL path, a deleted checkout), so absence is ordinary and falls through
+to the labels. Several compose files merge in compose's own order.
 
-Precedence: a local override, then a service's `x-freeharbor` entry, then its labels,
-then everything after them in DD294's order.
+Both are read, not baked into a container, so an edit shows on the next refresh with no
+`compose up`. That makes them the two project-side targets the edit screen can save to.
+
+Read order per field: saved in FreeHarbor, then `.freeharbor`, then `x-freeharbor`, then
+the labels and everything after them in DD294's order.
 
 ### §DD296 The edit details screen
 
-Labels and `x-freeharbor` only help someone who owns the file. Most containers come from
-a compose file someone else wrote, or from a one-off `docker run`. So the window gets an
-edit screen, reached from a row's overflow, a card's menu, the detail page and the "Add
-icon and description" link.
+Labels and file sources only help someone who owns the file, and most containers come
+from someone else's compose file or a one-off `docker run`. So the window gets an edit
+screen, reached from a row's overflow, a card's menu, the detail page and the "Add icon
+and description" link.
 
 The dialog always says what is being edited. Its header names the compose project and
 the full path of its files, with Copy path and Open folder. The pane names the target
 (project or service) and the key a save is stored under (`storefront / db`), then the
-container name, image and short id, so a user never edits the wrong thing. The left rail
-lists the project and each service with its service and container name.
+container name, image and short id. The left rail lists the project and each service
+with its service and container name.
 
-The screen edits title, description, icon (bundled picker, colour, monogram or a local
-file) and links. Each field shows where its value comes from (x-freeharbor, label,
-image, fallback), with Reset to source.
+It edits title, description, icon (bundled picker, colour, monogram or a local file) and
+links. Each field shows where its value comes from, with Reset to source.
 
-Saving writes to FreeHarbor's own store (the ArtefactStore DD39 uses), never the user's
-files, and shows at once. The key is project plus service, which survives a recreate; a
-standalone container is keyed by name, and a name docker made up gets a warning.
+Save asks nothing. It writes to one of three places, chosen in Settings and overridable
+per project from a Save to selector in the footer, which also says where the save will
+land:
 
-FreeHarbor never edits the compose file or Dockerfile by default: the file is shared
-with a team, re-serialising YAML loses comments, and a label change needs a recreate.
-Copy to compose writes only the `x-freeharbor` block, after a diff the user confirms.
+1. FreeHarbor's own store (the ArtefactStore DD39 uses), the default: personal, this machine only.
+2. `.freeharbor/project.yaml` in the project folder, which overrides the compose file.
+3. The compose file's `x-freeharbor` block, after a diff shown once per project.
+
+The key is project plus service, which survives a recreate. A standalone container
+always saves to the store, keyed by name, with a warning when docker made the name up.
 
 ### §DD297 The enriched list
 
@@ -181,6 +183,35 @@ placement and tab (DD39), so the window reopens the way it was left.
 
 Cards land after the enriched list on purpose. The list is the default and the one that
 scales, and the cards reuse everything it introduces.
+
+### §DD301 The settings destination
+
+The edit screen saves to one of three places, and that choice is the user's to make once
+rather than a question asked on every save. The window has no place for a preference
+today: its destinations are Containers, Images, Volumes, Builds, Engine and About. A
+Settings destination joins the nav strip before About, built as a page like the others
+(L2).
+
+Its first section is "Where edits to names, descriptions and icons are saved", three
+choices with what each means and where it writes:
+
+1. In FreeHarbor, the default: personal, this machine only, the project folder untouched.
+2. In a `.freeharbor` folder in the project: its own file beside the compose file, which it overrides, shared through git.
+3. In the compose file: only the `x-freeharbor` block, the first save in each project showing the diff once.
+
+A note says standalone containers always save in FreeHarbor, because they have no
+project folder.
+
+The second section lists the projects whose Save to was changed in their edit dialog,
+each with its compose path and destination, and a control to make it follow the default
+again.
+
+The third section states the read order, so the user can predict which value wins: saved
+in FreeHarbor, `.freeharbor`, `x-freeharbor`, service labels, image labels, the
+fallback.
+
+Settings persist through the same store as the window's placement (DD39). The page is
+drawn from the fixture (L6), so a capture shows it without a daemon.
 
 ## Block D — Container operations (what a user came to do)
 
