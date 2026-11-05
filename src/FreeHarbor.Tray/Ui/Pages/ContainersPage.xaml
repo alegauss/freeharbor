@@ -270,7 +270,7 @@
                      finds. One click deeper is not the same as hidden. -->
                 <Button Content="⋯" Click="OpenOverflow" Tag="{Binding}"
                         Style="{DynamicResource RowAction}"
-                        ToolTip="Shell, restart and remove"
+                        ToolTip="Shell, restart, edit details and remove"
                         Visibility="{Binding CanRemove, Converter={StaticResource Shown}}">
                     <Button.ContextMenu>
                         <ContextMenu>
@@ -282,6 +282,9 @@
                                       ToolTip="{Binding ShellReason}" />
                             <MenuItem Header="Restart" Click="RestartContainer" Tag="{Binding}"
                                       IsEnabled="{Binding CanRestart}" />
+                            <!-- DD296. Enabled in every state: what a container is called does not
+                                 depend on whether it is running. -->
+                            <MenuItem Header="Edit details…" Click="EditDetails" Tag="{Binding}" />
                             <Separator />
                             <MenuItem Header="Remove…" Click="RemoveContainer" Tag="{Binding}"
                                       IsEnabled="{Binding CanRemove}" />

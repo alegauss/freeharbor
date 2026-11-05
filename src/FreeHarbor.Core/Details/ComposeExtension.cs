@@ -138,7 +138,7 @@ public sealed class ComposeExtension
                 }
             }
 
-            return new ProjectFileDetails(Fields(block, folder), services);
+            return new ProjectFileDetails(Fields(block, folder), services, Key);
         }
         catch (JsonException)
         {

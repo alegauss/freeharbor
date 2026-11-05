@@ -77,6 +77,26 @@ public sealed record ContainerRow(
     /// </remarks>
     public ResolvedDetails? ProjectDetails { get; init; }
 
+    /// <summary>
+    /// What the row would show with nothing saved in FreeHarbor (DD296): what the edit dialog
+    /// compares each field with, and what its Reset puts back.
+    /// </summary>
+    /// <remarks>
+    /// Resolved here, beside <see cref="Details"/>, so the dialog never projects the container a
+    /// second time. The resolver is a pure function over what is already in hand, so the price is a
+    /// second call to it and no read of anything.
+    /// </remarks>
+    public ResolvedDetails? DetailsBeneath { get; init; }
+
+    /// <summary>The key an edit of this row is saved under (DD296): project/service, or the name.</summary>
+    public string? DetailKey { get; init; }
+
+    /// <summary>The folder compose ran in, which the edit dialog names, or nothing outside compose.</summary>
+    public string? WorkingDir { get; init; }
+
+    /// <summary>The compose files, comma-separated as compose stamps them, or nothing.</summary>
+    public string? ConfigFiles { get; init; }
+
     /// <summary>What the name cell draws: the resolved title, or the name on a header.</summary>
     public string Title => Details?.Title ?? Name;
 
@@ -459,7 +479,8 @@ public sealed record ContainerRow(
 
                 // DD295: a header draws its project's details from its own Details, so the copy each
                 // container carries for it is a container's alone.
-                nameof(ProjectDetails),
+                nameof(ProjectDetails), nameof(DetailKey), nameof(WorkingDir), nameof(ConfigFiles),
+                nameof(DetailsBeneath),
             };
 
         /// <summary>What only a header answers. A container returns each of these empty.</summary>
@@ -752,12 +773,15 @@ public sealed record ContainerRow(
     /// <summary>Project one summary, reading its project's files (DD295).</summary>
     /// <param name="container">What the API returned.</param>
     /// <param name="files">
-    /// What a project's own files say, given the folder compose ran in and the compose files it
-    /// read; or <see langword="null"/> to read none. A test passes what it wants them to hold.
+    /// What a project's own files say, first file first, given the folder compose ran in and the
+    /// compose files it read; or <see langword="null"/> to read none. A test passes what it wants.
     /// </param>
+    /// <param name="saved">What was saved in FreeHarbor (DD296), read before any file; or none.</param>
     /// <returns>The row.</returns>
     public static ContainerRow From(
-        ContainerSummary container, Func<string?, string?, ProjectFileDetails?>? files)
+        ContainerSummary container,
+        Func<string?, string?, IReadOnlyList<ProjectFileDetails>>? files,
+        DetailStore? saved = null)
     {
         ArgumentNullException.ThrowIfNull(container);
 
@@ -780,17 +804,35 @@ public sealed record ContainerRow(
         var project = Label(container, Core.Agent.ContextPack.ProjectLabel);
         var service = Label(container, Core.Agent.ContextPack.ServiceLabel);
 
-        // DD295: the project's own file, found from the folder compose stamped on the container.
-        var file = project is null
-            ? null
-            : files?.Invoke(
-                Label(container, ProjectFile.WorkingDirLabel),
-                Label(container, ComposeExtension.ConfigFilesLabel));
-        DetailFields? ofService = null;
-        if (file is not null && service is not null)
+        // DD295: the project's own files, found from the folder compose stamped on the container.
+        var workingDir = Label(container, ProjectFile.WorkingDirLabel);
+        var configFiles = Label(container, ComposeExtension.ConfigFilesLabel);
+        IReadOnlyList<ProjectFileDetails> read = project is null || files is null
+            ? []
+            : files(workingDir, configFiles);
+
+        // DD296: the key a save lands under, which is also the first layer read back.
+        var key = project is not null && service is not null
+            ? DetailStore.ServiceKey(project, service)
+            : DetailStore.ContainerKey(container.DisplayName);
+
+        var fromFiles = service is null
+            ? []
+            : read
+                .Where(file => file.Services.ContainsKey(service))
+                .Select(file => new DetailLayer(file.Source, file.Services[service]))
+                .ToList();
+        var layers = saved?.For(key) is { } mine
+            ? [new DetailLayer(ContainerDetails.EditedHere, mine), .. fromFiles]
+            : fromFiles;
+
+        var projectLayers = new List<DetailLayer>();
+        if (project is not null && saved?.For(DetailStore.ProjectKey(project)) is { } mineToo)
         {
-            _ = file.Services.TryGetValue(service, out ofService);
+            projectLayers.Add(new DetailLayer(ContainerDetails.EditedHere, mineToo));
         }
+
+        projectLayers.AddRange(read.Select(file => new DetailLayer(file.Source, file.Project)));
 
         return new ContainerRow(
             container.DisplayName,
@@ -801,10 +843,14 @@ public sealed record ContainerRow(
             container.Id)
         {
             Project = project,
-            Details = ContainerDetails.Resolve(container, overrides: ofService),
+            Details = ContainerDetails.Resolve(container, layers: layers),
+            DetailsBeneath = ContainerDetails.Resolve(container, layers: fromFiles),
             ProjectDetails = project is null
                 ? null
-                : ContainerDetails.ResolveProject(project, file?.Project),
+                : ContainerDetails.ResolveProject(project, projectLayers),
+            DetailKey = key,
+            WorkingDir = workingDir,
+            ConfigFiles = configFiles,
             ImageIsGone = container.ImageIsGone,
             Service = service,
             DependsOn = ComposeOrder.DependenciesIn(

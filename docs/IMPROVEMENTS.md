@@ -22,6 +22,26 @@ that line up with refused pipe instances are FreeHarbor's and belong with DD142'
 mechanism; failures on a quiet journal are docker-java's and go back to Turing as a
 client note.
 
+### §DD305 The error-mode test races its neighbours
+
+Seen on 5 November 2026: the full suite went red once on
+`TrayTests.A_child_Windows_refuses_to_start_cannot_hold_the_teardown_on_a_modal_box`,
+then passed alone and on the next full run, with no change between.
+
+The test calls `HardErrorBox.Suppress()` twice and asserts that the second answer keeps
+every flag the first one had. The error mode is one process-wide word, shared with the
+WinForms and WPF runtimes and with every test running in parallel, and its own comment
+says another writer may add a flag in between. A writer can also clear one: anything
+that calls `SetErrorMode` with a value of its own, rather than adding to the current
+one, makes the second answer lose a bit the first had, and the assertion fails on code
+that is fine.
+
+Fix: run the error-mode tests in a collection of their own, the way `ConsoleCollection`
+serialises the tests that swap the console, and find which test or runtime path sets the
+mode outright. If that path is in this product, it is a real defect, since a cleared
+`SEM_FAILCRITICALERRORS` brings the modal box back. Done when the full suite has run ten
+times in a row without this test failing.
+
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)

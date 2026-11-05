@@ -199,6 +199,9 @@ public sealed class EnginePaths
     /// </remarks>
     public string Settings => Path.Combine(Root, "settings.json");
 
+    /// <summary>The titles, descriptions and icons saved in FreeHarbor on this machine (DD296).</summary>
+    public string Details => Path.Combine(Root, "details.json");
+
     /// <summary>What the engine host saw, kept after the window that showed it is gone (DD137).</summary>
     /// <remarks>
     /// Beside <c>provision.log</c>, which the installer already writes into this same root and for

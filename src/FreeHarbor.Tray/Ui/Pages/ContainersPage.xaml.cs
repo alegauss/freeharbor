@@ -36,8 +36,12 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     {
         InitializeComponent();
         _api = api;
-        ProjectFiles = (folder, files) => Core.Details.ProjectFile.Merge(
-            Core.Details.ProjectFile.For(folder), _extension.For(folder, files));
+        ProjectFiles = (folder, files) =>
+            [
+                .. new[] { Core.Details.ProjectFile.For(folder), _extension.For(folder, files) }
+                    .Where(details => details is not null)
+                    .Select(details => details!),
+            ];
         _extension.Changed += (_, _) => Dispatcher.InvokeAsync(() => RefreshAsync());
         _engineState = engineState;
         _startEngine = startEngine;
@@ -53,7 +57,13 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     /// on no machine that captures it. A property and not a constructor seam, so the shell that
     /// builds this page carries none of it.
     /// </remarks>
-    internal Func<string?, string?, Core.Details.ProjectFileDetails?> ProjectFiles { get; set; }
+    internal Func<string?, string?, IReadOnlyList<Core.Details.ProjectFileDetails>> ProjectFiles { get; set; }
+
+    /// <summary>
+    /// What was saved in FreeHarbor on this machine (DD296), read before any file and written by the
+    /// edit dialog. A property for the reason <see cref="ProjectFiles"/> is one.
+    /// </summary>
+    internal Core.Details.DetailStore Saved { get; set; } = new(new EnginePaths().Details);
 
     // The x-freeharbor reader (DD295). Compose takes half a second, so it reads in the background
     // and says when it has something new; the page redraws once then, instead of waiting on it.
@@ -92,7 +102,7 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
                 // DD295: each project's own file is read here too, one stat per project when nothing
                 // changed, so an edit to it shows on the next event with nothing recreated.
                 var projected = containers
-                    .Select(container => ContainerRow.From(container, ProjectFiles))
+                    .Select(container => ContainerRow.From(container, ProjectFiles, Saved))
                     .ToList();
 
                 // Before the dressing and never after, because `Dress` reads exactly the state this
@@ -426,6 +436,21 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
 
     private void RestartContainer(object sender, RoutedEventArgs e) =>
         Act(sender, ContainerVerb.Restart);
+
+    /// <summary>Open the edit dialog on a row, and redraw with what it saved (DD296).</summary>
+    private async void EditDetails(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: ContainerRow { DetailsBeneath: { } beneath } row })
+        {
+            return;
+        }
+
+        var dialog = new EditDetailsWindow(row, beneath, Saved) { Owner = Window.GetWindow(this) };
+        if (dialog.ShowDialog() == true)
+        {
+            await RefreshAsync().ConfigureAwait(true);
+        }
+    }
 
     private void RemoveContainer(object sender, RoutedEventArgs e)
     {

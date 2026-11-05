@@ -16,8 +16,10 @@ public sealed record DetailFields(string? Title, string? Description, string? Ic
 /// <summary>What one project file says.</summary>
 /// <param name="Project">The project's own fields.</param>
 /// <param name="Services">Each service's fields, by the service's compose name.</param>
+/// <param name="Source">Which file said it, as the edit dialog names it (DD296).</param>
 public sealed record ProjectFileDetails(
-    DetailFields Project, IReadOnlyDictionary<string, DetailFields> Services);
+    DetailFields Project, IReadOnlyDictionary<string, DetailFields> Services,
+    string Source = ProjectFile.Folder);
 
 /// <summary>
 /// Reads <c>.freeharbor/project.yaml</c>, the project file FreeHarbor owns (DD295).

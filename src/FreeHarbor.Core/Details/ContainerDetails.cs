@@ -45,7 +45,22 @@ public sealed record ResolvedDetails(
     int Hue,
     IReadOnlyList<DetailLink> Links,
     DetailLink? Primary,
-    string? Group);
+    string? Group)
+{
+    /// <summary>Where the title came from, in the words the edit dialog prints (DD296).</summary>
+    public string TitleSource { get; init; } = "";
+
+    /// <summary>Where the description came from, or <c>none</c>.</summary>
+    public string DescriptionSource { get; init; } = "";
+
+    /// <summary>Where the icon came from.</summary>
+    public string IconSource { get; init; } = "";
+}
+
+/// <summary>One source of details beyond the labels, named for the dialog that shows it (DD296).</summary>
+/// <param name="Source">What the dialog calls it: <c>edited here</c>, <c>.freeharbor</c>, <c>x-freeharbor</c>.</param>
+/// <param name="Fields">What it says.</param>
+public sealed record DetailLayer(string Source, DetailFields Fields);
 
 /// <summary>
 /// Resolves a container's title, description, icon and links, in one place and one order (DD294).
@@ -97,55 +112,66 @@ public static class ContainerDetails
         ["valkey"] = "redis",
     };
 
+    /// <summary>What a source says for a value saved in FreeHarbor (DD296).</summary>
+    public const string EditedHere = "edited here";
+
     /// <summary>Resolve one container.</summary>
     /// <param name="container">The container, as the list endpoint reported it.</param>
     /// <param name="imageLabels">Its image's labels from an inspect, or <see langword="null"/>.</param>
-    /// <param name="overrides">
-    /// Its service's fields from the project's files (DD295), which come before every label: a file
-    /// beside the compose file is somebody naming this service on purpose, and it is read on every
-    /// refresh where a label needs a recreate to change.
+    /// <param name="layers">
+    /// What was said about it outside its labels, first source first: what was saved in FreeHarbor
+    /// (DD296), then the project's files (DD295). Every one of them comes before every label, because
+    /// each is somebody naming this service on purpose, read on every refresh where a label needs a
+    /// recreate to change.
     /// </param>
     /// <returns>Its details. Never null, and no field a screen needs is blank.</returns>
     public static ResolvedDetails Resolve(
         ContainerSummary container,
         IReadOnlyDictionary<string, string>? imageLabels = null,
-        DetailFields? overrides = null)
+        IReadOnlyList<DetailLayer>? layers = null)
     {
         ArgumentNullException.ThrowIfNull(container);
 
         var labels = container.Labels ?? new Dictionary<string, string>();
         var image = imageLabels ?? new Dictionary<string, string>();
+        var given = layers ?? [];
 
-        string? First(params string[] keys)
+        (string? Value, string Source) First(params string[] keys)
         {
             foreach (var key in keys)
             {
                 if (labels.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value))
                 {
-                    return value.Trim();
+                    return (value.Trim(), $"label {key}");
                 }
 
                 if (image.TryGetValue(key, out value) && !string.IsNullOrWhiteSpace(value))
                 {
-                    return value.Trim();
+                    return (value.Trim(), $"image label {key}");
                 }
             }
 
-            return null;
+            return (null, "");
         }
 
-        var name = labels.TryGetValue(ServiceLabel, out var service) && service.Length > 0
-            ? service
-            : container.DisplayName;
+        (string? Value, string Source) Layered(Func<DetailFields, string?> field, params string[] keys) =>
+            Pick(given, field) is { Value: not null } found ? found : First(keys);
 
-        var title = overrides?.Title
-            ?? First("freeharbor.title", "homepage.name", "org.opencontainers.image.title")
-            ?? name;
-        var description = overrides?.Description ?? First(
+        var service = labels.TryGetValue(ServiceLabel, out var named) && named.Length > 0 ? named : null;
+        var name = service ?? container.DisplayName;
+
+        var (titled, titleSource) = Layered(
+            fields => fields.Title, "freeharbor.title", "homepage.name", "org.opencontainers.image.title");
+        var title = titled ?? name;
+        var (description, descriptionSource) = Layered(
+            fields => fields.Description,
             "freeharbor.description", "homepage.description", "org.opencontainers.image.description");
+        var (iconValue, iconSource) = Layered(fields => fields.Icon, "freeharbor.icon", "homepage.icon");
+        var (icon, iconFrom) = Icon(iconValue, iconSource, container.Image, title);
 
         var links = Links(labels, image, container.Ports);
-        var primaryName = First("freeharbor.primary");
+        var primaryName = First("freeharbor.primary").Value;
+
         // The image's project site is a link and never what Open follows: Open is for what this
         // container serves.
         var served = links.Where(link => link.Served).ToList();
@@ -157,37 +183,61 @@ public static class ContainerDetails
         return new ResolvedDetails(
             title,
             description,
-            Icon(overrides?.Icon ?? First("freeharbor.icon", "homepage.icon"), container.Image, title),
+            icon,
             HueOf(name),
             links,
             primary,
-            First("freeharbor.group"));
+            First("freeharbor.group").Value)
+        {
+            TitleSource = titled is null ? (service is null ? "container name" : "service name") : titleSource,
+            DescriptionSource = description is null ? "none" : descriptionSource,
+            IconSource = iconFrom,
+        };
     }
 
     /// <summary>Resolve a compose project as a whole (DD295).</summary>
     /// <param name="project">The project's compose name.</param>
-    /// <param name="fields">What its project files say about it, or <see langword="null"/>.</param>
+    /// <param name="layers">What was saved and what its files say, first source first.</param>
     /// <returns>
-    /// Its details: the file's title or the compose name, the file's description or none, the file's
+    /// Its details: a layer's title or the compose name, a layer's description or none, a layer's
     /// icon or a monogram. No links: a project's Open is its primary service's, which is DD297's.
     /// </returns>
     /// <remarks>
     /// No labels here, because no label describes a project: labels are a container's, and a
     /// project is not one. That gap is the whole reason the project files exist.
     /// </remarks>
-    public static ResolvedDetails ResolveProject(string project, DetailFields? fields)
+    public static ResolvedDetails ResolveProject(string project, IReadOnlyList<DetailLayer>? layers = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(project);
+        var given = layers ?? [];
 
-        var title = fields?.Title ?? project;
-        return new ResolvedDetails(
-            title,
-            fields?.Description,
-            Icon(fields?.Icon, image: "", title),
-            HueOf(project),
-            [],
-            null,
-            null);
+        var (titled, titleSource) = Pick(given, fields => fields.Title);
+        var (description, descriptionSource) = Pick(given, fields => fields.Description);
+        var (iconValue, iconSource) = Pick(given, fields => fields.Icon);
+        var title = titled ?? project;
+        var (icon, iconFrom) = Icon(iconValue, iconSource, image: "", title);
+
+        return new ResolvedDetails(title, description, icon, HueOf(project), [], null, null)
+        {
+            TitleSource = titled is null ? "compose project name" : titleSource,
+            DescriptionSource = description is null ? "none" : descriptionSource,
+            IconSource = iconFrom,
+        };
+    }
+
+    /// <summary>The first layer that sets a field, and which layer that was.</summary>
+    private static (string? Value, string Source) Pick(
+        IReadOnlyList<DetailLayer> layers, Func<DetailFields, string?> field)
+    {
+        foreach (var layer in layers)
+        {
+            if (field(layer.Fields) is { } value)
+            {
+                return (value, layer.Source);
+            }
+        }
+
+        return (null, "");
     }
 
     /// <summary>Which hue a name sits on: the same one on every machine and every run.</summary>
@@ -233,32 +283,34 @@ public static class ContainerDetails
         return Bundled.Contains(canonical) ? canonical : null;
     }
 
-    private static DetailIcon Icon(string? labelled, string image, string title)
+    private static (DetailIcon Icon, string Source) Icon(
+        string? given, string givenSource, string image, string title)
     {
-        if (labelled is not null && !IsRemote(labelled))
+        if (given is not null && !IsRemote(given))
         {
-            if (Path.IsPathFullyQualified(labelled))
+            if (Path.IsPathFullyQualified(given))
             {
-                return new DetailIcon(IconKind.File, labelled);
+                return (new DetailIcon(IconKind.File, given), givenSource);
             }
 
             // Homepage spells a bundled icon as a file name, postgres.png or postgres.svg.
-            var stem = Path.GetFileNameWithoutExtension(labelled).ToLowerInvariant();
+            var stem = Path.GetFileNameWithoutExtension(given).ToLowerInvariant();
             if (Known(stem) is { } bundled)
             {
-                return new DetailIcon(IconKind.Bundled, bundled);
+                return (new DetailIcon(IconKind.Bundled, bundled), givenSource);
             }
         }
 
         if (BundledFor(image) is { } byImage)
         {
-            return new DetailIcon(IconKind.Bundled, byImage);
+            return (new DetailIcon(IconKind.Bundled, byImage), $"bundled icon for {byImage}");
         }
 
         var letter = title.FirstOrDefault(char.IsLetterOrDigit);
-        return new DetailIcon(
+        return (new DetailIcon(
             IconKind.Monogram,
-            letter == default ? "?" : char.ToUpper(letter, CultureInfo.InvariantCulture).ToString());
+            letter == default ? "?" : char.ToUpper(letter, CultureInfo.InvariantCulture).ToString()),
+            "the title's first letter");
     }
 
     private static bool IsRemote(string value) =>

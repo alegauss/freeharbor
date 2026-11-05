@@ -126,6 +126,10 @@ internal static class WindowCapture
         if (fixture)
         {
             window.Containers.ProjectFiles = FreeHarbor.Core.Fixtures.SampleMachine.ProjectFiles;
+
+            // DD296: and nothing saved, or the picture would carry whatever this account edited.
+            window.Containers.Saved = new FreeHarbor.Core.Details.DetailStore(
+                Path.Combine(Path.GetTempPath(), $"freeharbor-capture-{Guid.NewGuid():N}.json"));
         }
 
         var code = Failed;

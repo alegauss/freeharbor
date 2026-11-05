@@ -106,7 +106,7 @@ public sealed class IconTileTests
                 [ProjectFile.WorkingDirLabel] = folder,
                 ["freeharbor.title"] = "Label title",
             }),
-            (dir, _) => string.Equals(dir, folder, StringComparison.Ordinal) ? file : null);
+            (dir, _) => string.Equals(dir, folder, StringComparison.Ordinal) ? [file] : []);
         var header = ContainerRow.ProjectHeader("shop", [child], collapsed: false);
 
         // The file beats the label: it is read on every refresh, where a label needs a recreate.

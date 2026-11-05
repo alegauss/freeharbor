@@ -167,6 +167,7 @@
 - ✅ **DD241** **the driver cannot reach the compaction, so the one path with a UAC prompt is only ever exercised by hand** — --compact drives the compaction and goes on into the elevated half where the page offers it, stopping at the UAC prompt because that one is nobody's to automate.
 - ✅ **DD294** **A container shows only its name and image, so nothing says what it is for or gives it an icon** — Rows draw an icon tile with the resolved title and description (design superseded: image labels arrive on the list) (design recorded in `src/FreeHarbor.Core/Details/ContainerDetails.cs`).
 - ✅ **DD295** **A compose project has no title, description or icon of its own, only the directory name compose gave it** — An x-freeharbor block is read through compose in the background, under .freeharbor field by field (design recorded in `src/FreeHarbor.Core/Details/ComposeExtension.cs`).
+- ✅ **DD296 (the FreeHarbor store)** **A container from someone else's compose file or a docker run cannot be given a title, icon or link** — Edit details from a row's menu saves title, description and icon in FreeHarbor, each field naming its source with Reset.
 
 ## Block D — Container operations (what a user came to do)
 

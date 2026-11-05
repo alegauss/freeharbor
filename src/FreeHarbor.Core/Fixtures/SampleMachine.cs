@@ -184,9 +184,9 @@ public sealed class SampleMachine : IEngineClient
     /// the reader as well as the screen. The worker is renamed and the rest left to their labels,
     /// which is the override the file exists for.
     /// </remarks>
-    public static Details.ProjectFileDetails? ProjectFiles(string? folder, string? configFiles) =>
+    public static IReadOnlyList<Details.ProjectFileDetails> ProjectFiles(string? folder, string? configFiles) =>
         string.Equals(folder, ProjectFolder, StringComparison.OrdinalIgnoreCase)
-            ? Details.ProjectFile.Parse(
+            ? [Details.ProjectFile.Parse(
                 """
                 title: Storefront
                 description: Shop API, the worker behind it and the Postgres they share
@@ -195,8 +195,8 @@ public sealed class SampleMachine : IEngineClient
                     title: Order worker
                     description: Charges cards and sends receipts
                 """,
-                Path.Combine(ProjectFolder, Details.ProjectFile.Folder))
-            : null;
+                Path.Combine(ProjectFolder, Details.ProjectFile.Folder))]
+            : [];
 
     private static PortBinding Published(int host, int inside) => new()
     {

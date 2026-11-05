@@ -5,17 +5,18 @@
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
 - 💭 **DD303** (deps: —) **Testcontainers detects the engine on about one run in two even with an API version the engine accepts** — Whether the misses are docker-java's or the pipe's DD142 bursts decides who fixes it, and nobody has set the runs against the journal. → §DD303
+- 📋 **DD305** (deps: —) **The error-mode test fails now and then in a full run and passes alone, with nothing changed** — A red gate nobody can reproduce teaches people to rerun until green, which is how a real loss of the flag would slip through. → §DD305
 
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)
 
-- 📋 **DD296** (deps: DD294 ✅, DD295 ✅) **A container from someone else's compose file or a docker run cannot be given a title, icon or link** — An Edit details screen that saves title, description, icon and links where Settings says: FreeHarbor's store by default, or the project's .freeharbor or compose. → §DD296
+- ⏳ **DD296** (deps: DD294 ✅, DD295 ✅) **A container from someone else's compose file or a docker run cannot be given a title, icon or link** — Saving to .freeharbor or x-freeharbor, the project rail and target, links and the one-time compose diff are left. → §DD296
 - 📋 **DD297** (deps: DD294 ✅) **A project header names the project and a count, with no icon, no description and no way to open what it serves** — A group header carries icon, description, an Open button and Start/Stop; port links become chips; standalone containers sit in their own block, one verb per row. → §DD297
 - 📋 **DD298** (deps: DD297) **A project of twenty containers and ten links fills the page, and its two broken services sit among eighteen healthy ones** — One primary link and two pinned ones are buttons, the rest a filterable menu; services fold into freeharbor.group tiers, and a healthy tier stays folded. → §DD298
 - 📋 **DD299** (deps: DD294 ✅) **Nothing shows one project whole: its endpoints, every service, and why the one that stopped stopped** — Clicking a project or a standalone container opens a detail page with its endpoints, every service, recent output and the daemon's words for a failure. → §DD299
 - 📋 **DD300** (deps: DD294 ✅, DD297) **The containers page has one dense layout, so a user with five projects reads a table built for forty** — A Cards view shows each project as a card with icon, description, links and its services, beside List behind a switch; the choice, filter and sort persist. → §DD300
-- 📋 **DD301** (deps: DD295 ✅, DD296) **Nothing the user prefers can be set in the window, so where an edit is saved cannot be chosen at all** — A Settings destination chooses where edits are saved (FreeHarbor, .freeharbor or the compose file), lists the projects that differ and states the read order. → §DD301
+- 📋 **DD301** (deps: DD295 ✅, DD296 ⏳) **Nothing the user prefers can be set in the window, so where an edit is saved cannot be chosen at all** — A Settings destination chooses where edits are saved (FreeHarbor, .freeharbor or the compose file), lists the projects that differ and states the read order. → §DD301
 
 ## Block D — Container operations (what a user came to do)
 
