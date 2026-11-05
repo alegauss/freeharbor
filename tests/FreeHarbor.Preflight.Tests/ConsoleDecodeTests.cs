@@ -131,6 +131,7 @@ public sealed class ConsoleDecodeTests
         // Through an actual process, because the ordering above is a decision and this is the
         // pumping that feeds it. The pause is what makes it an assertion rather than a race: the
         // first write is read and recorded long before the second one happens.
+        var clock = System.Diagnostics.Stopwatch.StartNew();
         var ran = ConsoleTool.Run(
             TimeSpan.FromSeconds(30),
             Path.Combine(Environment.SystemDirectory, "cmd.exe"),
@@ -144,9 +145,14 @@ public sealed class ConsoleDecodeTests
 
         Assert.True(banner >= 0, $"nothing on stderr reached the output: {ran.Output}");
         Assert.True(summary >= 0, $"nothing on stdout reached the output: {ran.Output}");
+        // DD308: this inverted once on CI and nowhere else. The run's length and the pool's backlog
+        // are what tell a pump read delayed past the two-second pause from a busy runner, so the
+        // failure carries both rather than only the verdict.
         Assert.True(
             banner < summary,
             "what was written to stderr first came back last, which is the two buffers being "
-            + "appended rather than interleaved");
+            + $"appended rather than interleaved. The run took {clock.ElapsedMilliseconds} ms "
+            + $"with {ThreadPool.PendingWorkItemCount} pool items queued over {ThreadPool.ThreadCount} "
+            + $"threads; the output was: {ran.Output}");
     }
 }

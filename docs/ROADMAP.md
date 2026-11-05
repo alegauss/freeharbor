@@ -4,8 +4,6 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
-- 📋 **DD308** (deps: —) **On CI a tool's stderr line once came back after a stdout line it was written two seconds before** — The order is what makes a repair transcript readable, and the one failure has no cause shown yet. → §DD308
-
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)

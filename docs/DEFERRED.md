@@ -4,6 +4,7 @@
 
 - ⏸ **DD321** (deps: —) **In a full test run the pipe relay once took no second connection for thirty seconds, then passed alone** — set aside (Needs a full run that fails it.): The next failing run's message says whether the relay stopped accepting. → §DD321
 - ⏸ **DD303** (deps: —) **Testcontainers detects the engine on about one run in two even with an API version the engine accepts** — set aside (Needs Turing runs.): Whether the misses are docker-java's or the pipe's DD142 bursts decides who fixes it, and nobody has set the runs against the journal. → §DD303
+- ⏸ **DD308** (deps: —) **On CI a tool's stderr line once came back after a stdout line it was written two seconds before** — set aside (Needs a CI run that fails it.): The next CI failure's message shows the cause. → §DD308
 
 ## Block B — The daemon client (talk to the engine)
 
