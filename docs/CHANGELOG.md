@@ -175,6 +175,7 @@
 - ✅ **DD298** **A project of twenty containers and ten links fills the page, and its two broken services sit among eighteen healthy ones** — Past three links, Open and two pinned ones lead a link menu; past five services, a card shows a health bar (design recorded in `docs/specs/DD294-containers-redesign.md`).
 - ✅ **DD299** **Nothing shows one project whole: its endpoints, every service, and why the one that stopped stopped** — The detail page has a rail of projects and standalone containers, a Recent output pane, and opens from a title (design recorded in `docs/specs/DD294-containers-redesign.md`).
 - ✅ **DD300** **The containers page has one dense layout, so a user with five projects reads a table built for forty** — All, Running, Stopped and Problems chips narrow both views, a counts line says what the machine holds, and the chip is remembered (design recorded in `docs/specs/DD294-containers-redesign.md`).
+- ✅ **DD319** **A save of edited details fails now and then when Windows briefly holds the file just written** — The details store and the project file replace their file through a helper that waits out a brief lock before reporting failure (design recorded in `src/FreeHarbor.Core/Details/AtomicFile.cs`).
 
 ## Block D — Container operations (what a user came to do)
 

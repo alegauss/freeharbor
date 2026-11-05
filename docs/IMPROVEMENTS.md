@@ -94,26 +94,6 @@ fallback.
 Settings persist in the DD39 store and the page draws from the fixture (L6). Layout:
 docs/specs/DD294-containers-redesign.md section 7.
 
-### §DD319 A save that meets a brief lock
-
-On 5 November 2026 `DetailStoreTests.A_save_is_read_back_by_a_store_opened_later` failed
-once in a full run and passed three times alone. The assertion that failed was `Save`
-returning false, so `DetailStore.Save` caught an `IOException`, either from
-`File.WriteAllText` on `details.json.tmp` or from the `File.Move` over the real file.
-
-On Windows the usual cause is a scanner or the indexer holding a file it just saw
-written, for a few milliseconds. The same window hits the edit dialog: a Save the user
-pressed reports that nothing reached the disk, and the edit lives only until the window
-closes.
-
-What to build: retry the write and the move a few times with a short backoff (three
-tries, 50 ms apart, say) before returning false, the way an atomic replace on Windows
-generally has to. Keep the false return for a lock that outlasts the retries, because
-the dialog already says so.
-
-The test that found it stays as it is. A retry inside the store is the fix; a retry in
-the test would hide the same failure from the user.
-
 ## Block D — Container operations (what a user came to do)
 
 ## Block E — Images, volumes and networks

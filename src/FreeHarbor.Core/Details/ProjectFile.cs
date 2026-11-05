@@ -241,9 +241,9 @@ public static class ProjectFile
         {
             Directory.CreateDirectory(folder);
             var path = Path.Combine(folder, FileName);
-            var temporary = path + ".tmp";
-            File.WriteAllText(temporary, text.ToString());
-            File.Move(temporary, path, overwrite: true);
+
+            // DD319: the same brief lock the details store met, waited out the same way.
+            AtomicFile.Replace(path, text.ToString());
             return path;
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException

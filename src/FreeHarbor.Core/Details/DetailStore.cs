@@ -90,9 +90,9 @@ public sealed class DetailStore
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(_path))!);
-            var temporary = _path + ".tmp";
-            File.WriteAllText(temporary, JsonSerializer.Serialize(snapshot, Layout));
-            File.Move(temporary, _path, overwrite: true);
+
+            // DD319: through a helper that waits out a scanner holding the file it just saw written.
+            AtomicFile.Replace(_path, JsonSerializer.Serialize(snapshot, Layout));
             return true;
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException
