@@ -20,8 +20,9 @@ What to do first: reproduce with the properties file removed, and set the run's
 timestamps against the host journal (`%LOCALAPPDATA%\FreeHarbor\engine.log`). Failures
 that line up with refused pipe instances are FreeHarbor's and belong with DD142's
 mechanism; failures on a quiet journal are docker-java's and go back to Turing as a
-client note. DD321 reproduced a relay going 30 seconds without a new pipe instance under
-a full test run, which is the engine-side reading made measurable.
+client note. DD321 is a full-run test failure on the same pipe, a second connection not
+made in 30 seconds, whose cause is still open; if its message shows the relay stopped
+accepting, it is this engine-side reading reproduced.
 
 ### §DD305 The error-mode test races its neighbours
 
@@ -65,25 +66,28 @@ the cause is shown, not when a rerun goes green.
 ### §DD321 A relay that stops accepting under load
 
 On 5 November 2026 `PipeSurvivalTests.A_healthy_relay_stumbles_over_nothing` failed once
-in a full run: the first connection to a fresh `EnginePipeRelay` was served, and the
-second waited the whole 30 seconds `ReachableAsync` gives `ConnectAsync`, then failed.
-The same test passed three times alone in about 200 ms.
+in a full run: the test took 30 seconds and its second `ReachableAsync` returned false.
+It passed three times alone in about 200 ms. The assertion carried no message, so the
+reason the helper recorded was never printed.
 
-A wait that long with nothing wrong is not slowness. Either the accept loop had not put
-a new pipe instance up after serving the first, or a full run's thread pool was starved
-enough that the loop's continuation did not run for 30 seconds. The first is a relay
-defect; the second is the test's.
+Ruled out the same day:
 
-Why it matters beyond the gate: DD142 counts episodes where the relay "stopped
-accepting" and every docker client fails together, and DD303 asks whether
-Testcontainers' misses land in them. A relay that can go 30 seconds between instances
-under load is the same symptom, reproduced in a test and not on a user's machine.
+- The accept loop being starved. It runs on its own thread since DD142, and the next
+  listener goes up before the connection in hand is served; its retry waits on a wait
+  handle, not on the pool.
+- The client's timeout running out in the pool's queue. A probe against a listening pipe
+  with the pool starved: `ConnectAsync(2000)` connected after 12 seconds instead of timing
+  out. The clock starts inside the task, so starvation delays a connect but cannot fail it.
 
-What to do: run the suite with the relay's `Figures` and `Stumbles` written out when
-this test fails, to tell an instance that was never re-armed from a loop that was never
-scheduled. If it is never re-armed, keep one instance listening ahead of the one being
-served, as the named-pipe server pattern does; if it is scheduling, give the accept loop
-a dedicated thread, which DD279 already joins on dispose.
+Left: the connect failing with an `IOException`, or the relay really having no listener
+up for 30 seconds. The test now says which: the exception, how long the attempt took,
+and the relay's `Figures`, which say how many it accepted and whether it is still
+accepting.
+
+What to do next: read that message from the next failing run. A relay that says it has
+stopped accepting is DD142's defect and belongs with DD303's engine-side reading; one
+still accepting, with a fast `IOException`, is the client's, and the helper should retry
+that error as it retries a timeout.
 
 ## Block B — The daemon client (talk to the engine)
 

@@ -2,6 +2,8 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
+- ⏸ **DD321** (deps: —) **In a full test run the pipe relay once took no second connection for thirty seconds, then passed alone** — set aside (Needs a full run that fails it.): The next failing run's message says whether the relay stopped accepting. → §DD321
+
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)

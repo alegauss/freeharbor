@@ -111,6 +111,7 @@
 - ✅ **DD280** **the filesystem check refuses on a distribution that will not start, which is the one whose filesystem needs it** — A distribution that will not start is checked by the UUID read off its ext4.vhdx and a launch under the hold that attaches the disk; it repaired the disk it was measured on.
 - ✅ **DD288** **The engine refuses clients below API 1.40 and FreeHarbor offers no way to admit them** — freeharbor --min-api 1.24 sets DOCKER_MIN_API_VERSION at engine start, so a 1.32 client lists containers (design recorded in `src/FreeHarbor.Core/Engine/EngineApiFloor.cs`).
 - ✅ **DD318** **A CI run whose test host crashes says nothing about which test was running when it died** — check.yml runs the tests with --blame, so a crashed test host names the tests that were running when it died.
+- ✅ **DD321 (diagnosis)** **In a full test run the pipe relay once took no second connection for thirty seconds, then passed alone** — The test now names the exception, the time it took and the relay's figures; pool starvation is ruled out on both ends.
 
 ## Block B — The daemon client (talk to the engine)
 

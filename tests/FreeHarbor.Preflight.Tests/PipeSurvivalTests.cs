@@ -49,6 +49,9 @@ public sealed class PipeSurvivalTests
     /// <summary>Connect once, and say whether the pipe was there to connect to.</summary>
     private static async Task<bool> ReachableAsync(string pipe)
     {
+        // DD321: how long the attempt took goes into the reason, because a refusal after 30 seconds
+        // and one after 30 milliseconds are two different failures and the message used to be the same.
+        var clock = System.Diagnostics.Stopwatch.StartNew();
         try
         {
             using var client = new NamedPipeClientStream(
@@ -69,7 +72,7 @@ public sealed class PipeSurvivalTests
         }
         catch (Exception exception) when (exception is TimeoutException or IOException)
         {
-            Why = $"{exception.GetType().Name}: {exception.Message}";
+            Why = $"{exception.GetType().Name} after {clock.ElapsedMilliseconds} ms: {exception.Message}";
             return false;
         }
     }
@@ -183,8 +186,11 @@ public sealed class PipeSurvivalTests
         await using var relay = new EnginePipeRelay(new Answering(), pipe);
         relay.Start();
 
-        Assert.True(await ReachableAsync(pipe));
-        Assert.True(await ReachableAsync(pipe));
+        // DD321: this failed once in a full run, on the second connection after 30 seconds, and said
+        // nothing else. The reason and the relay's own figures are what tell a relay that stopped
+        // accepting from a client that never got to try.
+        Assert.True(await ReachableAsync(pipe), $"first connection: {Why}; {relay.Figures}");
+        Assert.True(await ReachableAsync(pipe), $"second connection: {Why}; {relay.Figures}");
         Assert.Equal(0, relay.Stumbles);
     }
 
