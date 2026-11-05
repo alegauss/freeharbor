@@ -68,27 +68,28 @@ then everything after them in DD294's order.
 
 ### §DD296 The edit details screen
 
-Labels and `x-freeharbor` only help someone who owns the file. Most containers on a
-developer machine come from a compose file someone else wrote, or from a one-off `docker
-run` with a random name. So the window gets an edit screen of its own, reached from a
-row's overflow, a card's menu, the detail page and the "Add icon and description" link
-an undescribed container shows.
+Labels and `x-freeharbor` only help someone who owns the file. Most containers come from
+a compose file someone else wrote, or from a one-off `docker run`. So the window gets an
+edit screen, reached from a row's overflow, a card's menu, the detail page and the "Add
+icon and description" link.
 
-The screen edits title, description, icon (a bundled icon picker, or a local image file)
-and the links: label, URL, which one is primary, which are pinned. Each field shows
-where its current value comes from (label, x-freeharbor, image, fallback), so the user
-can see what a save will override, and a Reset returns it to that source.
+The dialog always says what is being edited. Its header names the compose project and
+the full path of its files, with Copy path and Open folder. The pane names the target
+(project or service) and the key a save is stored under (`storefront / db`), then the
+container name, image and short id, so a user never edits the wrong thing. The left rail
+lists the project and each service with its service and container name.
 
-Saving writes to FreeHarbor's own store (the ArtefactStore that DD39 uses), never to the
-user's files, and the change shows at once. The key is project plus service for compose,
-which survives a recreate, and the container name for a standalone container.
+The screen edits title, description, icon (bundled picker, colour, monogram or a local
+file) and links. Each field shows where its value comes from (x-freeharbor, label,
+image, fallback), with Reset to source.
 
-FreeHarbor does not edit the compose file or the Dockerfile by default. A file in the
-user's repository is shared with their team, re-serialising YAML loses comments and
-anchors, and a label change only lands after a recreate. Copy to compose is an explicit
-action: it shows the `x-freeharbor` snippet to paste, and writes it only after a diff
-the user confirms. A Dockerfile is never written; at most its `LABEL` line is offered to
-copy.
+Saving writes to FreeHarbor's own store (the ArtefactStore DD39 uses), never the user's
+files, and shows at once. The key is project plus service, which survives a recreate; a
+standalone container is keyed by name, and a name docker made up gets a warning.
+
+FreeHarbor never edits the compose file or Dockerfile by default: the file is shared
+with a team, re-serialising YAML loses comments, and a label change needs a recreate.
+Copy to compose writes only the `x-freeharbor` block, after a diff the user confirms.
 
 ### §DD297 The enriched list
 
