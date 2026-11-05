@@ -161,11 +161,22 @@
   <!-- One box, over the rows already in hand. Never a second call to the daemon: every field it
        matches is on the row, and asking the engine to search would be a round trip to answer a
        question this window can answer itself. -->
-  <Grid Grid.Row="0" Margin="10,0,10,10">
-    <TextBox x:Name="Filter" HorizontalAlignment="Right" Style="{DynamicResource FilterBox}"
+  <!-- DD300: the Cards and List switch sits beside the box, and both views draw the same rows
+       through the same filter and sort, so switching keeps what was narrowed. -->
+  <StackPanel Grid.Row="0" x:Name="Toolbar" Orientation="Horizontal" HorizontalAlignment="Right"
+              Margin="10,0,10,10">
+    <!-- The switch before the box and not after it: the box keeps the right edge it always held,
+         and a capture showed a button placed past it clipped by the page's edge. -->
+    <Button x:Name="CardsSwitch" Content="Cards" Click="ChooseCards" Margin="0,0,4,0"
+            VerticalAlignment="Center" FontSize="12" Padding="10,3" MinWidth="0"
+            ToolTip="One card per project" />
+    <Button x:Name="ListSwitch" Content="List" Click="ChooseList" Margin="0,0,10,0"
+            VerticalAlignment="Center" FontSize="12" Padding="10,3" MinWidth="0"
+            ToolTip="One row per container" />
+    <TextBox x:Name="Filter" Style="{DynamicResource FilterBox}"
              TextChanged="FilterChanged"
              ToolTip="Narrow by name, image, state or port" />
-  </Grid>
+  </StackPanel>
 
         <Grid Grid.Row="1" x:Name="HeaderRow" Margin="10,0,10,6">
 <Grid.ColumnDefinitions>
@@ -472,6 +483,207 @@
   <!-- DD299. The detail page, laid over the list rather than replacing it: the list stays built and
        collapsed underneath, so Back finds it at the scroll position it was left at. Its DataContext
        is a DetailView, rebuilt from the rows in hand on every redraw like the list itself. -->
+  <!-- DD300. The cards view: one card per project, then the standalone containers as one-line cards.
+       Filled from code with the same rows the list draws, through DetailView.Cards. -->
+  <ScrollViewer Grid.Row="1" Grid.RowSpan="2" x:Name="CardsPane" Visibility="Collapsed"
+                VerticalScrollBarVisibility="Auto" Padding="10,0,10,10"
+                SizeChanged="CardsPaneSized">
+    <StackPanel>
+      <ItemsControl x:Name="ProjectCards">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <UniformGrid Columns="{Binding CardColumns, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                         VerticalAlignment="Top" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <!-- A click on the card outside its buttons opens the project's page; a button marks its
+                 own click handled, so it never reaches here. -->
+            <Border Margin="0,0,12,12" Padding="16,14" CornerRadius="8" BorderThickness="1"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    Tag="{Binding}" MouseLeftButtonUp="CardClicked" Cursor="Hand">
+              <StackPanel>
+                <DockPanel>
+                  <Border DockPanel.Dock="Left" Width="44" Height="44" CornerRadius="11" Margin="0,0,12,0"
+                          VerticalAlignment="Top" Background="{Binding Head.TileFill}">
+                    <Grid>
+                      <TextBlock Text="{Binding Head.TileGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                                 Foreground="{x:Static ui:Palette.TileInk}"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding Head.TileLetter}" FontSize="18" FontWeight="SemiBold"
+                                 Foreground="{x:Static ui:Palette.TileInk}"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      <Image Source="{Binding Head.TilePicture}" Width="28" Height="28" Stretch="Uniform" />
+                    </Grid>
+                  </Border>
+                  <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                      <Button Content="{Binding Head.Title}" Tag="{Binding Head}" Click="ShowDetails"
+                              FontSize="16" Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                              Style="{StaticResource TextLink}" VerticalAlignment="Center" />
+                      <Border Margin="10,0,0,0" CornerRadius="5" Padding="8,2" VerticalAlignment="Center"
+                              Background="{Binding Head.ChipFill}" ToolTip="{Binding Head.ChipEvidence}">
+                        <TextBlock FontSize="12" Foreground="{Binding Head.ChipText}"><Run
+                                   Text="{Binding Head.ChipShape, Mode=OneWay}" FontSize="10" /> <Run
+                                   Text="{Binding Head.ChipWord, Mode=OneWay}" /></TextBlock>
+                      </Border>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Head.Description}" FontSize="12" Margin="0,2,0,0"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Visibility="{Binding Head.HasDescription, Converter={StaticResource Shown}}" />
+                  </StackPanel>
+                </DockPanel>
+
+                <ItemsControl ItemsSource="{Binding Problems}" Margin="0,10,0,0">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <TextBlock FontSize="12" TextTrimming="CharacterEllipsis"
+                                 Foreground="{x:Static ui:Palette.DangerBrush}"><Run Text="▲" FontSize="10" /> <Run
+                                 Text="{Binding Sentence, Mode=OneWay}" /></TextBlock>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- The links: Open filled in the accent, the rest as the list's chips. A stopped
+                     project dims these and never the card, so its Start stays readable. -->
+                <WrapPanel Margin="0,12,0,0">
+                  <WrapPanel.Style>
+                    <Style TargetType="WrapPanel">
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Head.AnyUp}" Value="False">
+                          <Setter Property="Opacity" Value="0.5" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </WrapPanel.Style>
+                  <Button Content="{Binding Head.OpenLabel}" Tag="{Binding Head.OpenLink.Url}" Click="OpenPort"
+                          ToolTip="{Binding Head.OpenLink.Url}" IsEnabled="{Binding Head.CanOpen}"
+                          Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
+                          Margin="0,0,6,6" MinWidth="0"
+                          Visibility="{Binding Head.ShowsOpen, Converter={StaticResource Shown}}" />
+                  <ItemsControl ItemsSource="{Binding SecondaryLinks}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="0,0,0,6">
+                          <Button Content="{Binding Label}" Tag="{Binding Url}" Click="OpenPort"
+                                  ToolTip="{Binding Url}" Style="{StaticResource PortLink}"
+                                  Visibility="{Binding CanOpen, Converter={StaticResource Shown}}" />
+                          <Button Content="{Binding Label}" Tag="{Binding CopyText}" Click="CopyAddress"
+                                  ToolTip="{Binding CopyText}" Style="{StaticResource PortCopy}"
+                                  Visibility="{Binding CopiesOnly, Converter={StaticResource Shown}}" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </WrapPanel>
+
+                <ItemsControl ItemsSource="{Binding Services}" Margin="0,8,0,0">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <TextBlock FontSize="12" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
+                                 ToolTip="{Binding ChipEvidence}"><Run Text="{Binding ChipShape, Mode=OneWay}"
+                                 FontSize="10" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />  <Run
+                                 Text="{Binding Title, Mode=OneWay}"
+                                 Foreground="{DynamicResource TextFillColorPrimaryBrush}" />  <Run
+                                 Text="{Binding Image, Mode=OneWay}"
+                                 Foreground="{DynamicResource TextFillColorTertiaryBrush}" /></TextBlock>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- The one verb, which is the accent button only when it is Start (spec section 5,
+                     fixed), because starting is what a stopped card is opened for. No Restart beside
+                     it: DD36 keeps a row to its one verb, and the project's page is a click away. -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                  <TextBlock Text="{Binding Head.Pending}" VerticalAlignment="Center" Margin="0,0,8,0"
+                             Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                             Visibility="{Binding Head.IsPending, Converter={StaticResource Shown}}" />
+                  <Button Content="Stop" Tag="{Binding Head}" Click="PrimaryAction"
+                          Style="{DynamicResource RowAction}"
+                          Visibility="{Binding Head.CanStop, Converter={StaticResource Shown}}" />
+                  <Button Content="Start" Tag="{Binding Head}" Click="PrimaryAction"
+                          Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
+                          MinWidth="0"
+                          Visibility="{Binding Head.CanStart, Converter={StaticResource Shown}}" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <TextBlock x:Name="StandaloneHeading" Text="Standalone containers" Margin="0,8,0,10" FontSize="12"
+                 FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+      <ItemsControl x:Name="StandaloneCards">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Margin="0,0,0,8" Padding="12,10" CornerRadius="8" BorderThickness="1"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+              <DockPanel>
+                <Border DockPanel.Dock="Left" Width="40" Height="40" CornerRadius="10" Margin="0,0,12,0"
+                        Background="{Binding TileFill}">
+                  <Grid>
+                    <TextBlock Text="{Binding TileGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                               Foreground="{x:Static ui:Palette.TileInk}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding TileLetter}" FontSize="17" FontWeight="SemiBold"
+                               Foreground="{x:Static ui:Palette.TileInk}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Image Source="{Binding TilePicture}" Width="26" Height="26" Stretch="Uniform" />
+                  </Grid>
+                </Border>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                  <Button Content="{Binding OpenLabel}" Tag="{Binding OpenLink.Url}" Click="OpenPort"
+                          ToolTip="{Binding OpenLink.Url}" IsEnabled="{Binding CanOpen}"
+                          Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
+                          Margin="0,0,6,0" MinWidth="0"
+                          Visibility="{Binding ShowsOpen, Converter={StaticResource Shown}}" />
+                  <Button Content="Logs" Tag="{Binding}" Click="OpenLogs" Style="{DynamicResource RowAction}" />
+                  <Button Content="{Binding PrimaryVerb}" Tag="{Binding}" Click="PrimaryAction"
+                          Style="{DynamicResource RowAction}"
+                          Visibility="{Binding HasPrimary, Converter={StaticResource Shown}}" />
+                  <TextBlock Text="{Binding Pending}" VerticalAlignment="Center"
+                             Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                             Visibility="{Binding IsPending, Converter={StaticResource Shown}}" />
+                </StackPanel>
+                <StackPanel VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal">
+                    <Button Content="{Binding Title}" Tag="{Binding}" Click="ShowDetails"
+                            Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontSize="14"
+                            Style="{StaticResource TextLink}" VerticalAlignment="Center" />
+                    <Border Margin="10,0,0,0" CornerRadius="5" Padding="8,2" VerticalAlignment="Center"
+                            Background="{Binding ChipFill}" ToolTip="{Binding ChipEvidence}">
+                      <TextBlock FontSize="12" Foreground="{Binding ChipText}"><Run
+                                 Text="{Binding ChipShape, Mode=OneWay}" FontSize="10" /> <Run
+                                 Text="{Binding ChipWord, Mode=OneWay}" /></TextBlock>
+                    </Border>
+                  </StackPanel>
+                  <TextBlock FontSize="12" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
+                             Foreground="{DynamicResource TextFillColorTertiaryBrush}"><Run
+                             Text="{Binding Image, Mode=OneWay}" /> · <Run Text="{Binding Status, Mode=OneWay}" /></TextBlock>
+                  <StackPanel Orientation="Horizontal"
+                              Visibility="{Binding InvitesDetails, Converter={StaticResource Shown}}">
+                    <TextBlock Text="No details yet · " FontSize="12" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <Button Content="Add icon and description" Tag="{Binding}" Click="EditDetails"
+                            Style="{StaticResource TextLink}" />
+                  </StackPanel>
+                </StackPanel>
+              </DockPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+
   <!-- A DockPanel and not a two-column Grid: the guard that pairs a list's header with its rows
        counts this file's ColumnDefinitions blocks, and the detail page captions nothing. -->
   <DockPanel Grid.Row="0" Grid.RowSpan="3" x:Name="Detail" Visibility="Collapsed">

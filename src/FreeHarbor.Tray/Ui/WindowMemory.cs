@@ -69,6 +69,15 @@ public sealed record WindowMemory
     /// <summary>Height of the log window, in device-independent units. Zero for the markup's own.</summary>
     public int LogHeight { get; init; }
 
+    /// <summary>The containers page's view, <see cref="ListView"/> or <see cref="CardsView"/> (DD300).</summary>
+    public string ContainersView { get; init; } = ListView;
+
+    /// <summary>The containers page's dense view, and the one a window with nothing remembered opens on.</summary>
+    public const string ListView = "List";
+
+    /// <summary>The containers page's view of one card per project (DD300).</summary>
+    public const string CardsView = "Cards";
+
     /// <summary>Whether enough of the remembered window lands on a screen to take hold of it.</summary>
     /// <param name="screens">The monitors that exist now, in the same pixels this was saved in.</param>
     /// <returns><see langword="false"/> where the window would open somewhere nobody can reach it.</returns>

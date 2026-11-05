@@ -422,7 +422,7 @@ public sealed record ContainerRow(
             // never moves where it goes.
             OpenLink = children
                 .OrderBy(child => child.Name, StringComparer.Ordinal)
-                .Select(child => child.Details?.Primary)
+                .Select(child => child.OpenLink)
                 .FirstOrDefault(link => link is not null),
             Collapsed = collapsed,
         };
@@ -1211,10 +1211,33 @@ public sealed record ContainerRow(
             ConfigFiles = configFiles,
             ImageIsGone = container.ImageIsGone,
             Service = service,
-            OpenLink = details.Primary,
+            OpenLink = Openable(details, ports),
             DependsOn = ComposeOrder.DependenciesIn(
                 Label(container, ComposeOrder.DependsOnLabel)),
         };
+    }
+
+    /// <summary>
+    /// The link Open follows: the resolved primary, unless it was made from a port that does not
+    /// speak HTTP.
+    /// </summary>
+    /// <remarks>
+    /// The resolver turns every published TCP port into a link, because it has no list of which
+    /// ports are HTTP (DD294). A port the row already draws as a copy chip (DD297) is not one to
+    /// open in a browser, so Open goes to the first port that is a link, or nowhere. A link somebody
+    /// named, in a label or a project file, is taken as given.
+    /// </remarks>
+    private static DetailLink? Openable(ResolvedDetails details, IReadOnlyList<PortLink> ports)
+    {
+        if (details.LinksSource is not "published ports")
+        {
+            return details.Primary;
+        }
+
+        var http = ports.Where(port => port.IsLink).Select(port => port.Url!).ToHashSet(StringComparer.Ordinal);
+        return details.Primary is { } primary && http.Contains(primary.Url)
+            ? primary
+            : details.Links.FirstOrDefault(link => link.Served && http.Contains(link.Url));
     }
 
     /// <summary>One label, or nothing where it is absent or blank.</summary>

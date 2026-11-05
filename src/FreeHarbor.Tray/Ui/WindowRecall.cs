@@ -68,6 +68,20 @@ internal sealed class WindowRecall
         _memory.Write(_file);
     }
 
+    /// <summary>Whether the containers page was left on its cards (DD300).</summary>
+    internal bool ContainersAsCards =>
+        string.Equals(_memory.ContainersView, WindowMemory.CardsView, StringComparison.Ordinal);
+
+    /// <summary>
+    /// Remember which view the containers page is on, written as it is chosen, like a log's size.
+    /// </summary>
+    /// <param name="cards">Whether it is on its cards.</param>
+    internal void RememberContainersView(bool cards)
+    {
+        _memory = _memory with { ContainersView = cards ? WindowMemory.CardsView : WindowMemory.ListView };
+        _memory.Write(_file);
+    }
+
     private void Remember()
     {
         if (!_sourced)

@@ -80,6 +80,7 @@ internal partial class MainWindow : Window
         // Where it was and what was being read, last time (DD39). The moves belong to WindowRecall;
         // what is this window's own is the one question it asks — which destination is ticked.
         _recall = new WindowRecall(this, new EnginePaths().WindowState, () => Showing);
+        Containers.RecallView(_recall);
 
         // The destination, now that there is one to show. Not in the markup: ticking a destination
         // navigates, and during InitializeComponent there is nothing built to navigate to. A name this

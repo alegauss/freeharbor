@@ -39,6 +39,9 @@ internal static class WindowCapture
     /// <summary>What opens the containers page's detail page on a project before the picture (DD299).</summary>
     public const string DetailFlag = "--detail=";
 
+    /// <summary>What draws the containers page as cards rather than as its list (DD300).</summary>
+    public const string CardsFlag = "--cards";
+
     /// <summary>Render the window to a PNG.</summary>
     /// <param name="args">The output path, a tab header, and <c>--fixture</c>, all optional but the path.</param>
     /// <returns>The process exit code.</returns>
@@ -57,6 +60,10 @@ internal static class WindowCapture
         // DD299: the detail page has no tab of its own, so a capture names the project it is open on.
         var detail = args.FirstOrDefault(a => a.StartsWith(DetailFlag, StringComparison.Ordinal))?[DetailFlag.Length..];
         args = [.. args.Where(a => !a.StartsWith(DetailFlag, StringComparison.Ordinal))];
+
+        // DD300: the containers page's view is named, never inherited from this account's own choice.
+        var cards = args.Contains(CardsFlag, StringComparer.Ordinal);
+        args = [.. args.Where(a => !string.Equals(a, CardsFlag, StringComparison.Ordinal))];
 
         if (args.Length > 2)
         {
@@ -138,6 +145,11 @@ internal static class WindowCapture
             window.Containers.Saved = new FreeHarbor.Core.Details.DetailStore(
                 Path.Combine(Path.GetTempPath(), $"freeharbor-capture-{Guid.NewGuid():N}.json"));
         }
+
+        // Unhooked first, so a capture cannot write the view it was told to draw over the one the
+        // person chose, for the reason WindowRecall refuses to save a placement no screen can reach.
+        window.Containers.ViewChosen = null;
+        window.Containers.UseCards(cards);
 
         if (detail is { Length: > 0 })
         {

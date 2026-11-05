@@ -149,6 +149,68 @@ public sealed class DetailViewTests
         Assert.True(rows[0].TitleIsText);
     }
 
+    // ---- the cards view (DD300) ---------------------------------------------------------------
+
+    private static readonly ListShape ByState = new(ContainerRow.DefaultColumn, Descending: false);
+
+    [Fact]
+    public void Cards_are_one_per_project_then_the_standalone_containers()
+    {
+        var rows = Rows(
+            Summary("shop-1", project: "shop"),
+            Summary("blog-1", "exited", "blog"),
+            Summary("mailpit"));
+
+        var (projects, standalone) = DetailView.Cards(rows, ByState);
+
+        // In the list's order: the project led by a running container first.
+        Assert.Equal([ContainerRow.ProjectId("shop"), ContainerRow.ProjectId("blog")], projects.Select(card => card.Key));
+        Assert.Equal(["mailpit-id"], standalone.Select(row => row.Id));
+    }
+
+    [Fact]
+    public void Cards_keep_the_lists_filter()
+    {
+        // Switching views keeps what was narrowed, because both draw the same rows through one shape.
+        var rows = Rows(Summary("shop-1", project: "shop"), Summary("blog-1", project: "blog"), Summary("mailpit"));
+
+        var (projects, standalone) = DetailView.Cards(rows, ByState.Narrowed("shop"));
+
+        Assert.Equal([ContainerRow.ProjectId("shop")], projects.Select(card => card.Key));
+        Assert.Empty(standalone);
+    }
+
+    [Fact]
+    public void A_cards_secondary_links_leave_out_the_one_open_follows()
+    {
+        var rows = Rows(
+            Summary("shop-web-1", project: "shop", privatePort: 80, published: 8080),
+            Summary("shop-db-1", project: "shop", privatePort: 5432, published: 5432));
+
+        var card = Assert.Single(DetailView.Cards(rows, ByState).Projects);
+
+        Assert.Equal("http://localhost:8080", card.Head.OpenLink!.Url);
+        var link = Assert.Single(card.SecondaryLinks);
+        Assert.True(link.CopiesOnly);
+    }
+
+    [Fact]
+    public void The_chosen_view_is_remembered_and_a_window_with_nothing_remembered_opens_on_the_list()
+    {
+        Assert.Equal(WindowMemory.ListView, new WindowMemory().ContainersView);
+
+        var path = Path.Combine(Path.GetTempPath(), $"freeharbor-view-{Guid.NewGuid():N}.json");
+        try
+        {
+            new WindowMemory { ContainersView = WindowMemory.CardsView }.Write(path);
+            Assert.Equal(WindowMemory.CardsView, WindowMemory.Read(path)!.ContainersView);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     [Fact]
     public void A_page_about_something_gone_is_no_page()
     {

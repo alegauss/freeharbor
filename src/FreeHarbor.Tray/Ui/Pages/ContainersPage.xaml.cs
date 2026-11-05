@@ -165,8 +165,119 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     private void Show()
     {
         ShowList();
+        ShowCards();
         ShowDetail();
     }
+
+    // ---- the cards view (DD300) ---------------------------------------------------------------------
+
+    /// <summary>Whether the page shows its cards rather than its list.</summary>
+    private bool _cards;
+
+    /// <summary>What to tell when the view is chosen, so the window can remember it (DD39).</summary>
+    internal Action<bool>? ViewChosen { get; set; }
+
+    /// <summary>The narrowest a card is drawn, from the spec: the grid fills the width with cards this wide or wider.</summary>
+    private const double CardWidth = 400;
+
+    /// <summary>How many cards fit across, which the cards' UniformGrid binds to.</summary>
+    public static readonly DependencyProperty CardColumnsProperty = DependencyProperty.Register(
+        nameof(CardColumns), typeof(int), typeof(ContainersPage), new PropertyMetadata(1));
+
+    /// <summary>How many cards fit across.</summary>
+    public int CardColumns
+    {
+        get => (int)GetValue(CardColumnsProperty);
+        set => SetValue(CardColumnsProperty, value);
+    }
+
+    /// <summary>
+    /// Open on the view this window was left on, and write the choice down each time it changes (DD39).
+    /// </summary>
+    /// <param name="recall">The window's memory.</param>
+    /// <remarks>
+    /// Here and not in the shell, which owns the chrome and nothing else (DD35): the view is this
+    /// page's, so the shell only hands over where it is remembered.
+    /// </remarks>
+    internal void RecallView(WindowRecall recall)
+    {
+        ArgumentNullException.ThrowIfNull(recall);
+        UseCards(recall.ContainersAsCards);
+        ViewChosen = recall.RememberContainersView;
+    }
+
+    /// <summary>Open on the cards or on the list, without telling anyone: this is the remembered choice arriving.</summary>
+    /// <param name="cards">Whether to show the cards.</param>
+    internal void UseCards(bool cards)
+    {
+        _cards = cards;
+        Show();
+    }
+
+    private void ChooseCards(object sender, RoutedEventArgs e) => Choose(cards: true);
+
+    private void ChooseList(object sender, RoutedEventArgs e) => Choose(cards: false);
+
+    private void Choose(bool cards)
+    {
+        if (_cards == cards)
+        {
+            return;
+        }
+
+        _cards = cards;
+        ViewChosen?.Invoke(cards);
+        Show();
+    }
+
+    private void CardsPaneSized(object sender, SizeChangedEventArgs e) =>
+        CardColumns = Math.Max(1, (int)(e.NewSize.Width / CardWidth));
+
+    /// <summary>A click on a card outside its buttons opens the project's page (DD299, DD300).</summary>
+    private void CardClicked(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: DetailView view })
+        {
+            _detailKey = view.Key;
+            Show();
+        }
+    }
+
+    /// <summary>
+    /// Draw the cards over the same shaped rows the list just drew, or put them away.
+    /// </summary>
+    private void ShowCards()
+    {
+        CardsSwitch.Style = (Style)FindResource(_cards ? "AccentButtonStyle" : "RowAction");
+        ListSwitch.Style = (Style)FindResource(_cards ? "RowAction" : "AccentButtonStyle");
+
+        // The list's own empty state still speaks for both: no rows is no rows in either view.
+        if (!_cards || Empty.Visibility == Visibility.Visible)
+        {
+            CardsPane.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var (projects, standalone) = DetailView.Cards(_rows, _shape);
+        ProjectCards.ItemsSource = projects.Select(view => view with { Head = Dressed(view.Head) }).ToList();
+        StandaloneCards.ItemsSource = standalone;
+        StandaloneHeading.Visibility = projects.Count > 0 && standalone.Count > 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        CardsPane.Visibility = Visibility.Visible;
+        Containers.Visibility = Visibility.Collapsed;
+        HeaderRow.Visibility = Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// Dress a header made outside the list the way the list dresses its own: its refusals by id, the
+    /// wait its containers are under, and the theme's chip.
+    /// </summary>
+    private ContainerRow Dressed(ContainerRow head) =>
+        head.IsProject
+            ? ContainerRow.WithProjectWait(_activity.Dress(head), _rows).WithChip(RowStyle.For(this))
+            : head;
 
     /// <summary>
     /// What the detail page is open on (DD299), or <see langword="null"/> while the list is showing.
@@ -190,16 +301,13 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
             _outputFor = null;
             Detail.Visibility = Visibility.Collapsed;
             Detail.DataContext = null;
-            Filter.Visibility = Visibility.Visible;
+            Toolbar.Visibility = Visibility.Visible;
             return;
         }
 
         // The header the page is about is made here as the list's are, so it is dressed the same way:
         // the theme's chip, its refusals by id, and the wait its containers are under.
-        var head = view.Head.IsProject
-            ? ContainerRow.WithProjectWait(_activity.Dress(view.Head), _rows).WithChip(RowStyle.For(this))
-            : view.Head;
-        Detail.DataContext = view with { Head = head };
+        Detail.DataContext = view with { Head = Dressed(view.Head) };
 
         RailProjects.ItemsSource = DetailView.RailProjects(_rows, _railFilter);
         RailStandalone.ItemsSource = DetailView.RailStandalone(_rows, _railFilter);
@@ -221,7 +329,8 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
         Containers.Visibility = Visibility.Collapsed;
         HeaderRow.Visibility = Visibility.Collapsed;
         Empty.Visibility = Visibility.Collapsed;
-        Filter.Visibility = Visibility.Collapsed;
+        CardsPane.Visibility = Visibility.Collapsed;
+        Toolbar.Visibility = Visibility.Collapsed;
     }
 
     /// <summary>What the rail's box holds (DD299).</summary>

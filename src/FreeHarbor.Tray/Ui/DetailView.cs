@@ -17,6 +17,9 @@ public sealed record Endpoint(string Label, string Service, string Address, stri
     /// <summary>Whether the card offers Open: only an address a browser can show.</summary>
     public bool CanOpen => Url is not null;
 
+    /// <summary>Whether the address can only be copied: the complement, spelled for markup.</summary>
+    public bool CopiesOnly => Url is null;
+
     /// <summary>What Copy puts on the clipboard: the whole URL where there is one, else the address.</summary>
     public string CopyText => Url ?? Address;
 }
@@ -56,6 +59,40 @@ public sealed record DetailView(
 
     /// <summary>Whether there is any address to list.</summary>
     public bool HasEndpoints => Endpoints.Count > 0;
+
+    /// <summary>
+    /// The links a card draws beside its Open button (DD300): every endpoint but the one Open follows.
+    /// </summary>
+    public IReadOnlyList<Endpoint> SecondaryLinks =>
+        [.. Endpoints.Where(endpoint => !string.Equals(endpoint.Url, Head.OpenLink?.Url, StringComparison.Ordinal))];
+
+    /// <summary>
+    /// The cards view (DD300): one page's worth of content per project, in the list's order, and the
+    /// standalone containers after them.
+    /// </summary>
+    /// <param name="rows">Every container in hand, dressed.</param>
+    /// <param name="shape">The sort and filter the page is holding, which both views share.</param>
+    /// <returns>The project cards, and the containers outside compose.</returns>
+    /// <remarks>
+    /// The same rows, the same filter and the same sort as the list, so switching views keeps what
+    /// was narrowed. A card is built exactly as the detail page is, from the rows the filter kept, so
+    /// a card and the page it opens cannot disagree about a project.
+    /// </remarks>
+    public static (IReadOnlyList<DetailView> Projects, IReadOnlyList<ContainerRow> Standalone) Cards(
+        IReadOnlyList<ContainerRow> rows, ListShape shape)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+        ArgumentNullException.ThrowIfNull(shape);
+
+        var kept = ContainerRow.Shaped(rows, shape);
+        var projects = ContainerRow.Grouped(rows, shape, new HashSet<string>(StringComparer.Ordinal))
+            .Where(row => row is { IsProject: true, IsTier: false })
+            .Select(header => For(header.Id, kept))
+            .OfType<DetailView>()
+            .ToList();
+
+        return (projects, [.. kept.Where(row => row.Project is null)]);
+    }
 
     /// <summary>How many lines the Recent output pane keeps.</summary>
     public const int OutputLines = 14;

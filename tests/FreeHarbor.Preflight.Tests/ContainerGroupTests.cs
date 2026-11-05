@@ -488,6 +488,24 @@ public sealed class ContainerGroupTests
     }
 
     [Fact]
+    public void Open_never_follows_a_port_that_does_not_speak_http()
+    {
+        // The resolver makes every published TCP port a link, so a project whose first service by
+        // name is its database would have opened a browser on localhost:5432.
+        static ContainerSummary Serving(string name, int inside, int published) =>
+            Summary(name, project: "shop") with
+            {
+                Ports = [new PortBinding { PrivatePort = inside, PublicPort = published, Type = "tcp" }],
+            };
+
+        var header = Grouped(Rows(Serving("shop-db-1", 5432, 5432), Serving("shop-web-1", 80, 8080)))[0];
+        Assert.Equal("http://localhost:8080", header.OpenLink!.Url);
+
+        var onlyDb = Grouped(Rows(Serving("shop-db-1", 5432, 5432)))[0];
+        Assert.False(onlyDb.ShowsOpen);
+    }
+
+    [Fact]
     public void A_standalone_container_opens_itself_and_invites_details_it_lacks()
     {
         var bare = ContainerRow.From(Summary("nervous_tesla") with
