@@ -166,6 +166,18 @@ Board: [detail.png](DD294-containers-redesign/detail.png).
   including those folded into a menu elsewhere.
 - **Free:** whether memory and CPU appear in Services (only when the engine reports them).
 
+As built (DD299):
+
+- The page lies over the list in the Containers destination, and the list stays built
+  underneath, so Back finds it at its scroll position. It opens from `Details` in any
+  `⋯`, from a header's or standalone container's title, and from the rail.
+- Memory and CPU are not shown. The list response carries neither, and a stats stream
+  per service is a call this page does not make.
+- Recent output is read once, not followed (`tail` 200, newest 14 lines kept). Open log
+  is the followed view.
+- `FreeHarbor.exe --capture-window <png> containers --fixture --detail=<project>`
+  photographs the page from the fixture.
+
 ## 5. The cards view and the switch (DD300)
 
 Board: [cards.png](DD294-containers-redesign/cards.png), exported with the Running filter

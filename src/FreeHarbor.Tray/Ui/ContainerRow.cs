@@ -340,6 +340,15 @@ public sealed record ContainerRow(
         : Ports;
 
     /// <summary>
+    /// Whether the row's title is a link to the detail page (DD299): a project's header, or a
+    /// container outside compose. A service's page is its project's, reached from the header.
+    /// </summary>
+    public bool OpensDetail => IsProject ? !IsTier : Project is null;
+
+    /// <summary>Whether the title is plain text: the complement, spelled for markup.</summary>
+    public bool TitleIsText => !OpensDetail;
+
+    /// <summary>
     /// Whether this row opens the Standalone containers block (DD297), and so draws its heading.
     /// </summary>
     /// <remarks>
@@ -736,6 +745,9 @@ public sealed record ContainerRow(
 
                 // DD298: a tier header's own name, and the tier a container is drawn under.
                 nameof(Tier),
+
+                // DD299: a header's title opens its project's page, and a standalone container's its own.
+                nameof(OpensDetail), nameof(TitleIsText),
             };
     }
 

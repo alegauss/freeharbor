@@ -1,4 +1,11 @@
+using FreeHarbor.Core.Api;
+
 namespace FreeHarbor.Tray.Ui;
+
+/// <summary>One line of a service's recent output (DD299).</summary>
+/// <param name="Text">The line, without its ending.</param>
+/// <param name="IsError">Whether it came on stderr, which the pane draws in the danger colour.</param>
+public sealed record OutputLine(string Text, bool IsError);
 
 /// <summary>One address a project serves, as the detail page's Endpoints grid draws it (DD299).</summary>
 /// <param name="Label">What the link is called: its own name, or the port.</param>
@@ -49,6 +56,88 @@ public sealed record DetailView(
 
     /// <summary>Whether there is any address to list.</summary>
     public bool HasEndpoints => Endpoints.Count > 0;
+
+    /// <summary>How many lines the Recent output pane keeps.</summary>
+    public const int OutputLines = 14;
+
+    /// <summary>
+    /// The service the Recent output pane tails: the first that failed, else the first there is.
+    /// </summary>
+    public ContainerRow? OutputService => Problems.Count > 0 ? Problems[0].Row : Services.FirstOrDefault();
+
+    /// <summary>The last lines of a log, split into lines, each knowing which stream it came on.</summary>
+    /// <param name="chunks">The log, as <see cref="LogFrames"/> read it.</param>
+    /// <param name="keep">How many lines to keep, newest last.</param>
+    /// <returns>The lines.</returns>
+    /// <remarks>
+    /// A chunk is not a line: a frame can end mid-sentence, so the unfinished end of each stream is
+    /// carried to that stream's next chunk rather than drawn as a line of its own.
+    /// </remarks>
+    public static IReadOnlyList<OutputLine> Tail(IEnumerable<LogChunk> chunks, int keep)
+    {
+        ArgumentNullException.ThrowIfNull(chunks);
+
+        var lines = new List<OutputLine>();
+        var pending = new Dictionary<LogStream, string>();
+        foreach (var chunk in chunks)
+        {
+            var text = (pending.GetValueOrDefault(chunk.Stream) ?? "") + chunk.Text;
+            var parts = text.Split('\n');
+            pending[chunk.Stream] = parts[^1];
+            lines.AddRange(parts[..^1]
+                .Select(part => part.TrimEnd('\r'))
+                .Where(part => part.Length > 0)
+                .Select(part => new OutputLine(part, chunk.Stream == LogStream.StdErr)));
+        }
+
+        lines.AddRange(pending
+            .Where(rest => rest.Value.TrimEnd('\r').Length > 0)
+            .Select(rest => new OutputLine(rest.Value.TrimEnd('\r'), rest.Key == LogStream.StdErr)));
+
+        return lines.Count <= keep ? lines : lines[^keep..];
+    }
+
+    /// <summary>
+    /// The rail's compose projects: one header per project, by title, narrowed by the rail's filter.
+    /// </summary>
+    /// <param name="rows">Every container in hand.</param>
+    /// <param name="filter">What the rail's box holds, or nothing.</param>
+    /// <returns>The headers.</returns>
+    public static IReadOnlyList<ContainerRow> RailProjects(IReadOnlyList<ContainerRow> rows, string? filter)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+
+        return
+        [
+            .. rows
+                .Where(row => row.IsContainer && row.Project is not null)
+                .GroupBy(row => row.Project!, StringComparer.Ordinal)
+                .Select(project => ContainerRow.ProjectHeader(project.Key, [.. project], collapsed: false))
+                .Where(header => Matches(header, filter))
+                .OrderBy(header => header.Title, StringComparer.OrdinalIgnoreCase),
+        ];
+    }
+
+    /// <summary>The rail's standalone containers, by title, narrowed by the rail's filter.</summary>
+    /// <param name="rows">Every container in hand.</param>
+    /// <param name="filter">What the rail's box holds, or nothing.</param>
+    /// <returns>The containers.</returns>
+    public static IReadOnlyList<ContainerRow> RailStandalone(IReadOnlyList<ContainerRow> rows, string? filter)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+
+        return
+        [
+            .. rows
+                .Where(row => row.IsContainer && row.Project is null && Matches(row, filter))
+                .OrderBy(row => row.Title, StringComparer.OrdinalIgnoreCase),
+        ];
+    }
+
+    private static bool Matches(ContainerRow row, string? filter) =>
+        string.IsNullOrWhiteSpace(filter)
+        || row.Title.Contains(filter.Trim(), StringComparison.OrdinalIgnoreCase)
+        || row.Name.Contains(filter.Trim(), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The key a row opens the page on: its project for a header or a service, else itself.</summary>
     /// <param name="row">The row whose Details was chosen.</param>

@@ -81,6 +81,75 @@ public sealed class DetailViewTests
     }
 
     [Fact]
+    public void The_output_tail_keeps_lines_whole_across_frames_and_marks_stderr()
+    {
+        // A frame can end mid-sentence, so a line split across two chunks of one stream is one line.
+        var tail = DetailView.Tail(
+            [
+                new LogChunk(LogStream.StdOut, "listening on :8080\nconn"),
+                new LogChunk(LogStream.StdErr, "bind: address in use\r\n"),
+                new LogChunk(LogStream.StdOut, "ected\nshutting down"),
+            ],
+            keep: 10);
+
+        Assert.Equal(
+            [
+                new OutputLine("listening on :8080", false),
+                new OutputLine("bind: address in use", true),
+                new OutputLine("connected", false),
+                new OutputLine("shutting down", false),
+            ],
+            tail);
+    }
+
+    [Fact]
+    public void The_output_tail_keeps_only_the_newest_lines()
+    {
+        var chunks = Enumerable.Range(1, 30).Select(n => new LogChunk(LogStream.StdOut, $"line {n}\n"));
+
+        var tail = DetailView.Tail(chunks, keep: 3);
+
+        Assert.Equal(["line 28", "line 29", "line 30"], tail.Select(line => line.Text));
+    }
+
+    [Fact]
+    public void The_output_pane_tails_the_failing_service_or_else_the_first()
+    {
+        var failing = Rows(Summary("a-1", project: "p"), Summary("b-1", "exited", "p"));
+        var healthy = Rows(Summary("b-1", project: "p"), Summary("a-1", project: "p"));
+
+        Assert.Equal("b-1-id", DetailView.For(ContainerRow.ProjectId("p"), failing)!.OutputService!.Id);
+        Assert.Equal("a-1-id", DetailView.For(ContainerRow.ProjectId("p"), healthy)!.OutputService!.Id);
+    }
+
+    [Fact]
+    public void The_rail_lists_projects_then_standalone_containers_and_narrows_by_name()
+    {
+        var rows = Rows(
+            Summary("shop-1", project: "shop"),
+            Summary("shop-2", project: "shop"),
+            Summary("blog-1", project: "blog"),
+            Summary("mailpit"));
+
+        Assert.Equal(["blog", "shop"], DetailView.RailProjects(rows, null).Select(row => row.Title));
+        Assert.Equal(["mailpit"], DetailView.RailStandalone(rows, null).Select(row => row.Name));
+        Assert.Equal(["shop"], DetailView.RailProjects(rows, "sho").Select(row => row.Title));
+        Assert.Empty(DetailView.RailStandalone(rows, "sho"));
+    }
+
+    [Fact]
+    public void A_headers_and_a_standalone_containers_title_open_the_page_and_a_services_does_not()
+    {
+        var rows = Rows(Summary("shop-1", project: "shop"), Summary("mailpit"));
+        var header = ContainerRow.ProjectHeader("shop", [rows[0]], collapsed: false);
+
+        Assert.True(header.OpensDetail);
+        Assert.True(rows[1].OpensDetail);
+        Assert.False(rows[0].OpensDetail);
+        Assert.True(rows[0].TitleIsText);
+    }
+
+    [Fact]
     public void A_page_about_something_gone_is_no_page()
     {
         // Removed, or the engine stopped: the page closes rather than describe nothing.

@@ -173,7 +173,7 @@
 - ✅ **DD307** **The edit dialog edits one target at a time, so naming a project and its services means reopening it for each** — The edit dialog's rail lists a project and its services, keeps what was typed for each, and one Save writes them all (design recorded in `src/FreeHarbor.Tray/Ui/EditDetailsWindow.xaml.cs`).
 - ✅ **DD297** **A project header names the project and a count, with no icon, no description and no way to open what it serves** — A project header shows a tone chip, Open and Start/Stop; ports are tinted or copy chips; standalone containers close the list (design recorded in `docs/specs/DD294-containers-redesign.md`).
 - ✅ **DD298 (list tiers)** **A project of twenty containers and ten links fills the page, and its two broken services sit among eighteen healthy ones** — A grouped project's list splits into freeharbor.group tiers; a healthy tier starts folded, a tier with a problem cannot fold.
-- ✅ **DD299 (the page)** **Nothing shows one project whole: its endpoints, every service, and why the one that stopped stopped** — Details in any overflow opens a page with the project's verbs, failure lines with Start, every endpoint with Open or Copy, and its services.
+- ✅ **DD299** **Nothing shows one project whole: its endpoints, every service, and why the one that stopped stopped** — The detail page has a rail of projects and standalone containers, a Recent output pane, and opens from a title (design recorded in `docs/specs/DD294-containers-redesign.md`).
 
 ## Block D — Container operations (what a user came to do)
 

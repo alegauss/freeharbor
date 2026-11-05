@@ -187,6 +187,7 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
         if (view is null)
         {
             _detailKey = null;
+            _outputFor = null;
             Detail.Visibility = Visibility.Collapsed;
             Detail.DataContext = null;
             Filter.Visibility = Visibility.Visible;
@@ -200,11 +201,76 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
             : view.Head;
         Detail.DataContext = view with { Head = head };
 
+        RailProjects.ItemsSource = DetailView.RailProjects(_rows, _railFilter);
+        RailStandalone.ItemsSource = DetailView.RailStandalone(_rows, _railFilter);
+
+        var output = view.OutputService;
+        OutputOpenLog.Tag = output;
+        OutputCaption.Text = output is null ? "RECENT OUTPUT" : $"RECENT OUTPUT · {output.Title}";
+        if (!string.Equals(output?.Id, _outputFor, StringComparison.Ordinal))
+        {
+            _outputFor = output?.Id;
+            Output.ItemsSource = null;
+            if (output is not null)
+            {
+                _ = ReadOutputAsync(output.Id);
+            }
+        }
+
         Detail.Visibility = Visibility.Visible;
         Containers.Visibility = Visibility.Collapsed;
         HeaderRow.Visibility = Visibility.Collapsed;
         Empty.Visibility = Visibility.Collapsed;
         Filter.Visibility = Visibility.Collapsed;
+    }
+
+    /// <summary>What the rail's box holds (DD299).</summary>
+    private string? _railFilter;
+
+    /// <summary>The container the Recent output pane last read, so a redraw does not read it again.</summary>
+    private string? _outputFor;
+
+    /// <summary>Narrow the rail as it is typed, over the rows in hand.</summary>
+    private void RailFilterChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        _railFilter = RailFilter.Text;
+        ShowDetail();
+    }
+
+    /// <summary>
+    /// Read the last lines a container wrote, once, into the Recent output pane (DD299).
+    /// </summary>
+    /// <remarks>
+    /// Not followed: the pane is a glance at why something stopped, and a stream held open for every
+    /// page somebody looks at is a reader nobody closes. Open log is the followed view. Asked whether
+    /// the container has a TTY first, for <see cref="LogFrames"/>'s reason.
+    /// </remarks>
+    private async Task ReadOutputAsync(string id)
+    {
+        try
+        {
+            var container = await _api.InspectAsync(id).ConfigureAwait(true);
+            await using var stream = await _api.LogsAsync(id, tail: 200, follow: false).ConfigureAwait(true);
+            var frames = new LogFrames(stream, framed: !container.Config.Tty);
+            var chunks = new List<LogChunk>();
+            while (await frames.ReadAsync().ConfigureAwait(true) is { } chunk)
+            {
+                chunks.Add(chunk);
+            }
+
+            // The page may have moved on while this read: only the container still asked for draws.
+            if (string.Equals(_outputFor, id, StringComparison.Ordinal))
+            {
+                Output.ItemsSource = DetailView.Tail(chunks, DetailView.OutputLines);
+            }
+        }
+        catch (DockerApiException failure)
+        {
+            if (string.Equals(_outputFor, id, StringComparison.Ordinal))
+            {
+                Output.ItemsSource = new[] { new OutputLine(failure.Detail ?? failure.Message, IsError: true) };
+            }
+        }
     }
 
     /// <summary>Open the detail page on a project or a standalone container (DD299).</summary>

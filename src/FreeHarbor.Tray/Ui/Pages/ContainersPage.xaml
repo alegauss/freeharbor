@@ -83,6 +83,49 @@
             </Setter>
         </Style>
 
+        <!-- DD299: one entry in the detail page's rail. The tile at the rail's 24 px, the title, and
+             the state's shape on the right; the whole entry is the click. -->
+        <DataTemplate x:Key="RailItem">
+            <Button Tag="{Binding}" Click="ShowDetails" Cursor="Hand" Margin="0,0,0,2"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                    Background="Transparent">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Hit" Background="{TemplateBinding Background}" CornerRadius="4"
+                                Padding="6,4">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Hit" Property="Background"
+                                        Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+                <DockPanel>
+                    <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="6" Margin="0,0,8,0"
+                            Background="{Binding TileFill}">
+                        <Grid>
+                            <TextBlock Text="{Binding TileGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                       Foreground="{x:Static ui:Palette.TileInk}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding TileLetter}" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{x:Static ui:Palette.TileInk}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Image Source="{Binding TilePicture}" Width="16" Height="16" Stretch="Uniform" />
+                        </Grid>
+                    </Border>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding ChipShape}" FontSize="10"
+                               VerticalAlignment="Center" ToolTip="{Binding ChipEvidence}"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                </DockPanel>
+            </Button>
+        </DataTemplate>
+
         <!-- DD297: a link inside a sentence, which is what "Add icon and description" is. -->
         <Style x:Key="TextLink" TargetType="Button">
             <Setter Property="Cursor" Value="Hand" />
@@ -188,12 +231,12 @@
                  the STATE caption is the one thing L3 is about. A DockPanel rather than a nested
                  Grid — nesting one would add a third ColumnDefinitions block to this file and the
                  guard that pairs a header with its rows counts them. -->
-            <DockPanel Grid.Column="0" Margin="{Binding Indent}" LastChildFill="True">
+            <DockPanel Grid.Column="0" Margin="{Binding Indent}" LastChildFill="True" Panel.ZIndex="1">
                 <!-- The affordance: a row that opens into containers and one that does not must not
                      look the same. The glyph pair and the font are claude-tray's, because that
                      window is this project's reference and a second vocabulary reads as a second
                      application. -->
-                <TextBlock DockPanel.Dock="Left" Text="{Binding Chevron}"
+                <TextBlock DockPanel.Dock="Left" Text="{Binding Chevron}" IsHitTestVisible="False"
                            FontFamily="Segoe MDL2 Assets" FontSize="9" Margin="0,1,8,0"
                            VerticalAlignment="Center"
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
@@ -203,7 +246,7 @@
                      chips are tints, because white on a tint vanishes on the light theme. 40 px is
                      the spec's size for the list (docs/specs/DD294-containers-redesign.md, §1). -->
                 <Border DockPanel.Dock="Left" Width="40" Height="40" CornerRadius="10"
-                        Margin="0,0,10,0" VerticalAlignment="Center"
+                        Margin="0,0,10,0" VerticalAlignment="Center" IsHitTestVisible="False"
                         Background="{Binding TileFill}"
                         Visibility="{Binding HasTile, Converter={StaticResource Shown}}">
                     <Grid>
@@ -221,9 +264,19 @@
                      replaced, is the tooltip, so nothing the daemon calls it is lost. -->
                 <StackPanel VerticalAlignment="Center" ToolTip="{Binding NameEvidence}">
                     <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"
-                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                               IsHitTestVisible="{Binding IsContainer}"
+                               Visibility="{Binding TitleIsText, Converter={StaticResource Shown}}" />
+                    <!-- DD299. A header's or a standalone container's title opens its detail page.
+                         Above the fold's hit target (the cell's ZIndex), so the title takes its own
+                         click and the rest of the strip still folds (DD127). -->
+                    <Button Content="{Binding Title}" Tag="{Binding}" Click="ShowDetails"
+                            HorizontalAlignment="Left" FontSize="14"
+                            Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                            Style="{StaticResource TextLink}"
+                            Visibility="{Binding OpensDetail, Converter={StaticResource Shown}}" />
                     <TextBlock Text="{Binding Description}" TextTrimming="CharacterEllipsis"
-                               FontSize="12"
+                               FontSize="12" IsHitTestVisible="{Binding IsContainer}"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                Visibility="{Binding HasDescription, Converter={StaticResource Shown}}" />
                     <!-- DD297. A standalone container has no project file to be described in, so
@@ -419,8 +472,29 @@
   <!-- DD299. The detail page, laid over the list rather than replacing it: the list stays built and
        collapsed underneath, so Back finds it at the scroll position it was left at. Its DataContext
        is a DetailView, rebuilt from the rows in hand on every redraw like the list itself. -->
-  <ScrollViewer Grid.Row="0" Grid.RowSpan="3" x:Name="Detail" Visibility="Collapsed"
-                VerticalScrollBarVisibility="Auto" Padding="10,0,10,10">
+  <!-- A DockPanel and not a two-column Grid: the guard that pairs a list's header with its rows
+       counts this file's ColumnDefinitions blocks, and the detail page captions nothing. -->
+  <DockPanel Grid.Row="0" Grid.RowSpan="3" x:Name="Detail" Visibility="Collapsed">
+
+    <!-- The rail: compose projects, then standalone containers, so moving between pages does not go
+         back through the list. Filled from code, from the rows in hand, on every redraw. -->
+    <DockPanel DockPanel.Dock="Left" Width="230" Margin="10,0,10,10">
+      <TextBox x:Name="RailFilter" DockPanel.Dock="Top" Margin="0,0,0,12"
+               Style="{DynamicResource FilterBox}" HorizontalAlignment="Stretch" Width="Auto"
+               TextChanged="RailFilterChanged" ToolTip="Narrow the rail by name" />
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+          <TextBlock Text="COMPOSE PROJECTS" Margin="0,0,0,6" FontSize="11" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+          <ItemsControl x:Name="RailProjects" ItemTemplate="{StaticResource RailItem}" />
+          <TextBlock Text="STANDALONE" Margin="0,12,0,6" FontSize="11" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+          <ItemsControl x:Name="RailStandalone" ItemTemplate="{StaticResource RailItem}" />
+        </StackPanel>
+      </ScrollViewer>
+    </DockPanel>
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="10,0,10,10">
     <StackPanel>
       <Button Content="‹ Back" Click="CloseDetails" HorizontalAlignment="Left"
               Style="{DynamicResource RowAction}" Margin="0,0,0,14" />
@@ -555,7 +629,40 @@
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
+
+      <!-- The last lines of the failing service, or of the first one when none failed, read once
+           when the page opens on it. Open log is the live, followed view of the same stream. -->
+      <StackPanel Orientation="Horizontal" Margin="0,14,0,8">
+        <TextBlock x:Name="OutputCaption" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Button x:Name="OutputOpenLog" Content="Open log" Click="OpenLogs" Margin="12,0,0,0"
+                Style="{StaticResource TextLink}" VerticalAlignment="Center" />
+      </StackPanel>
+      <Border Padding="12,10" CornerRadius="6" BorderThickness="1"
+              BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+              Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+        <ItemsControl x:Name="Output">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="12"
+                         FontFamily="Cascadia Mono, Consolas, Courier New">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsError}" Value="True">
+                        <Setter Property="Foreground" Value="{x:Static ui:Palette.DangerBrush}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Border>
     </StackPanel>
   </ScrollViewer>
+  </DockPanel>
 </Grid>
 </UserControl>

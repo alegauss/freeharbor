@@ -89,30 +89,6 @@ opens the detail page.
 Fold state is remembered per project, like the fold DD112 narrows. Layout:
 docs/specs/DD294-containers-redesign.md section 3.
 
-### §DD299 The project detail page
-
-The list and the cards answer "what is running and how do I open it". They cannot answer
-"why did this stop" or "what does this project expose" without growing into something
-else. Those answers belong on a page of their own.
-
-It opens from a project's or container's title link, Details in any overflow, or a click
-on a card; in the list the header strip still folds (DD127). Back returns to the view
-and scroll position it came from. Layout: docs/specs/DD294-containers-redesign.md
-section 4.
-
-The page carries: the resolved icon, title and description, the compose project name and
-file, and the project's verbs (Open primary, Restart, Stop, overflow with Edit details).
-A problem line repeats the daemon's own sentence for each service that exited badly,
-with a per-service Start. An Endpoints grid holds every link, each with Open and Copy,
-non-HTTP ports offering Copy alone. A Services table shows state, image and, where the
-engine reports it, memory and CPU. A Recent output pane tails the failing service's log,
-its stderr in the danger colour, with a link to the full log window.
-
-A rail on the left lists compose projects and standalone containers apart, so moving
-between details does not go back through the list. A standalone container gets the same
-page with one service. The page is drawn from the fixture, so a capture can show it
-without a daemon (L6).
-
 ### §DD300 The cards view and the view switch
 
 Most machines run a handful of projects, and there the list spends its density on
