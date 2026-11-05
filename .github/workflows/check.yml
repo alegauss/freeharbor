@@ -43,8 +43,12 @@ jobs:
       - name: Build
         run: dotnet build --nologo
 
+      # --blame (DD318): on 5 November 2026 a rerun ended "Test host process crashed" with no name
+      # for what was running, so the one fact a crash needs was the one it did not say. Blame mode
+      # names the tests in flight when the host dies, in the same message, and costs nothing on a
+      # run that does not crash.
       - name: Test
-        run: dotnet test --nologo
+        run: dotnet test --nologo --blame
 
       # Release, because that is the configuration the single-file self-contained properties are
       # conditioned on — a Debug build proves nothing about the thing that gets shipped.
