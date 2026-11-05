@@ -29,6 +29,158 @@ containers, and leaving it alone keeps today's floor.
 
 ## Block C — The window (claude-tray's elements)
 
+### §DD294 Container metadata from labels
+
+Every richer view of the containers page needs the same four facts per container: a
+title, a description, an icon and the links it serves. They resolve in one place, in a
+fixed order, so the list, the cards and the detail page cannot disagree.
+
+1. `freeharbor.title`, `freeharbor.description`, `freeharbor.icon`, `freeharbor.url` and `freeharbor.url.<name>`, plus `freeharbor.primary` and `freeharbor.group` for large projects. A compose service carries them under `labels:`, a `docker run` under `--label`, an image under `LABEL`. Container labels arrive on the list response already, the same way the project label does for DD106, so this costs no second call.
+2. `homepage.name`, `homepage.icon`, `homepage.description` and `homepage.href`, the Homepage dashboard's labels, so a machine already labelled for it needs no edits.
+3. The image's `org.opencontainers.image.title`, `.description` and `.url`, read by one image inspect per image and cached.
+4. Fallback: a bundled icon chosen by image name (postgres, redis, nginx and the like), else a monogram coloured from a hash of the name.
+
+Icons are bundled or read from a local file. A remote icon URL is never fetched, because
+the product does not phone home. A link without a label is derived from a published
+port. The SampleMachine fixture carries labelled and unlabelled containers, so captures
+show both. Design board: https://claude.ai/artifact/VgKD48AfuNnC1AyduJJExu
+
+### §DD295 Project metadata from x-freeharbor
+
+Labels describe a container, and a project is not a container: no label says what a
+compose project as a whole is. The compose spec reserves top-level keys starting with
+`x-` for extensions, and the engine ignores them, so FreeHarbor can read an
+`x-freeharbor:` block holding the project's `title`, `description` and `icon`, plus an
+optional `services:` map with the same fields per service.
+
+The file is found through `com.docker.compose.project.config_files` and `working_dir`,
+which compose writes on every container. The path can be gone, moved or unreadable (a
+WSL path, a deleted checkout), so absence is ordinary and falls through to the label
+resolution. When several files are listed, the blocks merge in compose's own order.
+
+This source has one advantage labels lack: the file is read, not baked into the
+container, so editing it changes the window on the next refresh, with no `compose up`
+and no downtime. That makes it the target the edit screen's Copy to compose writes to.
+An icon path resolves relative to the compose file's directory.
+
+Precedence: a local override, then a service's `x-freeharbor` entry, then its labels,
+then everything after them in DD294's order.
+
+### §DD296 The edit details screen
+
+Labels and `x-freeharbor` only help someone who owns the file. Most containers on a
+developer machine come from a compose file someone else wrote, or from a one-off `docker
+run` with a random name. So the window gets an edit screen of its own, reached from a
+row's overflow, a card's menu, the detail page and the "Add icon and description" link
+an undescribed container shows.
+
+The screen edits title, description, icon (a bundled icon picker, or a local image file)
+and the links: label, URL, which one is primary, which are pinned. Each field shows
+where its current value comes from (label, x-freeharbor, image, fallback), so the user
+can see what a save will override, and a Reset returns it to that source.
+
+Saving writes to FreeHarbor's own store (the ArtefactStore that DD39 uses), never to the
+user's files, and the change shows at once. The key is project plus service for compose,
+which survives a recreate, and the container name for a standalone container.
+
+FreeHarbor does not edit the compose file or the Dockerfile by default. A file in the
+user's repository is shared with their team, re-serialising YAML loses comments and
+anchors, and a label change only lands after a recreate. Copy to compose is an explicit
+action: it shows the `x-freeharbor` snippet to paste, and writes it only after a diff
+the user confirms. A Dockerfile is never written; at most its `LABEL` line is offered to
+copy.
+
+### §DD297 The enriched list
+
+The list stays the default view, because it is the one that holds forty containers and
+still obeys L4 and L5 of the DD34 constitution. It changes in what each element says,
+not in its structure.
+
+A compose project's header (DD106) gains the resolved icon, title and description, the
+running-of-total chip, a primary Open button for the project's primary link, and Start
+or Stop as one verb, with the rest in the overflow. Open is disabled, not hidden, while
+the project is stopped.
+
+A row shows the state chip with its shape (L8), the service's title over its
+description, and each published port as a link that opens in the browser. A port that
+does not answer HTTP copies its address instead. Logs and Restart appear on hover,
+beside the one verb that is always drawn.
+
+Containers started without compose are gathered in a final Standalone containers block.
+Its header carries no group verbs, because each row is its own unit with its own Open
+and Start or Stop. A container with no metadata shows its monogram and an "Add icon and
+description" link to the edit screen.
+
+The header columns still match the row columns, and a test still says so.
+
+### §DD298 A large compose project
+
+The enriched list and the cards both assume a project of a handful of services. A real
+platform project runs twenty containers and publishes ten URLs, and the same layout then
+shows a wall of identical green rows and a row of ten buttons.
+
+Links: the link marked `freeharbor.primary` (otherwise the first) is a split button,
+with Open on one side and a count with a menu on the other. Up to two links marked
+pinned sit beside it as buttons. The menu lists every link under Pinned and All, with a
+filter box once there are more than five.
+
+Services in the list: a `freeharbor.group` label splits the project into tiers (Edge,
+APIs, Workers, Data). A tier where everything runs stays folded behind a one-line
+summary and an all running chip, and a tier with a problem opens. The group's own filter
+(All, Running, Problems) narrows over the rows in hand, as L5 requires. Without the
+label there is one tier and the behaviour is the plain list.
+
+Services in a card: a health bar with one block per container, problems drawn last and
+in their own shape, then only the services that need attention, and Show all, which
+opens the detail page.
+
+Fold state is remembered per project, like the fold DD112 narrows.
+
+### §DD299 The project detail page
+
+The list and the cards answer "what is running and how do I open it". They cannot answer
+"why did this stop" or "what does this project expose" without growing into something
+else. Those answers belong on a page of their own.
+
+Clicking a project header, a card, or a standalone row anywhere outside its buttons
+opens the detail page, and Back returns to the view and scroll position it came from.
+The buttons on a row keep acting in place, so Start, Stop and Open never cost a
+navigation.
+
+The page carries: the resolved icon, title and description, the compose project name and
+file, and the project's verbs (Open primary, Restart, Stop, overflow with Edit details).
+A problem line repeats the daemon's own sentence for each service that exited badly,
+with a per-service Start. An Endpoints grid holds every link, each with Open and Copy,
+non-HTTP ports offering Copy alone. A Services table shows state, image and, where the
+engine reports it, memory and CPU. A Recent output pane tails the failing service's log,
+its stderr in the danger colour, with a link to the full log window.
+
+A rail on the left lists compose projects and standalone containers apart, so moving
+between details does not go back through the list. A standalone container gets the same
+page with one service. The page is drawn from the fixture, so a capture can show it
+without a daemon (L6).
+
+### §DD300 The cards view and the view switch
+
+Most machines run a handful of projects, and there the list spends its density on
+nothing. The cards view trades density for recognition: one card per project, read at a
+glance by icon and description, opened in one click.
+
+A card carries the icon tile, title, state chip and description, then a problem line in
+the daemon's words when a service failed, then the links (the primary one filled in the
+accent colour, others outlined, non-HTTP ports as dashed copy chips), then the services
+with shape and state, then Logs, Restart and one verb. A stopped project dims its links,
+not its card. Standalone containers follow in a section of compact one-line cards, and a
+container with no metadata shows its monogram and the link to Edit details.
+
+A Cards and List switch sits beside the filter box. Both views are the same rows in
+hand: the filter chips (All, Running, Stopped, Problems), the text filter and the sort
+apply to both, and switching keeps them. The chosen view is remembered with the window's
+placement and tab (DD39), so the window reopens the way it was left.
+
+Cards land after the enriched list on purpose. The list is the default and the one that
+scales, and the cards reuse everything it introduces.
+
 ## Block D — Container operations (what a user came to do)
 
 ## Block E — Images, volumes and networks
