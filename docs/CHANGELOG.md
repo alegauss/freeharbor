@@ -239,6 +239,7 @@
 - ✅ **DD282** **A release never reaches winget-pkgs: the manifests stay in the repository unsubmitted** — publish-release.ps1 runs wingetcreate submit after the release exists when WINGET_TOKEN is set, and skips without failing on a draft, stale manifests or a missing token.
 - ✅ **DD284** **A silent install on a blocked machine exits 1 at the preflight page instead of 7, and /MERGETASKS is overwritten** — Silent Setup skips the tasks and preflight pages, so a blocked machine exits 7 from PrepareToInstall and /MERGETASKS holds; measured exit 7, nothing installed, on the test guest.
 - ✅ **DD293** **The product ships as FreeWilly, a name and an orca mark with a copyright problem** — Projects, exe, distro, root, AppId, winget id and site base are FreeHarbor, as a hard cut with no migration, and a ship-and-waves mark from build/logo.mjs replaces the orca.
+- ✅ **DD315** **Nobody has checked whether downloading the engine at first run passes Store policy 10.2.2 on dynamic code** — Store policy 10.2.2 (v7.20) bars code that changes the described function, so the engine download stays and the listing names it.
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 

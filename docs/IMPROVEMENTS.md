@@ -115,30 +115,30 @@ the site name the command.
 
 ### §DD292 DD292 — Distributing through the Microsoft Store
 
-From the portfolio review of 30/10/2026 (visibility, `estrategia/portfolio.md`). The
-installer is not signed, so SmartScreen warns on every first download, which is the
-wrong first impression on exactly the corporate laptop this tool is for. The decision
-for all of the author's Windows apps is the Microsoft Store, which signs the MSIX
-package itself, instead of buying a code signing certificate. claude-tray tested the
-path first (visibility VS58) and is listed as 9P27BHWNT56D since its T412.
+From the portfolio review of 30/10/2026 (visibility, `estrategia/portfolio.md`). An
+unsigned installer meets SmartScreen on every first download, on exactly the corporate
+laptop this tool is for. The author's Windows apps go to the Microsoft Store, which
+signs the MSIX itself; claude-tray is listed there as 9P27BHWNT56D since its T412.
 
-The restrictions FreeHarbor has of its own are now separate lines: whether WSL
-registration works from inside a package (DD309, the gate), the package build (DD310),
-packaged behaviour and updates (DD311), the command line (DD312), start with Windows
-(DD313), the build-details link (DD314), the engine download against policy 10.2.2
-(DD315), the first-run page that replaces the wizard (DD316), and removing the engine
-without an uninstaller (DD317).
+FreeHarbor's own restrictions are separate lines: WSL registration from inside a package
+(DD309, the gate), the package build (DD310), packaged behaviour and updates (DD311),
+the command line (DD312), start with Windows (DD313), the build-details link (DD314),
+the first-run page that replaces the wizard (DD316), and removing the engine without an
+uninstaller (DD317). The engine download stays (DD315): policy 10.2.2, as of version
+7.20, forbids code that changes the described function, so the listing names it.
 
 What stays here is the submission: the listing in en-US and pt-BR, the store art,
 claude-tray's store-submit.ps1 ported, and certification notes that justify
-runFullTrust, any unvirtualizedResources, and the engine download. The README and the
-site's download section name the Store beside winget and the installer, which both stay.
+runFullTrust, any unvirtualizedResources, and the engine download with its source, size
+and pinning. The README and the site's download section name the Store beside winget and
+the installer, which both stay.
 
-If DD309 shows MSIX cannot host the WSL registration, the answer is a Store listing that
-points to the existing installer, or no Store at all, and the reason is recorded here.
+If DD309 shows MSIX cannot host the WSL registration, the fallback is policy 10.2.9's
+listing by installer URL, which needs a signed, silent installer that downloads nothing
+when run, so the engine moves to first launch; otherwise no Store.
 
-Done when FreeHarbor is in the Store with its install still working without admin, or
-the reason it cannot be is recorded here and in the product sheet.
+Done when FreeHarbor is in the Store with its install working without admin, or the
+reason it cannot be is recorded here.
 
 ### §DD309 DD309 — Measuring WSL registration from inside a package
 
@@ -252,27 +252,6 @@ registration leaves with the package.
 
 Done when a build run from a terminal after a sideload install prints the link and
 clicking it opens that build in the window.
-
-### §DD315 Downloading the engine versus shipping it in the package
-
-The installer's engine task downloads about 250 MB at install time: the distribution's
-root filesystem, dockerd, the Windows docker CLI, and the compose and buildx plugins.
-Each is pinned and its checksum verified by EngineProvisioner, and --provision does the
-same work later. Microsoft Store policy 10.2.2 says an app must not change its described
-functionality by downloading code after certification. A container engine that downloads
-separate, pinned programs is the kind of case the certification notes are written to
-argue, not a clear pass.
-
-Two outcomes, each with its cost:
-
-- **Keep the download.** The listing description names the download and its size, and the certification notes explain what is fetched, from where, and how it is pinned. Engine updates stay independent of package updates. Cheapest to build; the risk is a rejection after the rest of the work is done.
-- **Ship the binaries in the package.** The provision copies from the package folder instead of downloading, the package grows by roughly the same 250 MB, and every engine bump becomes a package submission. FreeHarbor then redistributes those binaries inside its own package, so the NOTICE DD13 wrote and the attribution list (Licensing\Attribution.cs) are checked against exactly what the package carries.
-
-Read the current policy text and the published guidance on runtimes and package
-managers, and record which applies. Submit first with the download if the reading allows
-it.
-
-Done when the chosen outcome and the policy text it rests on are written here.
 
 ### §DD316 The first launch carries what the setup wizard did
 
