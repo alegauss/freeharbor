@@ -6,8 +6,11 @@ like, so a task can be built without the design board. Where the two disagree, t
 roadmap's behaviour wins and this file is corrected.
 
 The screens were explored on a design board
-(https://claude.ai/artifact/VgKD48AfuNnC1AyduJJExu, private to its owner). Images of its
-boards are not in the repository yet; once exported they go in `docs/specs/DD294-containers-redesign/`.
+(https://claude.ai/artifact/VgKD48AfuNnC1AyduJJExu, private to its owner). Each section
+below links the image of its board, exported into
+[`DD294-containers-redesign/`](DD294-containers-redesign/). The images are a record of the
+board as it was approved and are not regenerated; a change to a screen is made here, in
+text.
 The board is an HTML mockup and the window is WPF, so it shows composition and hierarchy,
 not pixels. Section 9 lists where this file deliberately departs from the board.
 
@@ -43,6 +46,9 @@ container, which shows `No details yet · Add icon and description`.
 The default view, and the one that holds forty containers. Columns stay aligned with the
 headings, and the test that pairs them still passes.
 
+Board: [list.png](DD294-containers-redesign/list.png). The row it draws in its hover state,
+with Logs and Restart as icons, is overruled by section 9.1.
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
 │ [▢]  Storefront   (● 4 of 4 running)                  [Open site] [Stop] [⋯]        │  group header
@@ -76,6 +82,9 @@ headings, and the test that pairs them still passes.
 
 What changes when a project has many services or many links. Under five services and
 three links nothing here applies.
+
+Board: [large-project.png](DD294-containers-redesign/large-project.png), the card on the
+left with its link menu open and the list on the right.
 
 ```
 group header:  [▢] Platform (▲ 18 of 20 running)        [Gateway ▸ | 10 ▾] [Admin] [Grafana] [Stop] [⋯]
@@ -112,6 +121,8 @@ tiers:         ▸ Edge            2 containers · gateway, admin           (all
 
 ## 4. The detail page (DD299)
 
+Board: [detail.png](DD294-containers-redesign/detail.png).
+
 ```
 ┌ rail ────────────────┐ ┌──────────────────────────────────────────────────────────────┐
 │ [Filter          ]   │ │ [▢▢]  Search lab  (▲ 2 of 3 running)   [Open console] [Restart] [Stop] [⋯] │
@@ -144,6 +155,10 @@ tiers:         ▸ Edge            2 containers · gateway, admin           (all
 
 ## 5. The cards view and the switch (DD300)
 
+Board: [cards.png](DD294-containers-redesign/cards.png), exported with the Running filter
+on, so it shows one project card and the standalone section. The wireframe below shows the
+unfiltered page.
+
 ```
 [Containers]   3 projects · 3 standalone · 9 of 14 running     (All 5)(Running 2)(Stopped 2)(Problems 1)
                                                                [Filter…] [Cards | List]
@@ -172,6 +187,11 @@ Standalone containers
 ## 6. The edit details dialog (DD296)
 
 A dialog owned by the main window, about 980 px wide.
+
+Board: [edit-project.png](DD294-containers-redesign/edit-project.png) for a compose project
+(exported with Save to set to the compose file), and
+[edit-container.png](DD294-containers-redesign/edit-container.png) for a standalone
+container, the `.freeharbor` folder Save writes, and the one-time compose diff.
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────────┐
@@ -214,6 +234,8 @@ A dialog owned by the main window, about 980 px wide.
 
 A destination in the nav strip, before About, built as a page (L2).
 
+Board: [settings.png](DD294-containers-redesign/settings.png).
+
 ```
 Settings
 
@@ -240,6 +262,9 @@ The page is a single column, about 920 px wide, centred. Each choice is a radio 
 selected one carries the accent border.
 
 ## 8. The files the details come from (DD294, DD295)
+
+Board: [details-sources.png](DD294-containers-redesign/details-sources.png), the read
+order with a labelled compose file (its text is in Portuguese, written for the review).
 
 `.freeharbor/project.yaml`, in the folder compose records as `working_dir`:
 
