@@ -90,4 +90,35 @@ public sealed class ProjectFileWriteTests : IDisposable
         Assert.True(EditDetailsWindow.CanSaveToFile(header));
         Assert.Equal("shop", header.DetailKey);
     }
+
+    [Fact]
+    public void One_save_applies_every_target_the_rail_visited_and_keeps_the_rest_of_the_file()
+    {
+        ContainerRow Service(string service) => ContainerRow.From(new ContainerSummary
+        {
+            Id = service,
+            Image = "example/app:1",
+            Names = [$"/shop-{service}-1"],
+            Labels = new Dictionary<string, string>
+            {
+                ["com.docker.compose.project"] = "shop",
+                ["com.docker.compose.service"] = service,
+            },
+        }, null);
+        var api = Service("api");
+        var header = ContainerRow.ProjectHeader("shop", [api], collapsed: false);
+        var file = new ProjectFileDetails(
+            new DetailFields(null, "Kept", null),
+            new Dictionary<string, DetailFields> { ["db"] = new("Untouched", null, null) });
+
+        var written = EditDetailsWindow.Applied(file,
+        [
+            (header, "Storefront", "Kept", null),
+            (api, "Shop API", "", null),
+        ]);
+
+        Assert.Equal(new DetailFields("Storefront", "Kept", null), written.Project);
+        Assert.Equal("Shop API", written.Services["api"].Title);
+        Assert.Equal("Untouched", written.Services["db"].Title);
+    }
 }

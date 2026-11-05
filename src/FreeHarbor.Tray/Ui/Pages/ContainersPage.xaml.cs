@@ -440,12 +440,25 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     /// <summary>Open the edit dialog on a row, and redraw with what it saved (DD296).</summary>
     private async void EditDetails(object sender, RoutedEventArgs e)
     {
-        if (sender is not FrameworkElement { Tag: ContainerRow { DetailsBeneath: { } beneath } row })
+        if (sender is not FrameworkElement { Tag: ContainerRow { DetailsBeneath: not null } row })
         {
             return;
         }
 
-        var dialog = new EditDetailsWindow(row, beneath, Saved) { Owner = Window.GetWindow(this) };
+        // The project and every one of its containers, folded or not, so the dialog's rail can name
+        // the whole project in one sitting. A container outside compose is its only target.
+        var children = row.Project is { } project
+            ? _rows.Where(child => string.Equals(child.Project, project, StringComparison.Ordinal)).ToList()
+            : [];
+        var header = row.Project is { } named && children.Count > 0
+            ? ContainerRow.ProjectHeader(named, children, collapsed: false)
+            : null;
+        IReadOnlyList<ContainerRow> targets = header is null ? [row] : [header, .. children];
+        var initial = row.IsProject && header is not null
+            ? header
+            : targets.FirstOrDefault(target => string.Equals(target.Id, row.Id, StringComparison.Ordinal)) ?? row;
+
+        var dialog = new EditDetailsWindow(targets, initial, Saved) { Owner = Window.GetWindow(this) };
         if (dialog.ShowDialog() == true)
         {
             await RefreshAsync().ConfigureAwait(true);

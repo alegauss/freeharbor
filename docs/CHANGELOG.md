@@ -169,6 +169,7 @@
 - ✅ **DD295** **A compose project has no title, description or icon of its own, only the directory name compose gave it** — An x-freeharbor block is read through compose in the background, under .freeharbor field by field (design recorded in `src/FreeHarbor.Core/Details/ComposeExtension.cs`).
 - ✅ **DD296 (the store and .freeharbor)** **A container from someone else's compose file or a docker run cannot be given a title, icon or link** — Edit details saves title, description and icon in FreeHarbor or the project's .freeharbor, for a service or a whole project.
 - ✅ **DD306** **An edit cannot be saved into the compose file's own x-freeharbor block** — Save to can write the compose file's x-freeharbor block, changing only its lines after showing the diff once per project (design recorded in `src/FreeHarbor.Core/Details/ComposeExtension.cs`).
+- ✅ **DD307** **The edit dialog edits one target at a time, so naming a project and its services means reopening it for each** — The edit dialog's rail lists a project and its services, keeps what was typed for each, and one Save writes them all (design recorded in `src/FreeHarbor.Tray/Ui/EditDetailsWindow.xaml.cs`).
 
 ## Block D — Container operations (what a user came to do)
 

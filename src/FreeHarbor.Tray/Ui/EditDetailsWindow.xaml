@@ -70,7 +70,31 @@
             </StackPanel>
         </Border>
 
-        <StackPanel Margin="20,6,20,0">
+        <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="RailColumn" Width="0" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- The project and each of its services, so a whole project is named in one sitting.
+             Moving along it keeps what was typed for the one being left. -->
+        <ListBox Grid.Column="0" x:Name="Rail" Margin="12,12,0,0" BorderThickness="0"
+                 Background="Transparent" SelectionChanged="RailChanged"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Margin="0,2">
+                        <TextBlock Text="{Binding Row.Title}" TextTrimming="CharacterEllipsis"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                        <TextBlock FontSize="11" TextTrimming="CharacterEllipsis"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   Text="{Binding Caption}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Column="1" Margin="20,6,20,0">
             <!-- The row as it will be drawn, redrawn as the fields change. -->
             <TextBlock Text="PREVIEW" Style="{StaticResource Caption}" />
             <DockPanel LastChildFill="True">
@@ -124,6 +148,7 @@
             </DockPanel>
             <TextBox x:Name="DescriptionBox" MaxLength="120" TextChanged="FieldChanged" />
         </StackPanel>
+        </Grid>
 
         <!-- Where Save writes, said before it is pressed, because Save asks nothing. -->
         <Border Margin="0,20,0,0" Padding="20,12,20,14"

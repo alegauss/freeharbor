@@ -7,63 +7,77 @@ using FreeHarbor.Core.Details;
 namespace FreeHarbor.Tray.Ui;
 
 /// <summary>
-/// Edits a container's title, description and icon, and saves them in FreeHarbor (DD296).
+/// Edits the titles, descriptions and icons of a compose project and its services, or of one
+/// container, and saves them where the footer says (DD296).
 /// </summary>
 /// <remarks>
-/// <b>What Save writes is the difference, not the form.</b> The dialog is opened with two answers:
-/// what the row shows now, and what it would show with nothing saved here. A field is stored only
+/// <b>What Save writes is the difference, not the form.</b> Every target is opened with two answers:
+/// what its row shows now, and what it would show with nothing saved here. A field is stored only
 /// where it differs from the second, so opening the dialog and pressing Save stores nothing, and a
 /// label changed later still reaches every field nobody edited. Reset puts that second answer back.
 ///
-/// <para><b>Two targets.</b> The store is the one place an edit can always land. A compose project
-/// whose folder this machine can open can also take it in <c>.freeharbor/project.yaml</c>, which the
-/// whole team gets when it is committed. Saving there keeps every field of the file the dialog did
-/// not change, and clears what the store held for the same key, because the store is read first and
-/// would otherwise hide the save. The compose file's own <c>x-freeharbor</c> block is a target
-/// too, and that one is somebody's file: the change is shown once per project before it is made,
-/// and only the block's own lines are touched.</para>
+/// <para><b>One dialog for the whole project.</b> The rail lists the project and each of its
+/// services. Moving along it keeps what was typed for the target being left, and Save writes every
+/// target that changed, to one destination, in one write per file.</para>
+///
+/// <para><b>Three destinations.</b> The store is the one place an edit can always land. A compose
+/// project whose folder this machine can open can also take it in <c>.freeharbor/project.yaml</c>,
+/// which the whole team gets when it is committed. Saving there keeps every field of the file the
+/// dialog did not change, and clears what the store held for the same key, because the store is read
+/// first and would otherwise hide the save. The compose file's own <c>x-freeharbor</c> block is a
+/// destination too, and that one is somebody's file: the change is shown once per project before it
+/// is made, and only the block's own lines are touched.</para>
 /// </remarks>
 internal partial class EditDetailsWindow : Window
 {
     /// <summary>The name shape docker gives a container nobody named: an adjective and a surname.</summary>
     private static readonly Regex Invented = new("^[a-z]+_[a-z]+$", RegexOptions.CultureInvariant);
 
-    private readonly ContainerRow _row;
-    private readonly ResolvedDetails _beneath;
+    private readonly IReadOnlyList<ContainerRow> _targets;
     private readonly DetailStore _store;
-    private readonly int _hue;
+    private readonly Dictionary<string, Edit> _pending = new(StringComparer.Ordinal);
+    private ContainerRow _row;
+    private ResolvedDetails _beneath;
+    private bool _loading;
 
-    /// <summary>Open the dialog on one row.</summary>
-    /// <param name="row">The row, as the list draws it now.</param>
-    /// <param name="beneath">What the row would show with nothing saved in FreeHarbor.</param>
-    /// <param name="store">Where Save writes.</param>
-    internal EditDetailsWindow(ContainerRow row, ResolvedDetails beneath, DetailStore store)
+    /// <summary>Open the dialog on one row, with the rows the rail lists beside it.</summary>
+    /// <param name="targets">
+    /// Every row the dialog can edit: a project's header and its containers, or the one container.
+    /// Each must carry <see cref="ContainerRow.DetailsBeneath"/> and <see cref="ContainerRow.DetailKey"/>.
+    /// </param>
+    /// <param name="initial">The row the dialog opens on, which is one of the targets.</param>
+    /// <param name="store">The store, read for what is saved and written by Save.</param>
+    internal EditDetailsWindow(IReadOnlyList<ContainerRow> targets, ContainerRow initial, DetailStore store)
     {
-        ArgumentNullException.ThrowIfNull(row);
-        ArgumentNullException.ThrowIfNull(beneath);
+        ArgumentNullException.ThrowIfNull(targets);
+        ArgumentNullException.ThrowIfNull(initial);
         ArgumentNullException.ThrowIfNull(store);
         InitializeComponent();
-        _row = row;
-        _beneath = beneath;
-        _store = store;
-        _hue = row.Details?.Hue ?? beneath.Hue;
-
-        var shown = row.Details ?? beneath;
-        Fill(shown);
-
-        SaveTo.Items.Add(new SaveTarget("FreeHarbor (only you)", ToFile: false));
-        if (CanSaveToFile(row))
+        _targets = [.. targets.Where(target => target.DetailKey is not null && target.DetailsBeneath is not null)];
+        if (!_targets.Contains(initial))
         {
-            SaveTo.Items.Add(new SaveTarget(".freeharbor (the whole team)", ToFile: true));
-            if (ComposeFiles(row).Count > 0)
-            {
-                SaveTo.Items.Add(new SaveTarget("the compose file (x-freeharbor)", ToFile: true, ToCompose: true));
-            }
+            _targets = [initial, .. _targets];
         }
 
-        SaveTo.SelectedIndex = 0;
-        SaveTo.Visibility = SaveTo.Items.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
-        Refresh();
+        _store = store;
+        _row = initial;
+        _beneath = initial.DetailsBeneath ?? initial.Details!;
+
+        FillShared(initial);
+        foreach (var target in _targets)
+        {
+            Rail.Items.Add(new RailItem(target));
+        }
+
+        RailColumn.Width = _targets.Count > 1 ? new GridLength(200) : new GridLength(0);
+        Rail.Visibility = _targets.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        if (_targets.Count > 1)
+        {
+            Width += 200;
+        }
+
+        Rail.SelectedIndex = _targets.ToList().IndexOf(initial);
+        Load(initial);
     }
 
     /// <summary>Whether Save reached the disk; false after a save that only holds until the window closes.</summary>
@@ -118,63 +132,131 @@ internal partial class EditDetailsWindow : Window
             icon ?? existing?.Icon);
     }
 
-    private void Fill(ResolvedDetails shown)
+    /// <summary>A project file's details with every pending edit applied to it.</summary>
+    /// <param name="file">What the file holds now.</param>
+    /// <param name="edits">Each target that changed, with what was typed for it.</param>
+    /// <returns>The details to write: the file's own wherever no edit reached.</returns>
+    internal static ProjectFileDetails Applied(
+        ProjectFileDetails file, IEnumerable<(ContainerRow Row, string Title, string Description, string? Icon)> edits)
     {
-        var project = _row.Project;
+        ArgumentNullException.ThrowIfNull(file);
+        ArgumentNullException.ThrowIfNull(edits);
+
+        var project = file.Project;
+        var services = new Dictionary<string, DetailFields>(file.Services, StringComparer.Ordinal);
+        foreach (var (row, title, description, icon) in edits)
+        {
+            if (row.DetailsBeneath is not { } beneath)
+            {
+                continue;
+            }
+
+            if (row.IsProject)
+            {
+                project = ForTheFile(project, beneath, title, description, icon);
+            }
+            else if (row.Service is { } service)
+            {
+                services[service] = ForTheFile(services.GetValueOrDefault(service), beneath, title, description, icon);
+            }
+        }
+
+        return new ProjectFileDetails(project, services);
+    }
+
+    private void FillShared(ContainerRow row)
+    {
+        var project = row.Project;
         Heading.Text = project is null
-            ? $"Edit details · container {_row.Name}"
+            ? $"Edit details · container {row.Name}"
             : $"Edit details · compose project {project}";
 
-        var files = (_row.ConfigFiles ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries
+        var files = (row.ConfigFiles ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries
             | StringSplitOptions.TrimEntries);
         Files.Text = files.Length == 0
             ? ""
             : files[0] + string.Concat(files.Skip(1).Select(file => " + " + Path.GetFileName(file)));
         FilesRow.Visibility = files.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
 
-        Editing.Text = _row.IsProject && project is not null
+        SaveTo.Items.Add(new SaveTarget("FreeHarbor (only you)", ToFile: false));
+        if (CanSaveToFile(row))
+        {
+            SaveTo.Items.Add(new SaveTarget(".freeharbor (the whole team)", ToFile: true));
+            if (ComposeFiles(row).Count > 0)
+            {
+                SaveTo.Items.Add(new SaveTarget("the compose file (x-freeharbor)", ToFile: true, ToCompose: true));
+            }
+        }
+
+        SaveTo.SelectedIndex = 0;
+        SaveTo.Visibility = SaveTo.Items.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>Show one target, from what was typed for it if anything was, or from its row.</summary>
+    private void Load(ContainerRow row)
+    {
+        _loading = true;
+        _row = row;
+        _beneath = row.DetailsBeneath ?? row.Details!;
+        var project = row.Project;
+
+        Editing.Text = row.IsProject && project is not null
             ? $"EDITING  project {project}"
-            : _row.Service is { } service && project is not null
+            : row.Service is { } service && project is not null
                 ? $"EDITING  service {project} / {service}"
-                : $"EDITING  container {_row.Name}";
-        Identity.Text = _row.IsProject
-            ? $"{_row.Total} container(s), in {_row.WorkingDir ?? "a folder compose did not record"}"
-            : $"container {_row.Name}   image {_row.Image}   id {_row.Id[..Math.Min(12, _row.Id.Length)]}";
-        KeyNote.Text = _row.IsProject
+                : $"EDITING  container {row.Name}";
+        Identity.Text = row.IsProject
+            ? $"{row.Total} container(s), in {row.WorkingDir ?? "a folder compose did not record"}"
+            : $"container {row.Name}   image {row.Image}   id {row.Id[..Math.Min(12, row.Id.Length)]}";
+        KeyNote.Text = row.IsProject
             ? $"Saved under {project}, so it survives a recreate."
-            : project is not null && _row.Service is not null
-            ? $"Saved under {project} / {_row.Service}, so it survives a recreate."
-            : Invented.IsMatch(_row.Name)
-                ? $"Docker made the name {_row.Name} up, so these details stay with it and will not "
+            : project is not null && row.Service is not null
+            ? $"Saved under {project} / {row.Service}, so it survives a recreate."
+            : Invented.IsMatch(row.Name)
+                ? $"Docker made the name {row.Name} up, so these details stay with it and will not "
                   + "follow a new docker run. Give the container a --name, or label it "
                   + "with --label freeharbor.title=…"
-                : $"Saved under the name {_row.Name}.";
+                : $"Saved under the name {row.Name}.";
 
         // Automatic first, which is "whatever the sources say", then every bundled icon, then a file
-        // if one is saved. A choice of what is drawn and never a free text box, so a typo cannot
-        // become a blank tile.
+        // if one is saved or chosen. A choice of what is drawn and never a free text box, so a typo
+        // cannot become a blank tile.
+        var pending = _pending.GetValueOrDefault(row.DetailKey!);
+        var icon = pending is not null ? pending.Icon : _store.For(row.DetailKey!)?.Icon;
+        IconBox.Items.Clear();
         IconBox.Items.Add(new IconChoice($"Automatic ({_beneath.IconSource})", null));
         foreach (var name in ContainerDetails.Bundled.Order(StringComparer.Ordinal))
         {
             IconBox.Items.Add(new IconChoice(name, name));
         }
 
-        var savedIcon = _row.DetailKey is { } key ? _store.For(key)?.Icon : null;
-        if (savedIcon is not null && Path.IsPathFullyQualified(savedIcon))
+        if (icon is not null && Path.IsPathFullyQualified(icon))
         {
-            IconBox.Items.Add(new IconChoice(Path.GetFileName(savedIcon), savedIcon));
+            IconBox.Items.Add(new IconChoice(Path.GetFileName(icon), icon));
         }
 
-        IconBox.SelectedItem = IconBox.Items.Cast<IconChoice>().FirstOrDefault(choice => choice.Value == savedIcon)
+        IconBox.SelectedItem = IconBox.Items.Cast<IconChoice>().FirstOrDefault(choice => choice.Value == icon)
             ?? IconBox.Items[0];
 
-        TitleBox.Text = shown.Title;
-        DescriptionBox.Text = shown.Description ?? "";
+        var shown = row.Details ?? _beneath;
+        TitleBox.Text = pending?.Title ?? shown.Title;
+        DescriptionBox.Text = pending?.Description ?? shown.Description ?? "";
+        _loading = false;
+        Refresh();
+    }
+
+    /// <summary>Keep what is typed for the target on screen, so moving along the rail loses nothing.</summary>
+    private void Stash()
+    {
+        if (_row.DetailKey is { } key && IconBox.SelectedItem is IconChoice choice)
+        {
+            _pending[key] = new Edit(_row, TitleBox.Text, DescriptionBox.Text, choice.Value);
+        }
     }
 
     private void Refresh()
     {
-        if (!IsInitialized || IconBox.SelectedItem is not IconChoice choice)
+        if (_loading || !IsInitialized || IconBox.SelectedItem is not IconChoice choice)
         {
             return;
         }
@@ -216,7 +298,7 @@ internal partial class EditDetailsWindow : Window
         };
         var glyph = IconTile.GlyphFor(icon);
         var picture = IconTile.PictureFor(icon);
-        Tile.Background = Palette.TileBrushes[_hue % Palette.TileBrushes.Count];
+        Tile.Background = Palette.TileBrushes[(_row.Details?.Hue ?? _beneath.Hue) % Palette.TileBrushes.Count];
         TileGlyph.Text = glyph ?? "";
         TilePicture.Source = picture;
         TileLetter.Text = glyph is null && picture is null ? IconTile.LetterFor(icon, title) : "";
@@ -226,6 +308,17 @@ internal partial class EditDetailsWindow : Window
     }
 
     private void FieldChanged(object sender, RoutedEventArgs e) => Refresh();
+
+    private void RailChanged(object sender, RoutedEventArgs e)
+    {
+        if (_loading || Rail.SelectedItem is not RailItem { Row: var next } || ReferenceEquals(next, _row))
+        {
+            return;
+        }
+
+        Stash();
+        Load(next);
+    }
 
     private void ResetTitle(object sender, RoutedEventArgs e) => TitleBox.Text = _beneath.Title;
 
@@ -284,51 +377,47 @@ internal partial class EditDetailsWindow : Window
         }
         catch (System.ComponentModel.Win32Exception)
         {
+            // Explorer refused; the folder is still named in the header to open by hand.
         }
     }
 
     private void Save(object sender, RoutedEventArgs e)
     {
-        if (_row.DetailKey is not { } key || IconBox.SelectedItem is not IconChoice choice)
+        Stash();
+        var edits = _pending.Values
+            .Select(edit => (edit.Row, edit.Title, edit.Description, edit.Icon))
+            .ToList();
+        if (edits.Count == 0)
         {
+            DialogResult = true;
             return;
         }
 
+        var cleared = new DetailFields(null, null, null);
         if (SaveTo.SelectedItem is SaveTarget { ToCompose: true } && _row.WorkingDir is { } composeFolder)
         {
-            if (!SaveToCompose(composeFolder, choice.Value))
+            if (!SaveToCompose(composeFolder, edits))
             {
                 return;
             }
 
-            _ = _store.Save(key, new DetailFields(null, null, null));
+            // The store is read first, so what it held for these keys would hide the file.
+            edits.ForEach(edit => _store.Save(edit.Row.DetailKey!, cleared));
         }
         else if (SaveTo.SelectedItem is SaveTarget { ToFile: true } && _row.WorkingDir is { } folder)
         {
             var file = ProjectFile.For(folder)
-                ?? new ProjectFileDetails(new DetailFields(null, null, null), new Dictionary<string, DetailFields>());
-            var services = new Dictionary<string, DetailFields>(file.Services, StringComparer.Ordinal);
-            var project = file.Project;
-            if (_row.IsProject)
-            {
-                project = ForTheFile(file.Project, _beneath, TitleBox.Text, DescriptionBox.Text, choice.Value);
-            }
-            else if (_row.Service is { } service)
-            {
-                services[service] = ForTheFile(
-                    services.GetValueOrDefault(service), _beneath, TitleBox.Text, DescriptionBox.Text, choice.Value);
-            }
-
-            Saved = ProjectFile.Write(folder, new ProjectFileDetails(project, services)) is not null;
+                ?? new ProjectFileDetails(cleared, new Dictionary<string, DetailFields>());
+            Saved = ProjectFile.Write(folder, Applied(file, edits)) is not null;
             if (Saved)
             {
-                // The store is read first, so what it held for this key would hide the file.
-                _ = _store.Save(key, new DetailFields(null, null, null));
+                edits.ForEach(edit => _store.Save(edit.Row.DetailKey!, cleared));
             }
         }
         else
         {
-            Saved = _store.Save(key, Difference(_beneath, TitleBox.Text, DescriptionBox.Text, choice.Value));
+            Saved = edits.All(edit => edit.Row.DetailsBeneath is { } beneath
+                && _store.Save(edit.Row.DetailKey!, Difference(beneath, edit.Title, edit.Description, edit.Icon)));
         }
 
         DialogResult = true;
@@ -341,11 +430,12 @@ internal partial class EditDetailsWindow : Window
             .Where(file => Path.IsPathFullyQualified(file) && File.Exists(file)),
     ];
 
-    /// <summary>Write the edit into the compose file's block, after showing the change once per project.</summary>
+    /// <summary>Write the edits into the compose file's block, after showing the change once per project.</summary>
     /// <param name="folder">The folder compose ran in.</param>
-    /// <param name="icon">The chosen icon, or null for automatic.</param>
+    /// <param name="edits">Each target that changed.</param>
     /// <returns>Whether it was written; false where the user said no or the file could not be written.</returns>
-    private bool SaveToCompose(string folder, string? icon)
+    private bool SaveToCompose(
+        string folder, IEnumerable<(ContainerRow Row, string Title, string Description, string? Icon)> edits)
     {
         var files = ComposeFiles(_row);
         var target = ComposeExtension.TargetFile(files);
@@ -357,24 +447,13 @@ internal partial class EditDetailsWindow : Window
         // the value it had, however the author spelled it. Half a second, and only on Save.
         var current = new ComposeExtension(new Core.Agent.BundledComposeCli()).Read(folder, files)
             ?? new ProjectFileDetails(new DetailFields(null, null, null), new Dictionary<string, DetailFields>());
-        var services = new Dictionary<string, DetailFields>(current.Services, StringComparer.Ordinal);
-        var project = current.Project;
-        if (_row.IsProject)
-        {
-            project = ForTheFile(current.Project, _beneath, TitleBox.Text, DescriptionBox.Text, icon);
-        }
-        else if (_row.Service is { } service)
-        {
-            services[service] = ForTheFile(
-                services.GetValueOrDefault(service), _beneath, TitleBox.Text, DescriptionBox.Text, icon);
-        }
 
         try
         {
             var bytes = File.ReadAllBytes(target);
             var bom = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
             var (text, before, after) = ComposeExtension.Rewrite(
-                File.ReadAllText(target), new ProjectFileDetails(project, services), Path.GetDirectoryName(target)!);
+                File.ReadAllText(target), Applied(current, edits), Path.GetDirectoryName(target)!);
 
             var paths = new Core.Engine.EnginePaths();
             var settings = Core.Settings.TraySettings.Read(paths.Settings);
@@ -409,6 +488,19 @@ internal partial class EditDetailsWindow : Window
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return false;
         }
+    }
+
+    /// <summary>What was typed for one target.</summary>
+    private sealed record Edit(ContainerRow Row, string Title, string Description, string? Icon);
+
+    /// <summary>One entry in the rail: the target's title over what compose calls it.</summary>
+    /// <param name="Row">The target.</param>
+    private sealed record RailItem(ContainerRow Row)
+    {
+        /// <summary>Under the title: the project and its size, or the service and its container.</summary>
+        public string Caption => Row.IsProject
+            ? $"{Row.Project} · {Row.Total}"
+            : $"{Row.Service ?? Row.Name} · {Row.Name}";
     }
 
     /// <summary>One place Save can write.</summary>
