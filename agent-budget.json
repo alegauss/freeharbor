@@ -46,18 +46,18 @@
     ],
     "measured": {
       "calls": 6,
-      "tokens": 11711
+      "tokens": 11641
     },
     "shapes": {
       "about": [
         "Per response, so a future verb can be judged against the shape it replaces. The list is",
         "counted three times in the total because the canonical task re-reads it as state moves,",
-        "which is what makes re-discovery the largest driver here: 5718 of 11711, ahead of",
-        "the log tail at 4170 and the whole inspect at 1603."
+        "which is what makes re-discovery the largest driver here: 5718 of 11641, ahead of",
+        "the log tail at 4100 and the whole inspect at 1603."
       ],
       "containers.list": 1906,
       "container.inspect": 1603,
-      "container.logs.tail200": 4170,
+      "container.logs.tail200": 4100,
       "network.inspect": 220
     },
     "caveat": [
@@ -90,7 +90,7 @@
         "against the two `measured` blocks so no one of the three can move on its own."
       ],
       "calls": 1.5,
-      "tokens": 14.4
+      "tokens": 14.3
     },
     "caveat": [
       "Task-for-task, not payload-for-payload, and the difference is not a rounding error. `read doctor`",

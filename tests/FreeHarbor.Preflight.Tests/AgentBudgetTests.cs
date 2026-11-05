@@ -182,7 +182,11 @@ public sealed class AgentBudgetTests
             	at shop.api.Bootstrap.main(Bootstrap.java:41)
 
             """;
-        return string.Concat(Enumerable.Repeat(trace, 40));
+
+        // LF whatever the checkout wrote. The raw literal carries the file's own line endings, so a
+        // CRLF checkout (CI's) measured 280 characters more than an LF one, 70 tokens, and the
+        // baseline flipped between 11641 and 11711 with whichever machine recorded it last.
+        return string.Concat(Enumerable.Repeat(trace.ReplaceLineEndings("\n"), 40));
     }
 
     /// <summary>The network read, the last question before the one Docker cannot answer at all.</summary>
@@ -473,10 +477,10 @@ public sealed class AgentBudgetTests
         // measurement falsified it. Recorded rather than quietly corrected, because falsifying an
         // estimate is what DD23 is for.
         //
-        // Measured over the Engine API, 11711 estimated tokens for six calls:
-        //   three list reads   5718   48.8%   <- the largest driver
-        //   the log tail       4170   35.6%
-        //   the whole inspect  1603   13.7%
+        // Measured over the Engine API, 11641 estimated tokens for six calls:
+        //   three list reads   5718   49.1%   <- the largest driver
+        //   the log tail       4100   35.2%
+        //   the whole inspect  1603   13.8%
         //   the network         220    1.9%
         // So re-discovery leads, and it is not a majority on its own - stated as the two comparisons
         // that are actually true rather than as "most of it", which it is not.
