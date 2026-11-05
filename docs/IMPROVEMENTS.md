@@ -233,19 +233,204 @@ From the portfolio review of 30/10/2026 (visibility, `estrategia/portfolio.md`).
 installer is not signed, so SmartScreen warns on every first download, which is the
 wrong first impression on exactly the corporate laptop this tool is for. The decision
 for all of the author's Windows apps is the Microsoft Store, which signs the MSIX
-package itself, instead of buying a code signing certificate. claude-tray tests the path
-first (visibility VS58); this line waits for what that test learns.
+package itself, instead of buying a code signing certificate. claude-tray tested the
+path first (visibility VS58) and is listed as 9P27BHWNT56D since its T412.
 
-FreeHarbor has restrictions of its own to check against the Store's rules: it enables or
-relies on the WSL2 feature, which can require elevation; it creates and registers its
-own WSL distribution and downloads the engine from upstream at install time; and its
-per-user, no-admin install is the selling point, so the package must keep it. If MSIX
-cannot host the preflight and the WSL registration, the answer may be a Store listing
-that points to the existing installer, or no Store at all; the outcome is written down
-either way.
+The restrictions FreeHarbor has of its own are now separate lines: whether WSL
+registration works from inside a package (DD309, the gate), the package build (DD310),
+packaged behaviour and updates (DD311), the command line (DD312), start with Windows
+(DD313), the build-details link (DD314), the engine download against policy 10.2.2
+(DD315), the first-run page that replaces the wizard (DD316), and removing the engine
+without an uninstaller (DD317).
+
+What stays here is the submission: the listing in en-US and pt-BR, the store art,
+claude-tray's store-submit.ps1 ported, and certification notes that justify
+runFullTrust, any unvirtualizedResources, and the engine download. The README and the
+site's download section name the Store beside winget and the installer, which both stay.
+
+If DD309 shows MSIX cannot host the WSL registration, the answer is a Store listing that
+points to the existing installer, or no Store at all, and the reason is recorded here.
 
 Done when FreeHarbor is in the Store with its install still working without admin, or
 the reason it cannot be is recorded here and in the product sheet.
+
+### §DD309 DD309 — Measuring WSL registration from inside a package
+
+The gate for the whole Store path (DD292). A full-trust app in an MSIX package has its
+writes to a new folder under AppData redirected to the package's LocalCache, and its
+HKCU writes kept in a private hive. FreeHarbor's root is %LOCALAPPDATA%\FreeHarbor and
+distro is the BasePath WSL registers the disk at. WslService runs outside the package
+and sees the real filesystem, so the app and the service may disagree about where the
+disk is.
+
+The test: a minimal package, self-signed and sideloaded, holding the current
+FreeHarbor.exe, run once with virtualization on and once with
+desktop6:FileSystemWriteVirtualization and RegistryWriteVirtualization disabled under
+rescap:unvirtualizedResources. In each mode, run --provision, then record:
+
+- the BasePath under HKCU\...\Lxss and where the vhdx really sits;
+- whether the tray reports the engine, starts it and reaches the docker_engine pipe;
+- whether --compact and --fsck find the disk;
+- what is left after Remove-AppxPackage: files, the Lxss entry, the Run values.
+
+Done when the table is written here and the mode the package will use is chosen. If
+neither mode keeps the app and WSL on one disk, DD292 records the fallback (a listing
+that points to the existing installer) and DD309 onward are retired.
+
+### §DD310 Building the MSIX package
+
+Ported from claude-tray's build\build-msix.cmd, build-msix.ps1 and
+build\msix\AppxManifest.xml, which passed certification (claude-tray T409 and T412).
+
+- Reserve the name FreeHarbor in Partner Center under the Alegauss account; Identity Name and Publisher are copied from the reservation exactly, or the upload is refused.
+- {VERSION} is filled from <Version> in Directory.Build.props with a fourth part of 0, which the Store requires.
+- The payload is the Release publish of FreeHarbor.exe, the shim's docker.exe, and build\agent.
+- Tiles and StoreLogo are drawn from build\icon.svg by the script that already draws the .ico.
+- Resources en-us and pt-br, matching the installer's languages; MinVersion 10.0.19041, as installer.iss requires for WSL2; runFullTrust; and the virtualization mode DD309 chose.
+- The output goes to dist\FreeHarbor.msix, plus a self-signed variant for sideloading tests.
+
+This task carries the bare package and none of the manifest extensions: the command
+aliases (DD312), the startup tasks (DD313) and the protocol handler (DD314) each come
+with their own task. PackagingTests gains cases that hold the manifest version equal to
+Directory.Build.props and check that both binaries are in the package.
+
+Done when the package installs by sideload on a clean user, the tray starts from the
+Start menu, and the existing Inno build is untouched.
+
+### §DD311 Behaving as a packaged app
+
+Ported from claude-tray's src\Tray\PackageIdentity.cs. Whether the process is packaged
+is asked of the process at runtime through GetCurrentPackageFullName and is never set by
+a build flag, so the exe the tests check is the exe both channels ship.
+
+Two things change under a package.
+
+- **Updates.** ReleaseCheck and ReleaseUpdate (DD154) stand down. The setup they download would install beside the package instead of replacing it, so the window's update notice and the menu entry go away, and the version row says updates come from the Microsoft Store. An unpackaged copy keeps its updater exactly as it is.
+- **Activation.** The Store's Open button, the Start menu tile and an alias launch all start the package the same way the startup task does. Only the startup task is meant to be quiet; the others open the window, as a bare launch does today (DD80). The activation kind is read as claude-tray reads it, and a kind that cannot be read counts as the startup task, so a failure never puts a window in somebody's face at sign-in.
+
+Paths that today derive from the install directory (the agent skill files,
+freeharbor.cmd, the after-install text) are checked for assumptions that {app} is
+%LOCALAPPDATA%\FreeHarbor, which under a package it is not.
+
+Done when the pure decisions (stand down, open the window) are covered by tests and a
+sideloaded package shows no update offer.
+
+### §DD312 The command line from a package
+
+The Inno setup's pathentry task does three things: it puts {app}\bin on the user's PATH,
+it places the shim as docker.exe and freeharbor.cmd there, and it writes DOCKER_CONFIG
+(DD124). Inside a package, the folder under WindowsApps cannot be launched from outside,
+and HKCU writes may be virtualized.
+
+- **freeharbor.** A uap5:AppExecutionAlias named freeharbor.exe on the tray's Application, so the allowlist entry Bash(freeharbor read:*) still matches (DD24). Measure whether ParentConsole still attaches when the windowed exe is launched through an alias. If it does not, the alias points at a console forwarder instead.
+- **docker.** A second Application with Executable set to the shim, AppListEntry="none" so it never shows in Start, and its own alias docker.exe. The shim is console subsystem, which an alias launch keeps (DD141). Aliases land in %LOCALAPPDATA%\Microsoft\WindowsApps, late on PATH, so an earlier docker on PATH wins; the preflight's rival check already refuses that machine.
+- **DOCKER_CONFIG.** claude-tray measured that a user-scope environment write from its package reached outside shells. Measure the same for DockerConfigEntry.Ensure. If it does not, the shim sets DOCKER_CONFIG for the child process when the variable is absent, which keeps compose and buildx found (DD73, DD74) with no registry write at all.
+
+Done when, from a fresh terminal after a sideload install, docker compose version,
+docker buildx version and freeharbor read status all answer.
+
+### §DD313 Start with Windows from a package
+
+Today there are two HKCU Run values (DD97): FreeHarbor, which the installer's checkbox
+writes with --tray, and FreeHarbor Engine, which --autostart on writes and nothing
+writes by default. A packaged app writes both into its private hive, where Explorer
+never looks; claude-tray met exactly this (T409).
+
+- **The tray.** A desktop:StartupTask with Enabled="true", as the installer's checkbox is ticked by default. Launched by it, the app stays in the tray, which is the activation rule DD311 sets.
+- **The engine.** A second Application on the same exe, AppListEntry="none", with uap10:Parameters naming the verb the Run value carries today, and its own StartupTask with Enabled="false". Off by default is the product's rule, not a preference.
+- **The verb.** Autostart reads and changes the state through the Windows.ApplicationModel.StartupTask API when packaged, and keeps the Run values when not. --autostart status reports Enabled, Disabled, DisabledByUser or DisabledByPolicy as they are. --autostart on can call RequestEnableAsync, but a task the user disabled in Settings cannot be re-enabled by the app, so the answer then names Settings > Apps > Startup. The WinRT call is declared by hand, as claude-tray's activation lookup is, rather than taking on the SDK projection.
+
+Done when both tasks are visible in Settings > Apps > Startup after a sideload install,
+the engine's is off, and --autostart on and off move it.
+
+### §DD314 The build-details link from a package
+
+Buildx ends every build with View build details: docker-desktop://dashboard/build/...,
+hardcoded in the binary this project pins. DD126 made the link open the build in
+FreeHarbor's window through a handler the installer writes under
+HKCU\Software\Classes\docker-desktop. A packaged app's HKCU write lands in its private
+hive, so on a Store install that link is dead again.
+
+The manifest declares it instead: a uap:Extension of category windows.protocol with
+Name="docker-desktop" on the tray's Application, the logo from the package, and the URL
+passed to the exe. The handler today runs FreeHarbor.exe --open-build "%1"; under a
+protocol activation the URL arrives through the activation arguments instead of the
+command line. Read it there when packaged, through the same hand-declared WinRT lookup
+DD311 uses for the activation kind. Then hand it to the code that already writes
+open-build.txt and signals the running tray (DD126).
+
+The trade-off DD126 recorded still holds: this is another vendor's scheme. A manifest
+registration behaves better than the Inno one on that score, because Windows offers a
+choice when two apps claim a scheme instead of the last writer silently winning, and the
+registration leaves with the package.
+
+Done when a build run from a terminal after a sideload install prints the link and
+clicking it opens that build in the window.
+
+### §DD315 Downloading the engine versus shipping it in the package
+
+The installer's engine task downloads about 250 MB at install time: the distribution's
+root filesystem, dockerd, the Windows docker CLI, and the compose and buildx plugins.
+Each is pinned and its checksum verified by EngineProvisioner, and --provision does the
+same work later. Microsoft Store policy 10.2.2 says an app must not change its described
+functionality by downloading code after certification. A container engine that downloads
+separate, pinned programs is the kind of case the certification notes are written to
+argue, not a clear pass.
+
+Two outcomes, each with its cost:
+
+- **Keep the download.** The listing description names the download and its size, and the certification notes explain what is fetched, from where, and how it is pinned. Engine updates stay independent of package updates. Cheapest to build; the risk is a rejection after the rest of the work is done.
+- **Ship the binaries in the package.** The provision copies from the package folder instead of downloading, the package grows by roughly the same 250 MB, and every engine bump becomes a package submission. FreeHarbor then redistributes those binaries inside its own package, so the NOTICE DD13 wrote and the attribution list (Licensing\Attribution.cs) are checked against exactly what the package carries.
+
+Read the current policy text and the published guidance on runtimes and package
+managers, and record which applies. Submit first with the download if the reading allows
+it.
+
+Done when the chosen outcome and the policy text it rests on are written here.
+
+### §DD316 The first launch carries what the setup wizard did
+
+The Inno wizard does four things a package cannot: it runs --preflight before writing
+anything (DD130), offers Turn it on for me with one elevated wsl.exe --install
+--no-distribution (DD131, DD132), downloads the engine behind a checkbox (DD119), and
+shows the after-install page about the tray overflow and the agent files (DD21, DD32). A
+package runs no code until the user opens it.
+
+So a packaged first launch, detected as no distribution registered and no settings.json,
+opens the window on a first-run page built from the same pieces:
+
+- the preflight report, from the same code --preflight runs, so there is still one opinion about the machine;
+- when the WSL2 row blocks, the plain-words explanation, the command, and the button. WindowsElevation already elevates per step, and installing the app still asks for no administrator;
+- after a restart, the tray's startup task brings the window back, replacing the wizard's RunOnce value;
+- the engine download as an explicit button stating its size, or a copy step if DD315 ships the engine inside the package;
+- the overflow note and the two agent setup commands, with paths valid under a package.
+
+The promise changes and the listing says so: a machine that cannot host the engine now
+gets a clean, removable package and this page, instead of nothing at all. The Inno
+wizard keeps its own pages.
+
+Done when a sideload install on a machine without WSL2 reaches a running engine through
+this page alone.
+
+### §DD317 Removing the engine without an uninstaller
+
+The Inno uninstaller closes the tray, unregisters the freeharbor distribution by name
+and offers to delete the root (DD14, DD121). Removing an MSIX package runs none of that.
+What is left depends on what DD309 measured: with virtualization off, the whole root
+stays under %LOCALAPPDATA%\FreeHarbor; with it on, Windows deletes LocalCache but WSL
+keeps a registered distribution whose disk is gone, which wsl --list then shows broken.
+
+Three parts:
+
+- **A verb.** freeharbor --remove-engine stops the engine host, terminates and unregisters the distribution (terminate first, per DD209), and deletes distro, downloads, cli and cli-plugins, keeping settings.json and details.json unless --all is given. It prints what it removed and how much space came back. The Inno uninstaller calls the same code, so there is one removal and not two.
+- **A place in the window.** Settings gets Remove engine, with a confirmation that states the disk size and that every image, container and volume goes with it.
+- **The leftover after the fact.** The preflight gains a row for a registered distribution named freeharbor whose BasePath no longer exists, with the unregister command as its remedy, so a reinstall after a bare package removal can clean up.
+
+The Store listing and the site's uninstall note say to run Remove engine before
+uninstalling.
+
+Done when a sideload install, an engine provisioned, Remove engine, then
+Remove-AppxPackage leaves no Lxss entry and no root.
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
