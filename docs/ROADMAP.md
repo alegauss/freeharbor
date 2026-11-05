@@ -33,7 +33,7 @@
 
 ## Block H — The public surface (the site a reader and an agent both read)
 
-- 📋 **DD304** (deps: —) **The compare page scores Rancher and Podman lower than they are on per-user install and on the docker_engine pipe** — A comparison caught overclaiming loses the reader on every other row, and three cells say what current sources contradict. → §DD304
+- 📋 **DD322** (deps: —) **llms.txt still lists five window destinations and calls a UDP port plain text after the containers redesign** — An agent reads the page as the product's own account of itself, and two of its sentences went false on 5 November. → §DD322
 
 ## Block I — The site on the design system
 

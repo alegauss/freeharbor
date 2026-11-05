@@ -366,31 +366,27 @@ All need WSL enabled once. Which differentiator leads is a person's call.
 Done when the first screen of the README and of the site names the corporate laptop
 without admin, and the comparison with Rancher and Podman is on the page.
 
-### §DD304 Correcting the rival cells on the compare page
+### §DD322 llms.txt after the containers redesign
 
-Found while working DD291 on 5 November 2026. The `/compare` matrix in
-`site/src/lib/site-content.ts` scores three rival cells against FreeHarbor that current
-sources contradict:
+`site/public/llms.txt` is hand-maintained, and the containers redesign (DD297 to DD301,
+5 November 2026) changed what it describes without touching it:
 
-- **Per-user install, no admin prompt.** Rancher Desktop is ✗, but its Windows installer
-  offers a current-user install; only its privileged service (which binds ports beyond
-  127.0.0.1) needs admin. That is `~`. Podman Desktop is `~`, but it has a current-user
-  option that needs no admin, and Podman 6's MSI is per-user by default. That is ✓.
-- **Standard docker_engine pipe, no DOCKER_HOST.** Podman is ✗, but `podman machine`
-  claims `npipe:////./pipe/docker_engine` whenever nothing else holds it, and only falls
-  back to its own pipe on a conflict. That is ✓.
+- It says the window has "five destinations beside About". DD301 added Settings, so there
+  are six.
+- It says a port that is only exposed, or a UDP port, is plain text. Since DD297 a
+  published port that does not speak HTTP, UDP included, is a chip that copies its
+  address; only an exposed port is plain text.
+- It says nothing of what the page now is: titles and icons per container, compose
+  projects with Open and a state chip, the Cards view, the detail page, the state chips.
+  Name what an agent reading it would act on, not the whole tour.
 
-Every one of these still needs WSL enabled once by an administrator, which is
-FreeHarbor's own caveat as well, so that is a footnote under the row and not a cell.
+The tracked snapshots `product.generated.ts` and `surface.generated.ts` also lag: a
+build adds Settings to the destinations and DD289's `--min-api` help line. Commit them
+as the build writes them, in the same change.
 
-`winsFooter` then names the per-user install and the standard pipe as the axis only this
-one wins, and after the correction it does not win them alone. Rewrite it to state what
-the corrected rows leave: nothing resident from boot (against Rancher), the read/do
-agent split, and Compose and Buildx pinned by digest. Do not invent a new claim to
-replace the lost ones.
-
-Done when the three cells and the footer match the sources, and the build's own page
-tests pass.
+`product.test.mjs` asserts over `llms.txt` with whitespace collapsed, so rewrap freely.
+Counts come from `product.generated.ts` where it has them; the destination count is
+`machine` there, so check the sentence against it rather than typing a new number blind.
 
 ## Block I — The site on the design system
 

@@ -52,14 +52,22 @@ export function Compare() {
                       <th colSpan={cmp.columns.length + 1}>{group.law}</th>
                     </tr>
                     {group.rows.map((row) => (
-                      <tr key={row.cap}>
-                        <td className="cmp-cap">{row.cap}</td>
-                        {row.cells.map((cell, i) => (
-                          <td key={i} className={i === 0 ? "cmp-td own" : "cmp-td"}>
-                            <span className={cellClass(cell)}>{cell}</span>
-                          </td>
-                        ))}
-                      </tr>
+                      <Fragment key={row.cap}>
+                        <tr>
+                          <td className="cmp-cap">{row.cap}</td>
+                          {row.cells.map((cell, i) => (
+                            <td key={i} className={i === 0 ? "cmp-td own" : "cmp-td"}>
+                              <span className={cellClass(cell)}>{cell}</span>
+                            </td>
+                          ))}
+                        </tr>
+                        {/* DD304: a caveat every column shares is a line under the row, not a cell. */}
+                        {"note" in row && row.note && (
+                          <tr className="cmp-note">
+                            <td colSpan={cmp.columns.length + 1}>{row.note}</td>
+                          </tr>
+                        )}
+                      </Fragment>
                     ))}
                   </Fragment>
                 ))}

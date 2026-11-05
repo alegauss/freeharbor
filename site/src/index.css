@@ -1541,6 +1541,12 @@ figcaption code {
   font-size: 0.82rem;
   margin-top: 14px;
 }
+/* DD304: a caveat shared by every column of the row above it. */
+.cmp-note td {
+  color: var(--vg-muted-foreground);
+  font-size: 0.82rem;
+  padding-top: 0;
+}
 .cmp-wins-footer {
   max-width: 760px;
   margin: 28px auto 0;

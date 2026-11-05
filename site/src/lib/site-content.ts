@@ -1099,7 +1099,14 @@ export const compare = {
       law: "Cost & access",
       rows: [
         { cap: "Free at any headcount", cells: ["✓", "✗", "✓", "✓", "✓"] },
-        { cap: "Per-user install, no admin prompt", cells: ["✓", "✗", "✗", "~", "✗"] },
+        // DD304. Rancher's Windows installer offers a current-user install and only its privileged
+        // service needs admin; Podman Desktop has a no-admin current-user option, and Podman 6's
+        // MSI is per-user by default.
+        {
+          cap: "Per-user install, no admin prompt",
+          cells: ["✓", "✗", "~", "✓", "✗"],
+          note: "Each of these still needs WSL turned on once by an administrator, FreeHarbor included.",
+        },
       ],
     },
     {
@@ -1111,7 +1118,9 @@ export const compare = {
     {
       law: "Compatibility",
       rows: [
-        { cap: "Standard docker_engine pipe, no DOCKER_HOST", cells: ["✓", "✓", "✓", "✗", "✗"] },
+        // DD304. `podman machine` claims the docker_engine pipe whenever nothing else holds it,
+        // and falls back to its own only on a conflict.
+        { cap: "Standard docker_engine pipe, no DOCKER_HOST", cells: ["✓", "✓", "✓", "✓", "✗"] },
         // DD158. The row the matrix was missing, and it is the one a hand-rolled WSL2 daemon
         // loses on work rather than on principle: both plugins are acquired, digest-checked
         // and placed where the CLI looks, by the same provisioner as the engine.
@@ -1143,7 +1152,7 @@ export const compare = {
     { name: "Plain WSL2 daemon", body: "Free of this project entirely. Pick it if you would rather wire dockerd into WSL2 and manage the pipe yourself." },
   ],
   winsFooter: [
-    "What is left is the axis where this one wins: a per-user install with no admin prompt, nothing resident, the standard pipe so no tool needs telling, and an agent surface that splits reads from writes.",
+    "Two rows are this one's alone: nothing held resident from boot, and an agent surface that splits reads from writes. A per-user install and the standard pipe it shares with Podman Desktop, and the table says so.",
   ] as Rich,
 };
 

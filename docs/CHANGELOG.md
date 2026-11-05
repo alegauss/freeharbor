@@ -326,6 +326,7 @@
 - ✅ **DD246** **the site says the compaction ends where Windows stops allowing it, which stopped being true, and names no verb for it** — The site and llms.txt say the hand-back can be refused and what the page then offers, naming the rights, the WSL shutdown and the free decline, plus the compaction verb.
 - ✅ **DD248** **the guard on the generated help matches verbs by prefix, so a verb that is a prefix of another passes unseen** — The guard compares whole verbs, so --compact is no longer answered by --compact-drill; proved by re-running it against the stale file it had passed.
 - ✅ **DD249** **the page slices the help by prefix, and the guard on that slice shares the assumption so it cannot catch it** — helpExcerpt and every guard in product.test.mjs share one whole-verb matcher, and a case states the rule so the page and its guard cannot agree wrongly again.
+- ✅ **DD304** **The compare page scores Rancher and Podman lower than they are on per-user install and on the docker_engine pipe** — The compare page gives Rancher and Podman their per-user and pipe cells, notes the shared WSL admin step, and claims two rows alone (design superseded: pinned Compose is not won alone).
 
 ## Block I — The site on the design system
 
