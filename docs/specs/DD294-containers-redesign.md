@@ -1,0 +1,282 @@
+# DD294 to DD301: the containers page, redesigned
+
+How the containers page, the detail page, the edit dialog and Settings are laid out. The
+roadmap sections say what each task does and why; this file says what each screen looks
+like, so a task can be built without the design board. Where the two disagree, the
+roadmap's behaviour wins and this file is corrected.
+
+The screens were explored on a design board
+(https://claude.ai/artifact/VgKD48AfuNnC1AyduJJExu, private to its owner). Images of its
+boards are not in the repository yet; once exported they go in `docs/specs/DD294-containers-redesign/`.
+The board is an HTML mockup and the window is WPF, so it shows composition and hierarchy,
+not pixels. Section 9 lists where this file deliberately departs from the board.
+
+Everything here sits under the window's existing law: [DD34](DD34-window-constitution.md),
+`Palette.cs` for every colour, and claude-tray as the formatting reference.
+
+---
+
+## 1. The shared vocabulary
+
+These elements appear on more than one screen. Each is built once and reused.
+
+| Element | What it is | Built from |
+|---|---|---|
+| **Icon tile** | A rounded square holding the resolved icon in white, on the resolved colour. 40 px in the list, 44 px on a card, 64 px on the detail page, 24 px in a rail. Radius about a quarter of the side. | New. The colour comes from a set of tile hues declared in `Palette.cs` (L1), never a hex in markup. |
+| **Monogram** | The tile with the first letter of the title instead of an icon, on a hue hashed from the name. | The tile, with text. |
+| **State chip** | The DD36 chip, plus a shape before the word: a filled circle for running, a hollow square for stopped, a triangle for a failure (L8). | The existing chip in `ContainersPage.xaml` and `RowStyle.cs`. |
+| **Project chip** | The same chip on a group, saying `n of m running`. Running when all run, stopped when none do, failure when any exited with a non-zero code. | The chip, fed by the existing `ProjectCount`. |
+| **Open button** | Opens the primary link. Filled with the Fluent accent (`AccentButtonStyle`), disabled rather than hidden when nothing runs. | Fluent button. The board's blue is a stand-in for the accent, not a new colour. |
+| **Link chip** | A secondary link: label, then host in tertiary text. A non-HTTP port is a dashed chip that copies the address. | The existing `PortLink` style, widened to carry a label. |
+| **Verbs** | Logs, one primary verb, and `⋯`, all always drawn. Shell, Restart, Remove and (new) Edit details and Details live in `⋯`. | The existing row verbs. |
+| **Failure line** | The daemon's own sentence under whatever caused it, in `Palette.Danger`. | The existing `Failure` line. |
+| **Resolved details** | Title, description, icon, colour and links for a project, a service or a container, resolved in the DD294 and DD295 order. | New, one class. Every screen reads it; none resolves on its own. |
+
+Where a title is missing it falls back to the service or container name, so a title is
+never blank. Where a description is missing nothing is drawn, except on a standalone
+container, which shows `No details yet · Add icon and description`.
+
+---
+
+## 2. The list (DD297)
+
+The default view, and the one that holds forty containers. Columns stay aligned with the
+headings, and the test that pairs them still passes.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│ [▢]  Storefront   (● 4 of 4 running)                  [Open site] [Stop] [⋯]        │  group header
+│      Shop API, admin panel and the Postgres behind them                              │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│  ●  Public site        nginx:1.27       (● running)  [:8080]      Up 2 hours  Logs Stop ⋯ │
+│     Hot reload on                                                                    │
+│  ●  admin              node:22-alpine   (● running)  [:8081/admin] Up 2 hours  Logs Stop ⋯ │
+│  ●  PostgreSQL         postgres:17      (● running)  [:5432 ⧉]    Up 2 hours  Logs Stop ⋯ │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ Standalone containers ─────────────────────────────────────────────────────────────┐
+│ [▢] Mail catcher   mailpit · catches outgoing mail   axllent/mailpit  (● running) [Inbox] Logs Stop ⋯ │
+│ [N] nervous_tesla  No details yet · Add icon and description           (● running)        Logs Stop ⋯ │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+- **Group header.** Chevron, icon tile, title (a link to the detail page), project chip,
+  description underneath in secondary text. On the right: Open (primary link), Start or
+  Stop for the whole project, `⋯`. A click anywhere else on the strip folds the group, as
+  DD127 made it.
+- **Row.** State shape, title over description, image, state chip, link chips, status,
+  verbs. The title is the resolved one; the service name moves to the tooltip.
+- **Standalone block.** Last, under its own heading, with no group verbs. Each row has its
+  own icon tile and its own Open.
+- **Fixed:** column alignment, verbs always drawn, failure line under the row.
+- **Free:** spacing, how a long description truncates, whether the description row
+  collapses when empty (it should).
+
+## 3. A large project (DD298)
+
+What changes when a project has many services or many links. Under five services and
+three links nothing here applies.
+
+```
+group header:  [▢] Platform (▲ 18 of 20 running)        [Gateway ▸ | 10 ▾] [Admin] [Grafana] [Stop] [⋯]
+
+               ┌ Filter 10 links ─────────────┐
+               │ PINNED                        │
+               │  Gateway      gateway   :8000 │
+               │  Admin        admin     :8001 │
+               │ ALL                           │
+               │  API docs     gateway   :8000/docs │
+               │  ...                          │
+               └───────────────────────────────┘
+
+tier filter:   (All 20) (Running 18) (Problems 2)
+tiers:         ▸ Edge            2 containers · gateway, admin           (all running)
+               ▸ APIs           10 containers · catalog, cart, orders…    (all running)
+               ▾ Workers         4 containers                             (2 problems)
+                   ▲ payments-worker   Exited (1) 2 minutes ago            Logs Start ⋯
+                   ▲ notifications     Restarting (1) 10 seconds ago       Logs Start ⋯
+                   ● search-indexer                                        Logs Stop  ⋯
+               ▸ Data and tools  4 containers · postgres, redis, queue…   (all running)
+```
+
+- **Links.** The `freeharbor.primary` link (else the first) is a split button: Open on
+  one side, a count and a menu on the other. Up to two pinned links sit beside it. The
+  menu has a filter box once it lists more than five.
+- **Tiers.** One per `freeharbor.group` value, in first-seen order. A tier where
+  everything runs is folded behind a one-line summary; a tier with a problem opens. No
+  label means one tier, and the plain list.
+- **On a card** the services become a health bar (one block per container, problems last
+  and drawn as triangles), the failure lines, and `Show all 20`, which opens the detail
+  page.
+- **Fixed:** a healthy tier starts folded; a problem is never folded away.
+
+## 4. The detail page (DD299)
+
+```
+┌ rail ────────────────┐ ┌──────────────────────────────────────────────────────────────┐
+│ [Filter          ]   │ │ [▢▢]  Search lab  (▲ 2 of 3 running)   [Open console] [Restart] [Stop] [⋯] │
+│ COMPOSE PROJECTS     │ │       Search engine with a sample index and its indexer         │
+│ [▢] Storefront    ●  │ │       compose project search-lab · compose.yaml · up 40 minutes │
+│ [▢] Search lab    ▲  │ │                                                                 │
+│ [▢] Team wiki     □  │ │ ▲ indexer: Exited (143) 3 minutes ago            [Start indexer]│
+│ STANDALONE           │ │                                                                 │
+│ [▢] Mail catcher  ●  │ │ ENDPOINTS                                                        │
+│ [N] nervous_tesla ●  │ │ ┌ Console · engine ┐ ┌ API · engine ┐ ┌ Database · db ┐         │
+│                      │ │ │ localhost:2700/… │ │ …            │ │ localhost:3306│         │
+│                      │ │ │ [Open] [Copy]    │ │ [Open][Copy] │ │ [Copy]        │         │
+│                      │ │ └──────────────────┘ └──────────────┘ └───────────────┘         │
+│                      │ │ SERVICES                     RECENT OUTPUT · indexer  Open log │
+│                      │ │ ● engine  search:3.1  running │ 12:41:15 INFO loading batch…  │
+│                      │ │ ▲ indexer indexer:3.1 exited  │ 12:41:21 received SIGTERM…    │
+│                      │ │ ● db      mariadb:11  running │ (stderr in Palette.Danger)    │
+└──────────────────────┘ └──────────────────────────────────────────────────────────────┘
+```
+
+- **Opened from:** the title link in a list group header or standalone row, `Details` in
+  any `⋯`, a click on a card outside its buttons, and `Show all` on a large card. Back
+  returns to the view and scroll position it came from.
+- **Rail:** compose projects, then standalone containers, each with a tile and a state
+  shape. Selecting one swaps the page without going back through the list.
+- **Recent output** tails the failing service, or the first service when none failed.
+- **Fixed:** the failure line repeats the daemon's sentence; Endpoints lists every link,
+  including those folded into a menu elsewhere.
+- **Free:** whether memory and CPU appear in Services (only when the engine reports them).
+
+## 5. The cards view and the switch (DD300)
+
+```
+[Containers]   3 projects · 3 standalone · 9 of 14 running     (All 5)(Running 2)(Stopped 2)(Problems 1)
+                                                               [Filter…] [Cards | List]
+┌──────────────────────────────┐ ┌──────────────────────────────┐ ┌──────────────────────────────┐
+│ [▢] Storefront (● 4 of 4)  ⋯ │ │ [▢] Search lab (▲ 2 of 3)  ⋯ │ │ [▢] Team wiki (□ 0 of 3)   ⋯ │
+│ Shop API, admin panel and…   │ │ Search engine with a sample… │ │ WordPress with its database… │
+│                              │ │ ▲ indexer: Exited (143) …    │ │                              │
+│ [Open site localhost:8080]   │ │ [Console localhost:2700]     │ │ [Open site] (disabled)       │
+│ [Admin] [db :5432 ⧉]         │ │                              │ │                              │
+│ ● web    nginx:1.27   :8080  │ │ ● engine …                   │ │ □ wordpress …                │
+│ ● db     postgres:17  :5432  │ │ ▲ indexer …                  │ │ □ db …                       │
+│ Up 2 hours   Logs Restart Stop│ │ Up 40 min    Logs Restart Stop│ │ Exited 20 h  Logs Restart Start│
+└──────────────────────────────┘ └──────────────────────────────┘ └──────────────────────────────┘
+Standalone containers
+┌ [▢] Mail catcher (● running)  axllent/mailpit · :8025 · Up 3 days   [Inbox] [Stop] [⋯] ┐
+└ [N] nervous_tesla             No details yet · Add icon and description     [Stop] [⋯] ┘
+```
+
+- A card is a `GroupCard` (DD34 section 3: card fill, card stroke, 8 px radius). The grid
+  fills the width with cards of at least 400 px.
+- A stopped project dims its links, never the card, so its Start stays readable.
+- The switch, the filter chips, the text filter and the sort are shared by both views and
+  remembered with the window's placement (DD39).
+- **Fixed:** the primary verb is the accent button only when it is Start.
+
+## 6. The edit details dialog (DD296)
+
+A dialog owned by the main window, about 980 px wide.
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────┐
+│ Edit details · compose project storefront                                       ✕ │
+│ 🗀 C:\src\storefront\compose.yaml + compose.override.yaml  [Copy path] [Open folder] │
+├──────────────────────┬────────────────────────────────────────────────────────────┤
+│ PROJECT              │ EDITING (Service) storefront / db                          │
+│ [▢] Storefront     • │ container storefront-db-1  image postgres:17  id 3f2a9c1b7e04 │
+│     storefront · 4   │ Saved under storefront / db, so it survives a recreate.    │
+│ SERVICES             │                                                            │
+│ [▢] Public site      │ PREVIEW  [▢]  PostgreSQL                                   │
+│     web · storefr…-1 │               No description                               │
+│ [▢] PostgreSQL     ◂ │ Icon     bundled icon for postgres                         │
+│     db · storefr…-1  │ [▢][▢][▢][▢]…[Aa][Choose file…]                             │
+│                      │ Colour   ○ ○ ○ ○ ○ ○ ○ ○                                    │
+│                      │ Title    from image label org.opencontainers.image.title   │
+│                      │ [PostgreSQL                                          ]     │
+│                      │ Description  none                                0 / 120   │
+│                      │ [                                                    ]     │
+├──────────────────────┴────────────────────────────────────────────────────────────┤
+│ 💾 Saves in FreeHarbor on this machine.            Save to [FreeHarbor (default) ▾] │
+│    Default from Settings · only you see these details             [Cancel] [Save] │
+└───────────────────────────────────────────────────────────────────────────────────┘
+```
+
+- **Identity, always.** The header names the project and its compose files. The Editing
+  strip names the target, the key it is saved under, and the container, image and short
+  id. A rail item shows the title over `service · container`.
+- **Each field says its source** (x-freeharbor, a label, the image, a fallback, or
+  `edited here`) and has Reset to source.
+- **Save asks nothing.** The footer says where it will write. `Save to` changes the
+  destination for this project only, and the change is listed in Settings. Writing into a
+  compose file shows its diff once per project, with `Don't ask again`.
+- **A standalone container** has one target, no rail and no `Save to`: it always saves in
+  FreeHarbor. When docker made its name up, a warning says the details will not follow a
+  new `docker run`, with a link that copies the `--label` flags.
+- **Fixed:** the identity block, the source per field, no confirmation on Save.
+
+## 7. Settings (DD301)
+
+A destination in the nav strip, before About, built as a page (L2).
+
+```
+Settings
+
+Where edits to names, descriptions and icons are saved
+Applies to compose projects. A standalone container is always saved in FreeHarbor.
+ (•) In FreeHarbor                          default
+     Only on this machine and only for you. Nothing in the project folder changes.
+ ( ) In a .freeharbor folder in the project  shared through git
+     A file beside the compose file, which it overrides. Commit it and the team sees it.
+     <project>\.freeharbor\project.yaml · <project>\.freeharbor\icons\
+ ( ) In the compose file                    edits your file
+     Only the x-freeharbor block. The first save in each project shows the diff once.
+
+Projects that save somewhere else
+ storefront   C:\src\storefront\compose.yaml        .freeharbor in the project   ✕
+ search-lab   C:\src\search-lab\docker-compose.yml  The compose file             ✕
+
+Read order
+ 1. Saved in FreeHarbor  2. .freeharbor/project.yaml  3. x-freeharbor
+ 4. Service labels (freeharbor.*, then homepage.*)  5. Image labels  6. Bundled icon or monogram
+```
+
+The page is a single column, about 920 px wide, centred. Each choice is a radio card: the
+selected one carries the accent border.
+
+## 8. The files the details come from (DD294, DD295)
+
+`.freeharbor/project.yaml`, in the folder compose records as `working_dir`:
+
+```yaml
+title: Storefront
+description: Shop API, admin panel and the Postgres behind them
+icon: icons/storefront.svg        # relative to .freeharbor/, or a bundled icon name
+services:
+  admin:
+    title: Back office
+    icon: icons/backoffice.png
+  db:
+    description: Orders and customers
+```
+
+The `x-freeharbor` block in a compose file takes the same keys. Service labels are
+`freeharbor.title`, `.description`, `.icon`, `.url`, `.url.<name>`, `.primary` and
+`.group`. An icon is a bundled name or a local file; a URL is never fetched.
+
+## 9. Where this departs from the board
+
+1. **No verbs on hover.** Board B reveals Logs and Restart on hover. The row keeps DD36's
+   always-drawn Logs, one verb and `⋯`, as the comment in `ContainersPage.xaml` records:
+   a verb nobody can see is a verb nobody finds.
+2. **The header strip still folds.** The board treats a click on a group as opening the
+   detail page. In the list that click already folds the project (DD127), so the detail
+   page opens from the title link and from `Details` in `⋯`. Only a card opens on a plain
+   click.
+3. **Ports were already links.** DD7 drew them as links; DD297 restyles them as chips, it
+   does not introduce them.
+4. **Colours are tokens.** The board's hex values stand in for the Fluent accent, the
+   `Palette` state colours and the new tile hues.
+
+## 10. What the fixture must carry
+
+DD38's `SampleMachine` is how every screen here is captured without a daemon (L6), so it
+grows with the work: a project with `x-freeharbor` details, a service with `freeharbor.*`
+labels, one with only an image label, one with nothing, a standalone container with a
+docker-made name, and a project of twenty services in four `freeharbor.group` tiers with
+two failures. Each task adds the part its screen needs.

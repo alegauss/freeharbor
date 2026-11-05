@@ -43,7 +43,8 @@ fixed order, so the list, the cards and the detail page cannot disagree.
 Icons are bundled or read from a local file. A remote icon URL is never fetched, because
 the product does not phone home. A link without a label is derived from a published
 port. The SampleMachine fixture carries labelled and unlabelled containers, so captures
-show both. Design board: https://claude.ai/artifact/VgKD48AfuNnC1AyduJJExu
+show both. Layout of every screen: docs/specs/DD294-containers-redesign.md, section 1
+for the shared elements.
 
 ### §DD295 Project metadata from .freeharbor and x-freeharbor
 
@@ -64,7 +65,8 @@ Both are read, not baked into a container, so an edit shows on the next refresh 
 `compose up`. That makes them the two project-side targets the edit screen can save to.
 
 Read order per field: saved in FreeHarbor, then `.freeharbor`, then `x-freeharbor`, then
-the labels and everything after them in DD294's order.
+the labels and everything after them in DD294's order. File formats:
+docs/specs/DD294-containers-redesign.md section 8.
 
 ### §DD296 The edit details screen
 
@@ -79,8 +81,8 @@ the full path of its files, with Copy path and Open folder. The pane names the t
 container name, image and short id. The left rail lists the project and each service
 with its service and container name.
 
-It edits title, description, icon (bundled picker, colour, monogram or a local file) and
-links. Each field shows where its value comes from, with Reset to source.
+It edits title, description, icon and links; each field shows its source, with Reset.
+Layout: docs/specs/DD294-containers-redesign.md section 6.
 
 Save asks nothing. It writes to one of three places, chosen in Settings and overridable
 per project from a Save to selector in the footer, which also says where the save will
@@ -105,16 +107,17 @@ or Stop as one verb, with the rest in the overflow. Open is disabled, not hidden
 the project is stopped.
 
 A row shows the state chip with its shape (L8), the service's title over its
-description, and each published port as a link that opens in the browser. A port that
-does not answer HTTP copies its address instead. Logs and Restart appear on hover,
-beside the one verb that is always drawn.
+description, and keeps the port links DD7 drew, now as tinted chips. A port that does
+not answer HTTP copies its address instead of opening a browser. The row keeps DD36's
+Logs, one verb and an always-drawn overflow; nothing is revealed on hover.
 
 Containers started without compose are gathered in a final Standalone containers block.
 Its header carries no group verbs, because each row is its own unit with its own Open
 and Start or Stop. A container with no metadata shows its monogram and an "Add icon and
 description" link to the edit screen.
 
-The header columns still match the row columns, and a test still says so.
+The header columns still match the row columns, and a test still says so. Layout:
+docs/specs/DD294-containers-redesign.md section 2.
 
 ### §DD298 A large compose project
 
@@ -137,7 +140,8 @@ Services in a card: a health bar with one block per container, problems drawn la
 in their own shape, then only the services that need attention, and Show all, which
 opens the detail page.
 
-Fold state is remembered per project, like the fold DD112 narrows.
+Fold state is remembered per project, like the fold DD112 narrows. Layout:
+docs/specs/DD294-containers-redesign.md section 3.
 
 ### §DD299 The project detail page
 
@@ -145,10 +149,10 @@ The list and the cards answer "what is running and how do I open it". They canno
 "why did this stop" or "what does this project expose" without growing into something
 else. Those answers belong on a page of their own.
 
-Clicking a project header, a card, or a standalone row anywhere outside its buttons
-opens the detail page, and Back returns to the view and scroll position it came from.
-The buttons on a row keep acting in place, so Start, Stop and Open never cost a
-navigation.
+It opens from a project's or container's title link, Details in any overflow, or a click
+on a card; in the list the header strip still folds (DD127). Back returns to the view
+and scroll position it came from. Layout: docs/specs/DD294-containers-redesign.md
+section 4.
 
 The page carries: the resolved icon, title and description, the compose project name and
 file, and the project's verbs (Open primary, Restart, Stop, overflow with Edit details).
@@ -182,7 +186,8 @@ apply to both, and switching keeps them. The chosen view is remembered with the 
 placement and tab (DD39), so the window reopens the way it was left.
 
 Cards land after the enriched list on purpose. The list is the default and the one that
-scales, and the cards reuse everything it introduces.
+scales, and the cards reuse everything it introduces. Layout:
+docs/specs/DD294-containers-redesign.md section 5.
 
 ### §DD301 The settings destination
 
@@ -210,8 +215,8 @@ The third section states the read order, so the user can predict which value win
 in FreeHarbor, `.freeharbor`, `x-freeharbor`, service labels, image labels, the
 fallback.
 
-Settings persist through the same store as the window's placement (DD39). The page is
-drawn from the fixture (L6), so a capture shows it without a daemon.
+Settings persist in the DD39 store and the page draws from the fixture (L6). Layout:
+docs/specs/DD294-containers-redesign.md section 7.
 
 ## Block D — Container operations (what a user came to do)
 
