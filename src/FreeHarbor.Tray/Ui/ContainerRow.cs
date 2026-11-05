@@ -976,6 +976,41 @@ public sealed record ContainerRow(
         return drawn;
     }
 
+    /// <summary>Whether a container passes the state chip the page is holding (DD300).</summary>
+    /// <param name="row">A container.</param>
+    /// <param name="chip">The chip.</param>
+    /// <returns>Whether it is drawn.</returns>
+    /// <remarks>
+    /// Stopped is everything not up, failures included, so Running and Stopped split the machine in
+    /// two; Problems is the subset of it somebody has to look at, which is the same rule a tier folds
+    /// by (DD298).
+    /// </remarks>
+    public static bool Passes(ContainerRow row, StateChip chip)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        return chip switch
+        {
+            StateChip.Running => row.IsRunning,
+            StateChip.Stopped => !row.IsLive,
+            StateChip.Problems => IsProblem(row),
+            _ => true,
+        };
+    }
+
+    /// <summary>The line beside the chips: how many projects, standalone containers and running ones.</summary>
+    /// <param name="rows">Every container in hand.</param>
+    /// <returns>For instance <c>2 projects · 3 standalone · 9 of 14 running</c>.</returns>
+    public static string Counts(IReadOnlyList<ContainerRow> rows)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+        static string N(int n) => n.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        var projects = rows.Select(row => row.Project).Where(project => project is not null).Distinct(StringComparer.Ordinal).Count();
+        var standalone = rows.Count(row => row.Project is null);
+        return $"{N(projects)} {(projects == 1 ? "project" : "projects")} · {N(standalone)} standalone · "
+            + $"{N(rows.Count(row => row.IsRunning))} of {N(rows.Count)} running";
+    }
+
     /// <summary>Whether a container is a problem: not running, and not a clean exit either.</summary>
     private static bool IsProblem(ContainerRow row) =>
         row.IsContainer && !row.IsRunning && row.Tone is RowTone.Bad or RowTone.Warn;
@@ -1247,6 +1282,22 @@ public sealed record ContainerRow(
         && !string.IsNullOrWhiteSpace(value)
             ? value
             : null;
+}
+
+/// <summary>The state chips over the containers page, shared by its list and its cards (DD300).</summary>
+public enum StateChip
+{
+    /// <summary>Every container.</summary>
+    All,
+
+    /// <summary>Only what is running.</summary>
+    Running,
+
+    /// <summary>Only what is not up, cleanly exited or not.</summary>
+    Stopped,
+
+    /// <summary>Only what stopped and did not mean to, or is stuck in between.</summary>
+    Problems,
 }
 
 /// <summary>What the window says when the list is empty.</summary>

@@ -191,6 +191,50 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
         set => SetValue(CardColumnsProperty, value);
     }
 
+    // ---- the state chips (DD300) --------------------------------------------------------------------
+
+    /// <summary>The state chip in force, which narrows both views before the text filter and the sort.</summary>
+    private StateChip _chip = StateChip.All;
+
+    /// <summary>What to tell when a chip is chosen, so the window can remember it (DD39).</summary>
+    internal Action<StateChip>? ChipChosen { get; set; }
+
+    /// <summary>The rows in hand that the chip in force keeps.</summary>
+    private IReadOnlyList<ContainerRow> Chipped =>
+        _chip is StateChip.All ? _rows : [.. _rows.Where(row => ContainerRow.Passes(row, _chip))];
+
+    /// <summary>Hold a chip without telling anyone: a capture names the one it draws.</summary>
+    /// <param name="chip">The chip.</param>
+    internal void UseChip(StateChip chip) => _chip = chip;
+
+    private void ChooseChip(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string name } && Enum.TryParse<StateChip>(name, out var chip)
+            && chip != _chip)
+        {
+            _chip = chip;
+            ChipChosen?.Invoke(chip);
+            Show();
+        }
+    }
+
+    /// <summary>Each chip with its count over every row in hand, the one in force filled, and the counts line.</summary>
+    private void DrawChips()
+    {
+        foreach (var (button, chip) in new[]
+                 {
+                     (ChipAll, StateChip.All), (ChipRunning, StateChip.Running),
+                     (ChipStopped, StateChip.Stopped), (ChipProblems, StateChip.Problems),
+                 })
+        {
+            var count = _rows.Count(row => ContainerRow.Passes(row, chip));
+            button.Content = $"{chip} {count.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+            button.Style = (Style)FindResource(chip == _chip ? "AccentButtonStyle" : "RowAction");
+        }
+
+        Counts.Text = _rows.Count > 0 ? ContainerRow.Counts(_rows) : "";
+    }
+
     /// <summary>
     /// Open on the view this window was left on, and write the choice down each time it changes (DD39).
     /// </summary>
@@ -202,8 +246,10 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     internal void RecallView(WindowRecall recall)
     {
         ArgumentNullException.ThrowIfNull(recall);
+        _chip = recall.ContainersChip;
         UseCards(recall.ContainersAsCards);
         ViewChosen = recall.RememberContainersView;
+        ChipChosen = recall.RememberContainersChip;
     }
 
     /// <summary>Open on the cards or on the list, without telling anyone: this is the remembered choice arriving.</summary>
@@ -258,7 +304,7 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
             return;
         }
 
-        var (projects, standalone) = DetailView.Cards(_rows, _shape);
+        var (projects, standalone) = DetailView.Cards(Chipped, _shape);
         ProjectCards.ItemsSource = projects.Select(view => view with { Head = Dressed(view.Head) }).ToList();
         StandaloneCards.ItemsSource = standalone;
         StandaloneHeading.Visibility = projects.Count > 0 && standalone.Count > 0
@@ -302,6 +348,7 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
             Detail.Visibility = Visibility.Collapsed;
             Detail.DataContext = null;
             Toolbar.Visibility = Visibility.Visible;
+            Counts.Visibility = Visibility.Visible;
             return;
         }
 
@@ -331,6 +378,7 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
         Empty.Visibility = Visibility.Collapsed;
         CardsPane.Visibility = Visibility.Collapsed;
         Toolbar.Visibility = Visibility.Collapsed;
+        Counts.Visibility = Visibility.Collapsed;
     }
 
     /// <summary>What the rail's box holds (DD299).</summary>
@@ -410,7 +458,8 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
         // containers: the count that came back refused is state about the header, and there is no
         // header until here (DD107). Its wait is not stored beside that count — it is read off the
         // containers, which end their own waits on the events that end them (DD108).
-        var shown = ContainerRow.Grouped(_rows, _shape, _collapsed, _openTiers);
+        DrawChips();
+        var shown = ContainerRow.Grouped(Chipped, _shape, _collapsed, _openTiers);
 
         // DD297: a header's chip is drawn too, so it is dressed in the theme's brushes here, the one
         // place headers exist.
@@ -441,6 +490,20 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
 
         // The third empty state. "No containers" and "nothing matched api" are different answers, and
         // only one of them is fixed by clearing a box.
+        // DD300: emptied by a chip, which is cleared by choosing All rather than by clearing the box.
+        if (_chip is not StateChip.All && _rows.Count > 0)
+        {
+            EmptyHeadline.Text = _chip switch
+            {
+                StateChip.Running => "Nothing is running",
+                StateChip.Stopped => "Nothing is stopped",
+                _ => "No problems",
+            };
+            EmptyDetail.Text = "Choose All to see every container.";
+            EmptyStart.Visibility = Visibility.Collapsed;
+            return;
+        }
+
         if (_shape.EmptyBecauseFiltered("containers") is var (headline, detail) && _rows.Count > 0)
         {
             (EmptyHeadline.Text, EmptyDetail.Text) = (headline, detail);

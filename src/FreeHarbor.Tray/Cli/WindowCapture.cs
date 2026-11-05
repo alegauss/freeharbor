@@ -149,6 +149,8 @@ internal static class WindowCapture
         // Unhooked first, so a capture cannot write the view it was told to draw over the one the
         // person chose, for the reason WindowRecall refuses to save a placement no screen can reach.
         window.Containers.ViewChosen = null;
+        window.Containers.ChipChosen = null;
+        window.Containers.UseChip(Ui.StateChip.All);
         window.Containers.UseCards(cards);
 
         if (detail is { Length: > 0 })

@@ -194,6 +194,33 @@ public sealed class DetailViewTests
         Assert.True(link.CopiesOnly);
     }
 
+    [Theory]
+    [InlineData(StateChip.All, new[] { "up-id", "done-id", "crashed-id" })]
+    [InlineData(StateChip.Running, new[] { "up-id" })]
+    [InlineData(StateChip.Stopped, new[] { "done-id", "crashed-id" })]
+    [InlineData(StateChip.Problems, new[] { "crashed-id" })]
+    public void A_state_chip_keeps_what_it_names(StateChip chip, string[] kept)
+    {
+        // A clean exit is stopped and not a problem; a crash is both.
+        var rows = Rows(
+            Summary("up"),
+            Summary("done", "exited") with { Status = "Exited (0) 1 minute ago" },
+            Summary("crashed", "exited"));
+
+        Assert.Equal(kept, rows.Where(row => ContainerRow.Passes(row, chip)).Select(row => row.Id));
+    }
+
+    [Fact]
+    public void The_counts_line_says_what_the_machine_holds()
+    {
+        var rows = Rows(
+            Summary("shop-1", project: "shop"),
+            Summary("shop-2", "exited", "shop"),
+            Summary("mailpit"));
+
+        Assert.Equal("1 project · 1 standalone · 2 of 3 running", ContainerRow.Counts(rows));
+    }
+
     [Fact]
     public void The_chosen_view_is_remembered_and_a_window_with_nothing_remembered_opens_on_the_list()
     {

@@ -82,6 +82,18 @@ internal sealed class WindowRecall
         _memory.Write(_file);
     }
 
+    /// <summary>The containers page's state chip as it was left; All where the name is unknown.</summary>
+    internal StateChip ContainersChip =>
+        Enum.TryParse<StateChip>(_memory.ContainersChip, ignoreCase: false, out var chip) ? chip : StateChip.All;
+
+    /// <summary>Remember the containers page's state chip, written as it is chosen.</summary>
+    /// <param name="chip">The chip.</param>
+    internal void RememberContainersChip(StateChip chip)
+    {
+        _memory = _memory with { ContainersChip = chip.ToString() };
+        _memory.Write(_file);
+    }
+
     private void Remember()
     {
         if (!_sourced)

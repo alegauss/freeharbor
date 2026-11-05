@@ -209,6 +209,22 @@ Standalone containers
   remembered with the window's placement (DD39).
 - **Fixed:** the primary verb is the accent button only when it is Start.
 
+As built (DD300):
+
+- The switch and the chips sit before the filter box, which keeps the right edge it always
+  held. A capture showed a button placed past it clipped by the page's edge.
+- A card's footer is the one verb, without Restart beside it: DD36 keeps a row to one
+  verb, and the project's page is a click away.
+- Chips narrow the rows before the text filter and the sort. Stopped is everything not up,
+  failures included; Problems is the subset that failed or is stuck in between. The
+  counts line counts every container, not the chip's narrowing.
+- The view and the chip are remembered with the window (DD39). The text filter and the
+  sort carry across a switch, not across a restart.
+- Open never follows a port that does not speak HTTP, even where the resolver made a link
+  of it.
+- `--capture-window <png> containers --fixture --cards` photographs the cards. A capture
+  always draws All, whatever this account chose.
+
 ## 6. The edit details dialog (DD296)
 
 A dialog owned by the main window, about 980 px wide.

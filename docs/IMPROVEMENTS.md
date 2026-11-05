@@ -89,28 +89,6 @@ opens the detail page.
 Fold state is remembered per project, like the fold DD112 narrows. Layout:
 docs/specs/DD294-containers-redesign.md section 3.
 
-### §DD300 The cards view and the view switch
-
-Most machines run a handful of projects, and there the list spends its density on
-nothing. The cards view trades density for recognition: one card per project, read at a
-glance by icon and description, opened in one click.
-
-A card carries the icon tile, title, state chip and description, then a problem line in
-the daemon's words when a service failed, then the links (the primary one filled in the
-accent colour, others outlined, non-HTTP ports as dashed copy chips), then the services
-with shape and state, then Logs, Restart and one verb. A stopped project dims its links,
-not its card. Standalone containers follow in a section of compact one-line cards, and a
-container with no metadata shows its monogram and the link to Edit details.
-
-A Cards and List switch sits beside the filter box. Both views are the same rows in
-hand: the filter chips (All, Running, Stopped, Problems), the text filter and the sort
-apply to both, and switching keeps them. The chosen view is remembered with the window's
-placement and tab (DD39), so the window reopens the way it was left.
-
-Cards land after the enriched list on purpose. The list is the default and the one that
-scales, and the cards reuse everything it introduces. Layout:
-docs/specs/DD294-containers-redesign.md section 5.
-
 ### §DD301 The settings destination
 
 The edit screen saves to one of three places, and that choice is the user's to make once

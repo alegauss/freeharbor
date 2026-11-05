@@ -72,6 +72,9 @@ public sealed record WindowMemory
     /// <summary>The containers page's view, <see cref="ListView"/> or <see cref="CardsView"/> (DD300).</summary>
     public string ContainersView { get; init; } = ListView;
 
+    /// <summary>The containers page's state chip, by its name (DD300): All, Running, Stopped or Problems.</summary>
+    public string ContainersChip { get; init; } = "All";
+
     /// <summary>The containers page's dense view, and the one a window with nothing remembered opens on.</summary>
     public const string ListView = "List";
 
