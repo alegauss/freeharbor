@@ -47,11 +47,20 @@ internal partial class EditDetailsWindow : Window
     /// </param>
     /// <param name="initial">The row the dialog opens on, which is one of the targets.</param>
     /// <param name="store">The store, read for what is saved and written by Save.</param>
-    internal EditDetailsWindow(IReadOnlyList<ContainerRow> targets, ContainerRow initial, DetailStore store)
+    /// <param name="preference">Where edits are saved, which Save to opens on (DD301); FreeHarbor where none.</param>
+    /// <param name="remember">Told what Save chose, so a project that departs from the default is remembered.</param>
+    internal EditDetailsWindow(
+        IReadOnlyList<ContainerRow> targets,
+        ContainerRow initial,
+        DetailStore store,
+        SavePreference? preference = null,
+        Action<SavePreference>? remember = null)
     {
         ArgumentNullException.ThrowIfNull(targets);
         ArgumentNullException.ThrowIfNull(initial);
         ArgumentNullException.ThrowIfNull(store);
+        _preference = preference ?? SavePreference.None;
+        _remember = remember;
         InitializeComponent();
         _targets = [.. targets.Where(target => target.DetailKey is not null && target.DetailsBeneath is not null)];
         if (!_targets.Contains(initial))
@@ -79,6 +88,9 @@ internal partial class EditDetailsWindow : Window
         Rail.SelectedIndex = _targets.ToList().IndexOf(initial);
         Load(initial);
     }
+
+    private readonly SavePreference _preference;
+    private readonly Action<SavePreference>? _remember;
 
     /// <summary>Whether Save reached the disk; false after a save that only holds until the window closes.</summary>
     internal bool Saved { get; private set; }
@@ -225,17 +237,20 @@ internal partial class EditDetailsWindow : Window
             : files[0] + string.Concat(files.Skip(1).Select(file => " + " + Path.GetFileName(file)));
         FilesRow.Visibility = files.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
 
-        SaveTo.Items.Add(new SaveTarget("FreeHarbor (only you)", ToFile: false));
+        SaveTo.Items.Add(new SaveTarget(SaveDestination.FreeHarbor));
         if (CanSaveToFile(row))
         {
-            SaveTo.Items.Add(new SaveTarget(".freeharbor (the whole team)", ToFile: true));
+            SaveTo.Items.Add(new SaveTarget(SaveDestination.ProjectFile));
             if (ComposeFiles(row).Count > 0)
             {
-                SaveTo.Items.Add(new SaveTarget("the compose file (x-freeharbor)", ToFile: true, ToCompose: true));
+                SaveTo.Items.Add(new SaveTarget(SaveDestination.ComposeFile));
             }
         }
 
-        SaveTo.SelectedIndex = 0;
+        // DD301: opened on the project's own choice, else the one Settings names, where it is there.
+        var targets = SaveTo.Items.OfType<SaveTarget>().ToList();
+        var chosen = _preference.For(SavePreference.KeyFor(row), [.. targets.Select(target => target.Destination)]);
+        SaveTo.SelectedIndex = targets.FindIndex(target => target.Destination == chosen);
         SaveTo.Visibility = SaveTo.Items.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
     }
 
@@ -441,6 +456,14 @@ internal partial class EditDetailsWindow : Window
     private void Save(object sender, RoutedEventArgs e)
     {
         Stash();
+
+        // DD301: a project whose Save to departs from the default is remembered, and one set back to
+        // it is forgotten, so Settings lists exactly the projects that differ.
+        if (SaveTo.SelectedItem is SaveTarget target)
+        {
+            _remember?.Invoke(_preference.Chose(SavePreference.KeyFor(_row), target.Destination));
+        }
+
         var edits = _pending.Values
             .Select(edit => (edit.Row, edit.Title, edit.Description, edit.Icon, edit.Links))
             .ToList();
@@ -562,13 +585,17 @@ internal partial class EditDetailsWindow : Window
             : $"{Row.Service ?? Row.Name} · {Row.Name}";
     }
 
-    /// <summary>One place Save can write.</summary>
-    /// <param name="Label">What the list shows.</param>
-    /// <param name="ToFile">Whether it is a file in the project rather than the store.</param>
-    /// <param name="ToCompose">Whether that file is the compose file's block rather than <c>.freeharbor</c>.</param>
-    private sealed record SaveTarget(string Label, bool ToFile, bool ToCompose = false)
+    /// <summary>One place Save can write, shown by the name Settings gives it (DD301).</summary>
+    /// <param name="Destination">Which of the three it is.</param>
+    private sealed record SaveTarget(SaveDestination Destination)
     {
-        public override string ToString() => Label;
+        /// <summary>Whether it is a file in the project rather than the store.</summary>
+        public bool ToFile => Destination is not SaveDestination.FreeHarbor;
+
+        /// <summary>Whether that file is the compose file's block rather than <c>.freeharbor</c>.</summary>
+        public bool ToCompose => Destination is SaveDestination.ComposeFile;
+
+        public override string ToString() => SavePreference.Name(Destination);
     }
 
     /// <summary>One entry in the icon list.</summary>

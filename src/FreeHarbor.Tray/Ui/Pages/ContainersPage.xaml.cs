@@ -235,6 +235,9 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
         Counts.Text = _rows.Count > 0 ? ContainerRow.Counts(_rows) : "";
     }
 
+    /// <summary>The window's memory, which also holds where edits are saved (DD301); none in a test.</summary>
+    private WindowRecall? _recall;
+
     /// <summary>
     /// Open on the view this window was left on, and write the choice down each time it changes (DD39).
     /// </summary>
@@ -246,6 +249,7 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     internal void RecallView(WindowRecall recall)
     {
         ArgumentNullException.ThrowIfNull(recall);
+        _recall = recall;
         _chip = recall.ContainersChip;
         UseCards(recall.ContainersAsCards);
         ViewChosen = recall.RememberContainersView;
@@ -887,7 +891,11 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
             ? header
             : targets.FirstOrDefault(target => string.Equals(target.Id, row.Id, StringComparison.Ordinal)) ?? row;
 
-        var dialog = new EditDetailsWindow(targets, initial, Saved) { Owner = Window.GetWindow(this) };
+        var dialog = new EditDetailsWindow(
+            targets, initial, Saved, _recall?.SavePreference, _recall is { } recall ? recall.RememberSavePreference : null)
+        {
+            Owner = Window.GetWindow(this),
+        };
         if (dialog.ShowDialog() == true)
         {
             await RefreshAsync().ConfigureAwait(true);

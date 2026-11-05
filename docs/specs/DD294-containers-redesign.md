@@ -316,6 +316,20 @@ Read order
 The page is a single column, about 920 px wide, centred. Each choice is a radio card: the
 selected one carries the accent border.
 
+As built (DD301):
+
+- The page is a left-aligned column at most 720 px wide, like About, and each choice is a
+  plain radio button with its explanation under it, not a radio card.
+- A project's own choice is kept under the folder compose ran in, else its name. The edit
+  dialog opens on it, then on the default, then on FreeHarbor where the project cannot use
+  either. A save to the default forgets the project's departure, so the list holds only
+  projects that differ. Choosing a new default drops the projects that now match it.
+- The preference lives in the window's memory (DD39). With `--fixture` a capture reads a
+  throwaway file instead, so a picture never carries this account's project folders, and
+  it draws at the window's own default size.
+- The snapshot renderer moved out of the shell into `Ui/WindowSnapshot.cs` to make room
+  for the destination: rendering a window is capture, not chrome.
+
 ## 8. The files the details come from (DD294, DD295)
 
 Board: [details-sources.png](DD294-containers-redesign/details-sources.png), the read

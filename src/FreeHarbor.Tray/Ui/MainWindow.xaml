@@ -148,6 +148,10 @@
                 <!-- The terms and the versions, where a bug report starts. A destination rather
                      than the dialog it used to be (DD83, L2): a modal that has to be dismissed is
                      the wrong shape for a page somebody reads while typing somewhere else. -->
+                <!-- DD301: what the user prefers, before About, as a page like the others (L2). -->
+                <RadioButton x:Name="NavSettings" Style="{StaticResource NavDest}"
+                             GroupName="Destination" Content="Settings"
+                             Tag="Settings" Checked="Destination_Checked" />
                 <RadioButton x:Name="NavAbout" Style="{StaticResource NavDest}"
                              GroupName="Destination" Content="About"
                              Tag="About" Checked="Destination_Checked" />

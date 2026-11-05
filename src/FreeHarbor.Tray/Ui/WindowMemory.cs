@@ -72,6 +72,35 @@ public sealed record WindowMemory
     /// <summary>The containers page's view, <see cref="ListView"/> or <see cref="CardsView"/> (DD300).</summary>
     public string ContainersView { get; init; } = ListView;
 
+    /// <summary>Where edits to details are saved, by <see cref="SaveDestination"/>'s name (DD301).</summary>
+    public string SaveDetailsTo { get; init; } = nameof(SaveDestination.FreeHarbor);
+
+    /// <summary>The projects whose edits go somewhere else, by folder or name (DD301).</summary>
+    public Dictionary<string, string> SaveDetailsToByProject { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Equal field for field, the projects by their contents.</summary>
+    /// <param name="other">The other memory.</param>
+    /// <returns>Whether they remember the same things.</returns>
+    /// <remarks>
+    /// Written out because a dictionary compares by reference, and a memory read back from its file
+    /// would otherwise never equal the one written: <see cref="Core.Details.DetailFields"/> does the same
+    /// for its links.
+    /// </remarks>
+    public bool Equals(WindowMemory? other) =>
+        other is not null
+        && (Left, Top, Width, Height, Maximised, Destination, LogWidth, LogHeight, ContainersView,
+            ContainersChip, SaveDetailsTo)
+        == (other.Left, other.Top, other.Width, other.Height, other.Maximised, other.Destination,
+            other.LogWidth, other.LogHeight, other.ContainersView, other.ContainersChip, other.SaveDetailsTo)
+        && SaveDetailsToByProject.Count == other.SaveDetailsToByProject.Count
+        && SaveDetailsToByProject.All(pair =>
+            other.SaveDetailsToByProject.TryGetValue(pair.Key, out var value)
+            && string.Equals(value, pair.Value, StringComparison.Ordinal));
+
+    /// <inheritdoc />
+    public override int GetHashCode() =>
+        HashCode.Combine(Left, Top, Width, Height, Destination, ContainersView, SaveDetailsTo, SaveDetailsToByProject.Count);
+
     /// <summary>The containers page's state chip, by its name (DD300): All, Running, Stopped or Problems.</summary>
     public string ContainersChip { get; init; } = "All";
 

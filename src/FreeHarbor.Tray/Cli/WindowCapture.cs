@@ -121,9 +121,15 @@ internal static class WindowCapture
         // this whole verb is for.
         Ui.Motion.Still = true;
 
+        // DD301: and the window's memory, which now holds this account's project folders (where their
+        // edits are saved). A fixture capture reads a file nobody wrote, so Settings draws the defaults.
+        var windowState = fixture
+            ? Path.Combine(Path.GetTempPath(), $"freeharbor-capture-window-{Guid.NewGuid():N}.json")
+            : null;
+
         var window = new Ui.MainWindow(
             api, () => fixture ? EngineState.Running : EngineState.Stopped, () => { },
-            builds, engine)
+            builds, engine, windowState)
         {
             WindowStartupLocation = System.Windows.WindowStartupLocation.Manual,
             // Off the desktop entirely. Not merely unfocused: there is no screen region for anything
@@ -185,7 +191,7 @@ internal static class WindowCapture
             settle.Stop();
             try
             {
-                var (width, height) = window.SaveSnapshot(outPath);
+                var (width, height) = Ui.WindowSnapshot.Save(window, outPath);
                 Console.Out.WriteLine(
                     $"wrote {outPath}: {width}x{height}, "
                     + $"{tab ?? window.TabNames.FirstOrDefault() ?? "the window"} rendered off-screen");

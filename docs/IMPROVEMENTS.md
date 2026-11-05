@@ -65,34 +65,27 @@ the cause is shown, not when a rerun goes green.
 
 ## Block C — The window (claude-tray's elements)
 
-### §DD301 The settings destination
+### §DD320 The containers page at its default width
 
-The edit screen saves to one of three places, and that choice is the user's to make once
-rather than a question asked on every save. The window has no place for a preference
-today: its destinations are Containers, Images, Volumes, Builds, Engine and About. A
-Settings destination joins the nav strip before About, built as a page like the others
-(L2).
+Seen in a fixture capture at the window's default size (1540 by 786 pixels at 1.5
+scale), which DD301 made the size every fixture capture draws at. Before that, captures
+inherited this account's own larger window and hid it.
 
-Its first section is "Where edits to names, descriptions and icons are saved", three
-choices with what each means and where it writes:
+Two things do not fit:
 
-1. In FreeHarbor, the default: personal, this machine only, the project folder untouched.
-2. In a `.freeharbor` folder in the project: its own file beside the compose file, which it overrides, shared through git.
-3. In the compose file: only the `x-freeharbor` block, the first save in each project showing the diff once.
+1. The toolbar DD300 added is one right-aligned row: four state chips, the Cards and List
+   switch, and the filter box. At this width it is wider than the page, and the filter box
+   is cut off at the right edge.
+2. A project header's chip says `2 of 3 running` in the STATE column (DD297), and at this
+   width the column trims it to `2 of 3 runni…`.
 
-A note says standalone containers always save in FreeHarbor, because they have no
-project folder.
+What to build: put the counts line and the chips on the left, in one group the detail
+page hides as it hides the toolbar, and keep the switch and the filter box on the right,
+so each half fits at the default width. For the chip, give the STATE column the room its
+longest word needs, or have the header chip say the count without `running` when the
+column is narrow; the tooltip already carries the sentence.
 
-The second section lists the projects whose Save to was changed in their edit dialog,
-each with its compose path and destination, and a control to make it follow the default
-again.
-
-The third section states the read order, so the user can predict which value wins: saved
-in FreeHarbor, `.freeharbor`, `x-freeharbor`, service labels, image labels, the
-fallback.
-
-Settings persist in the DD39 store and the page draws from the fixture (L6). Layout:
-docs/specs/DD294-containers-redesign.md section 7.
+A fixture capture at the default size is the check: nothing clipped, no chip trimmed.
 
 ## Block D — Container operations (what a user came to do)
 

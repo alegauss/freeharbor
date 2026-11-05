@@ -94,6 +94,33 @@ internal sealed class WindowRecall
         _memory.Write(_file);
     }
 
+    /// <summary>Where edits are saved, and the projects that depart from it (DD301).</summary>
+    /// <remarks>A name this build does not know reads as FreeHarbor, the one destination always there.</remarks>
+    internal SavePreference SavePreference =>
+        new(
+            SavedTo(_memory.SaveDetailsTo) ?? SaveDestination.FreeHarbor,
+            (_memory.SaveDetailsToByProject ?? [])
+                .Select(pair => (pair.Key, Value: SavedTo(pair.Value)))
+                .Where(pair => pair.Value is not null)
+                .ToDictionary(pair => pair.Key, pair => pair.Value!.Value, StringComparer.OrdinalIgnoreCase));
+
+    /// <summary>Remember where edits are saved, written as it changes.</summary>
+    /// <param name="preference">The preference.</param>
+    internal void RememberSavePreference(SavePreference preference)
+    {
+        ArgumentNullException.ThrowIfNull(preference);
+        _memory = _memory with
+        {
+            SaveDetailsTo = preference.Default.ToString(),
+            SaveDetailsToByProject = preference.Projects.ToDictionary(
+                pair => pair.Key, pair => pair.Value.ToString(), StringComparer.OrdinalIgnoreCase),
+        };
+        _memory.Write(_file);
+    }
+
+    private static SaveDestination? SavedTo(string? name) =>
+        Enum.TryParse<SaveDestination>(name, ignoreCase: false, out var destination) ? destination : null;
+
     private void Remember()
     {
         if (!_sourced)

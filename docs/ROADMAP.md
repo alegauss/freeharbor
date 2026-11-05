@@ -12,7 +12,7 @@
 
 ## Block C — The window (claude-tray's elements)
 
-- 📋 **DD301** (deps: DD295 ✅, DD296 ✅) **Nothing the user prefers can be set in the window, so where an edit is saved cannot be chosen at all** — A Settings destination chooses where edits are saved (FreeHarbor, .freeharbor or the compose file), lists the projects that differ and states the read order. → §DD301
+- 📋 **DD320** (deps: —) **At the window's default width the containers toolbar clips the filter box and a header chip trims its count** — A fixture capture now draws at the default size, and it shows both on the first screen a new user sees. → §DD320
 
 ## Block D — Container operations (what a user came to do)
 
