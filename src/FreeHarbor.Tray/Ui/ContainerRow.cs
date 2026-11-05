@@ -269,7 +269,12 @@ public sealed record ContainerRow(
         { IsTier: true, Problems: > 1 } =>
             $"{Problems.ToString(System.Globalization.CultureInfo.InvariantCulture)} problems",
         { IsTier: true, Total: > 0 } when Running == Total => "all running",
-        { IsProject: true } => ProjectCount,
+
+        // DD320: the count alone, as the spec's cards write it. The STATE column is narrow at the
+        // window's default width and trimmed "running" to "runni…"; the tooltip says the sentence.
+        { IsProject: true } =>
+            $"{Running.ToString(System.Globalization.CultureInfo.InvariantCulture)} of "
+            + Total.ToString(System.Globalization.CultureInfo.InvariantCulture),
         _ => State,
     };
 
@@ -290,9 +295,11 @@ public sealed record ContainerRow(
     };
 
     /// <summary>Why the chip says what it says: a container's evidence, or a sentence about the project's.</summary>
-    public string ChipEvidence => this switch
+    public string ChipEvidence => IsContainer ? StateEvidence : $"{ProjectCount}. {HeaderEvidence}";
+
+    /// <summary>What a header's chip adds to its count: which kind of stopped the rest are.</summary>
+    private string HeaderEvidence => this switch
     {
-        { IsContainer: true } => StateEvidence,
         { Failed: > 0 } => $"{Failed.ToString(System.Globalization.CultureInfo.InvariantCulture)} of them "
             + "stopped and did not mean to. Their logs say why.",
         _ when Running == Total => "Every container under it is up.",

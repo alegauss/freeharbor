@@ -20,7 +20,8 @@ What to do first: reproduce with the properties file removed, and set the run's
 timestamps against the host journal (`%LOCALAPPDATA%\FreeHarbor\engine.log`). Failures
 that line up with refused pipe instances are FreeHarbor's and belong with DD142's
 mechanism; failures on a quiet journal are docker-java's and go back to Turing as a
-client note.
+client note. DD321 reproduced a relay going 30 seconds without a new pipe instance under
+a full test run, which is the engine-side reading made measurable.
 
 ### §DD305 The error-mode test races its neighbours
 
@@ -61,31 +62,32 @@ message, and if it is the pump, read each stream on a dedicated thread
 (`TaskCreationOptions.LongRunning`) so the order stops depending on the pool. Done when
 the cause is shown, not when a rerun goes green.
 
+### §DD321 A relay that stops accepting under load
+
+On 5 November 2026 `PipeSurvivalTests.A_healthy_relay_stumbles_over_nothing` failed once
+in a full run: the first connection to a fresh `EnginePipeRelay` was served, and the
+second waited the whole 30 seconds `ReachableAsync` gives `ConnectAsync`, then failed.
+The same test passed three times alone in about 200 ms.
+
+A wait that long with nothing wrong is not slowness. Either the accept loop had not put
+a new pipe instance up after serving the first, or a full run's thread pool was starved
+enough that the loop's continuation did not run for 30 seconds. The first is a relay
+defect; the second is the test's.
+
+Why it matters beyond the gate: DD142 counts episodes where the relay "stopped
+accepting" and every docker client fails together, and DD303 asks whether
+Testcontainers' misses land in them. A relay that can go 30 seconds between instances
+under load is the same symptom, reproduced in a test and not on a user's machine.
+
+What to do: run the suite with the relay's `Figures` and `Stumbles` written out when
+this test fails, to tell an instance that was never re-armed from a loop that was never
+scheduled. If it is never re-armed, keep one instance listening ahead of the one being
+served, as the named-pipe server pattern does; if it is scheduling, give the accept loop
+a dedicated thread, which DD279 already joins on dispose.
+
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)
-
-### §DD320 The containers page at its default width
-
-Seen in a fixture capture at the window's default size (1540 by 786 pixels at 1.5
-scale), which DD301 made the size every fixture capture draws at. Before that, captures
-inherited this account's own larger window and hid it.
-
-Two things do not fit:
-
-1. The toolbar DD300 added is one right-aligned row: four state chips, the Cards and List
-   switch, and the filter box. At this width it is wider than the page, and the filter box
-   is cut off at the right edge.
-2. A project header's chip says `2 of 3 running` in the STATE column (DD297), and at this
-   width the column trims it to `2 of 3 runni…`.
-
-What to build: put the counts line and the chips on the left, in one group the detail
-page hides as it hides the toolbar, and keep the switch and the filter box on the right,
-so each half fits at the default width. For the chip, give the STATE column the room its
-longest word needs, or have the header chip say the count without `running` when the
-column is narrow; the tooltip already carries the sentence.
-
-A fixture capture at the default size is the check: nothing clipped, no chip trimmed.
 
 ## Block D — Container operations (what a user came to do)
 

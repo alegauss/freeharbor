@@ -7,12 +7,11 @@
 - 💭 **DD303** (deps: —) **Testcontainers detects the engine on about one run in two even with an API version the engine accepts** — Whether the misses are docker-java's or the pipe's DD142 bursts decides who fixes it, and nobody has set the runs against the journal. → §DD303
 - 📋 **DD305** (deps: —) **The error-mode test fails now and then in a full run and passes alone, with nothing changed** — A red gate nobody can reproduce teaches people to rerun until green, which is how a real loss of the flag would slip through. → §DD305
 - 📋 **DD308** (deps: —) **On CI a tool's stderr line once came back after a stdout line it was written two seconds before** — The order is what makes a repair transcript readable, and the one failure has no cause shown yet. → §DD308
+- 📋 **DD321** (deps: —) **In a full test run the pipe relay once took no second connection for thirty seconds, then passed alone** — A relay that goes that long between instances under load is DD142's stopped-accepting symptom, reproduced where it can be measured. → §DD321
 
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)
-
-- 📋 **DD320** (deps: —) **At the window's default width the containers toolbar clips the filter box and a header chip trims its count** — A fixture capture now draws at the default size, and it shows both on the first screen a new user sees. → §DD320
 
 ## Block D — Container operations (what a user came to do)
 

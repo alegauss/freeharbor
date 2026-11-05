@@ -178,11 +178,13 @@
        through the same filter and sort, so switching keeps what was narrowed. -->
   <!-- DD300: what the machine holds, counted over every container and not over the chip's narrowing,
        so the line says what is there while the chips say what is shown. -->
-  <TextBlock Grid.Row="0" x:Name="Counts" Margin="10,0,10,10" VerticalAlignment="Center"
-             HorizontalAlignment="Left" FontSize="12"
-             Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-  <StackPanel Grid.Row="0" x:Name="Toolbar" Orientation="Horizontal" HorizontalAlignment="Right"
+  <!-- DD320: the counts and the chips on the left, the switch and the box on the right. As one
+       right-aligned row the four together were wider than the window's default width, and the
+       filter box was the half cut off. -->
+  <StackPanel Grid.Row="0" x:Name="Summary" Orientation="Horizontal" HorizontalAlignment="Left"
               Margin="10,0,10,10">
+    <TextBlock x:Name="Counts" Margin="0,0,16,0" VerticalAlignment="Center" FontSize="12"
+               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
     <!-- The state chips, each with its count; the one in force is filled in the accent. -->
     <Button x:Name="ChipAll" Tag="All" Click="ChooseChip" Margin="0,0,4,0"
             VerticalAlignment="Center" FontSize="12" Padding="10,3" MinWidth="0" />
@@ -190,8 +192,11 @@
             VerticalAlignment="Center" FontSize="12" Padding="10,3" MinWidth="0" />
     <Button x:Name="ChipStopped" Tag="Stopped" Click="ChooseChip" Margin="0,0,4,0"
             VerticalAlignment="Center" FontSize="12" Padding="10,3" MinWidth="0" />
-    <Button x:Name="ChipProblems" Tag="Problems" Click="ChooseChip" Margin="0,0,16,0"
+    <Button x:Name="ChipProblems" Tag="Problems" Click="ChooseChip"
             VerticalAlignment="Center" FontSize="12" Padding="10,3" MinWidth="0" />
+  </StackPanel>
+  <StackPanel Grid.Row="0" x:Name="Toolbar" Orientation="Horizontal" HorizontalAlignment="Right"
+              Margin="10,0,10,10">
     <!-- The switch before the box and not after it: the box keeps the right edge it always held,
          and a capture showed a button placed past it clipped by the page's edge. -->
     <Button x:Name="CardsSwitch" Content="Cards" Click="ChooseCards" Margin="0,0,4,0"

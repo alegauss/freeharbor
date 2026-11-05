@@ -385,7 +385,10 @@ public sealed class ContainerGroupTests
         Assert.Equal((RowTone.Muted, "□"), (none.Tone, none.ChipShape));
         Assert.Equal(RowTone.Warn, half.Tone);
         Assert.Equal((RowTone.Bad, "▲"), (crashed.Tone, crashed.ChipShape));
-        Assert.Equal("1 of 2 running", crashed.ChipWord);
+        // The chip says the count and its tooltip the sentence (DD320): "running" was what the
+        // STATE column trimmed at the window's default width.
+        Assert.Equal("1 of 2", crashed.ChipWord);
+        Assert.StartsWith("1 of 2 running.", crashed.ChipEvidence, StringComparison.Ordinal);
         Assert.Contains("logs", crashed.ChipEvidence, StringComparison.Ordinal);
     }
 

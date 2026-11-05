@@ -362,7 +362,7 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
             Detail.Visibility = Visibility.Collapsed;
             Detail.DataContext = null;
             Toolbar.Visibility = Visibility.Visible;
-            Counts.Visibility = Visibility.Visible;
+            Summary.Visibility = Visibility.Visible;
             return;
         }
 
@@ -392,7 +392,7 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
         Empty.Visibility = Visibility.Collapsed;
         CardsPane.Visibility = Visibility.Collapsed;
         Toolbar.Visibility = Visibility.Collapsed;
-        Counts.Visibility = Visibility.Collapsed;
+        Summary.Visibility = Visibility.Collapsed;
     }
 
     /// <summary>What the rail's box holds (DD299).</summary>
