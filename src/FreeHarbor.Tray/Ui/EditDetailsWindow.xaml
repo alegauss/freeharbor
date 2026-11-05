@@ -136,11 +136,13 @@
                     <Button Content="Save" IsDefault="True" Click="Save"
                             Style="{DynamicResource AccentButtonStyle}" Padding="14,5" Margin="8,0,0,0" />
                 </StackPanel>
+                <!-- Save to, for a compose project whose folder this machine can open. A
+                     standalone container has nowhere but FreeHarbor, so it has no choice to make. -->
+                <ComboBox x:Name="SaveTo" DockPanel.Dock="Right" Margin="0,0,8,0"
+                          VerticalAlignment="Center" SelectionChanged="FieldChanged" />
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="Saves in FreeHarbor on this machine."
-                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                    <TextBlock Text="Only you see these details, and nothing in the project changes."
-                               FontSize="12" TextWrapping="Wrap"
+                    <TextBlock x:Name="Lands" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <TextBlock x:Name="LandsDetail" FontSize="12" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </DockPanel>

@@ -77,6 +77,9 @@ public sealed record ContainerRow(
     /// </remarks>
     public ResolvedDetails? ProjectDetails { get; init; }
 
+    /// <summary>The project's details with nothing saved in FreeHarbor, for its header's dialog (DD296).</summary>
+    public ResolvedDetails? ProjectDetailsBeneath { get; init; }
+
     /// <summary>
     /// What the row would show with nothing saved in FreeHarbor (DD296): what the edit dialog
     /// compares each field with, and what its Reset puts back.
@@ -219,6 +222,14 @@ public sealed record ContainerRow(
             // project's; a header with no children has only its compose name.
             Details = children.Select(child => child.ProjectDetails).FirstOrDefault(details => details is not null)
                 ?? ContainerDetails.ResolveProject(project, null),
+
+            // DD296: what its edit dialog needs, from the child that knows the folder.
+            DetailsBeneath = children.Select(child => child.ProjectDetailsBeneath)
+                    .FirstOrDefault(details => details is not null)
+                ?? ContainerDetails.ResolveProject(project, null),
+            DetailKey = DetailStore.ProjectKey(project),
+            WorkingDir = children.Select(child => child.WorkingDir).FirstOrDefault(dir => dir is not null),
+            ConfigFiles = children.Select(child => child.ConfigFiles).FirstOrDefault(files => files is not null),
             Project = project,
             Running = children.Count(child => child.IsRunning),
             Total = children.Count,
@@ -479,8 +490,8 @@ public sealed record ContainerRow(
 
                 // DD295: a header draws its project's details from its own Details, so the copy each
                 // container carries for it is a container's alone.
-                nameof(ProjectDetails), nameof(DetailKey), nameof(WorkingDir), nameof(ConfigFiles),
-                nameof(DetailsBeneath),
+                nameof(ProjectDetails),
+                nameof(ProjectDetailsBeneath),
             };
 
         /// <summary>What only a header answers. A container returns each of these empty.</summary>
@@ -508,7 +519,8 @@ public sealed record ContainerRow(
                 nameof(Title), nameof(NameEvidence),
 
                 // DD294 and DD295: a container's details or a project's, drawn by the same tile.
-                nameof(Details), nameof(Description), nameof(HasDescription), nameof(HasTile),
+                nameof(Details), nameof(DetailsBeneath), nameof(DetailKey), nameof(WorkingDir),
+                nameof(ConfigFiles), nameof(Description), nameof(HasDescription), nameof(HasTile),
                 nameof(TileFill), nameof(TileGlyph), nameof(TilePicture), nameof(TileLetter),
                 nameof(Indent), nameof(Pending), nameof(Failure), nameof(IsPending),
                 nameof(HasFailure), nameof(AnyUp), nameof(CanStart), nameof(CanStop),
@@ -826,13 +838,10 @@ public sealed record ContainerRow(
             ? [new DetailLayer(ContainerDetails.EditedHere, mine), .. fromFiles]
             : fromFiles;
 
-        var projectLayers = new List<DetailLayer>();
-        if (project is not null && saved?.For(DetailStore.ProjectKey(project)) is { } mineToo)
-        {
-            projectLayers.Add(new DetailLayer(ContainerDetails.EditedHere, mineToo));
-        }
-
-        projectLayers.AddRange(read.Select(file => new DetailLayer(file.Source, file.Project)));
+        var projectFromFiles = read.Select(file => new DetailLayer(file.Source, file.Project)).ToList();
+        var projectLayers = project is not null && saved?.For(DetailStore.ProjectKey(project)) is { } mineToo
+            ? [new DetailLayer(ContainerDetails.EditedHere, mineToo), .. projectFromFiles]
+            : projectFromFiles;
 
         return new ContainerRow(
             container.DisplayName,
@@ -848,6 +857,9 @@ public sealed record ContainerRow(
             ProjectDetails = project is null
                 ? null
                 : ContainerDetails.ResolveProject(project, projectLayers),
+            ProjectDetailsBeneath = project is null
+                ? null
+                : ContainerDetails.ResolveProject(project, projectFromFiles),
             DetailKey = key,
             WorkingDir = workingDir,
             ConfigFiles = configFiles,

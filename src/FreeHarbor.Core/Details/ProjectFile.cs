@@ -186,6 +186,88 @@ public static class ProjectFile
         }
     }
 
+    /// <summary>Write a project file in the shape <see cref="Parse"/> reads (DD296).</summary>
+    /// <param name="projectFolder">The project's folder; the file goes in its <c>.freeharbor</c>.</param>
+    /// <param name="details">What to write. Icon paths under <c>.freeharbor</c> are written relative.</param>
+    /// <returns>The file written, or <see langword="null"/> where the folder could not be written.</returns>
+    /// <remarks>
+    /// Every value is double-quoted, so a title holding a colon or a hash reads back as itself and
+    /// no value is ever taken for a map. The file is ours, so it is rewritten whole: there is no
+    /// formatting of somebody else's to keep, which is the opposite of the compose file's case.
+    /// </remarks>
+    public static string? Write(string projectFolder, ProjectFileDetails details)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectFolder);
+        ArgumentNullException.ThrowIfNull(details);
+
+        var folder = Path.Combine(projectFolder, Folder);
+        var text = new System.Text.StringBuilder();
+        text.AppendLine("# Written by FreeHarbor. Titles, descriptions and icons for this compose project;")
+            .AppendLine("# it overrides the compose file and can be committed for the whole team.");
+        Lines(text, details.Project, folder, indent: "");
+        if (details.Services.Count > 0)
+        {
+            text.AppendLine("services:");
+            foreach (var (name, fields) in details.Services.OrderBy(pair => pair.Key, StringComparer.Ordinal))
+            {
+                if (fields.IsEmpty)
+                {
+                    continue;
+                }
+
+                text.Append("  ").Append(Quoted(name)).AppendLine(":");
+                Lines(text, fields, folder, indent: "    ");
+            }
+        }
+
+        try
+        {
+            Directory.CreateDirectory(folder);
+            var path = Path.Combine(folder, FileName);
+            var temporary = path + ".tmp";
+            File.WriteAllText(temporary, text.ToString());
+            File.Move(temporary, path, overwrite: true);
+            return path;
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException
+            or ArgumentException or NotSupportedException or System.Security.SecurityException)
+        {
+            return null;
+        }
+    }
+
+    private static void Lines(System.Text.StringBuilder text, DetailFields fields, string folder, string indent)
+    {
+        void Line(string key, string? value)
+        {
+            if (value is not null)
+            {
+                text.Append(indent).Append(key).Append(": ").AppendLine(Quoted(value));
+            }
+        }
+
+        Line("title", fields.Title);
+        Line("description", fields.Description);
+
+        // Relative where the picture is inside .freeharbor, so the file reads the same on a
+        // teammate's machine with the project checked out somewhere else.
+        var icon = fields.Icon;
+        if (icon is not null && Path.IsPathFullyQualified(icon))
+        {
+            var relative = Path.GetRelativePath(folder, icon);
+            if (!relative.StartsWith("..", StringComparison.Ordinal) && !Path.IsPathRooted(relative))
+            {
+                icon = relative.Replace('\\', '/');
+            }
+        }
+
+        Line("icon", icon);
+    }
+
+    private static string Quoted(string value) =>
+        "\"" + value.Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
+
     /// <summary>Two sources, field by field: the first one's value wherever it has one.</summary>
     /// <param name="first">The source read first, <c>.freeharbor</c> in the window.</param>
     /// <param name="second">The one under it, <c>x-freeharbor</c>.</param>
