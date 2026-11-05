@@ -101,32 +101,39 @@ it.
   virtual machine, and until DD128 the only way to get that memory back was to remember a
   second menu item before pressing Quit. Signing out or shutting down does the same. The
   distribution this tool owns is terminated and no other WSL distribution is touched.
-- **The window**: one window, and it is the list of containers: name, image, state, the
-  daemon's own status sentence, and the ports. A published TCP port is a link that opens
-  `http://localhost:<port>`; a port that is only exposed, or a UDP port, is plain text rather
-  than a link that lands on nothing. Ports published on both address families are folded into
-  one cell. WPF on the built-in .NET Fluent theme with `ThemeMode="System"`, so light and dark
-  follow the OS with no extra package. Empty is a designed state: "the engine is not running"
-  offers a Start button, "no containers" does not. Five destinations beside About: containers,
-  images, volumes, **builds** and **engine**. Builds is where the `docker-desktop://` link
-  buildx prints at the end of a build lands, since the record it names is one the daemon kept
-  and only the address was dead; engine is how an empty window explains itself. It carries the
-  host's own journal (every time the engine was brought back, what `wsl.exe` said the last time
-  it would not start, and the suspend it did not survive), what the machine under the engine is
-  doing (WSL and kernel versions, the root device and whether it is still writable, what ext4
-  has recorded against it, what the virtual disk says it is against what the Windows volume is
-  really charging for, and the space used inside it and left on the drive), a check that reads
-  the filesystem and offers to repair it only once it has found something and shown you what,
-  and a Compact button that drops the build cache, trims the filesystem and hands the freed
-  blocks back. Current Windows builds have sparse virtual disks turned off, and where the
-  hand-back is refused for that reason the page offers the one route left: it asks for
-  administrator rights, shuts every WSL distribution down rather than only this product's, and
-  costs nothing at all if the prompt is declined. `freeharbor read health` answers the same
-  question in one call, `freeharbor --fsck` runs the same check from a terminal and
-  `freeharbor --compact` the same compaction, with `--as-administrator` for the elevated
-  route. Every heading sorts and
-  every list has a filter box, over the rows already in hand rather than a second call to the
-  daemon.
+- **The window**: one window, and it opens on the containers: each with a title, a line saying
+  what it is for and an icon, read from its labels, its image, or what was saved in FreeHarbor
+  or the project's own files, and falling back to its name. A compose project sits under one
+  header with a state chip, Start or Stop, and Open for its main link; containers started
+  without compose come after, in a block of their own. A published TCP port is a link that
+  opens `http://localhost:<port>`; a published port that does not speak HTTP (a database, or
+  any UDP port) is a chip that copies its address, and a port that is only exposed is plain
+  text. Ports published on both address families are folded into one cell. The same rows draw
+  as a list or as one card per project, narrowed by All, Running, Stopped and Problems, and a
+  project opens a page with its endpoints, every service, the daemon's own words for any that
+  failed and the last lines of its output. WPF on the built-in .NET Fluent theme with
+  `ThemeMode="System"`, so light and dark follow the OS with no extra package. Empty is a
+  designed state: "the engine is not running" offers a Start button, "no containers" does not.
+  Six destinations beside About: containers, images, volumes, **builds**, **engine** and
+  **settings**, which chooses whether an edit to a container's details is saved in FreeHarbor,
+  in the project's `.freeharbor` folder or in the compose file. Builds is where the
+  `docker-desktop://` link buildx prints at the end of a build lands, since the record it
+  names is one the daemon kept and only the address was dead; engine is how an empty window
+  explains itself. It carries the host's own journal (every time the engine was brought back,
+  what `wsl.exe` said the last time it would not start, and the suspend it did not survive),
+  what the machine under the engine is doing (WSL and kernel versions, the root device and
+  whether it is still writable, what ext4 has recorded against it, what the virtual disk says
+  it is against what the Windows volume is really charging for, and the space used inside it
+  and left on the drive), a check that reads the filesystem and offers to repair it only once
+  it has found something and shown you what, and a Compact button that drops the build cache,
+  trims the filesystem and hands the freed blocks back. Current Windows builds have sparse
+  virtual disks turned off, and where the hand-back is refused for that reason the page offers
+  the one route left: it asks for administrator rights, shuts every WSL distribution down
+  rather than only this product's, and costs nothing at all if the prompt is declined.
+  `freeharbor read health` answers the same question in one call, `freeharbor --fsck` runs the
+  same check from a terminal and `freeharbor --compact` the same compaction, with
+  `--as-administrator` for the elevated route. Every heading sorts and every list has a filter
+  box, over the rows already in hand rather than a second call to the daemon.
 - **Nothing resident**: no Windows service and no scheduled task. Autostart is a single
   per-user registry value under the `Run` key, off unless the user turns it on, and turning it
   off removes the value rather than setting it to zero. The engine runs for exactly as long as

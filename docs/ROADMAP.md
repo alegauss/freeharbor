@@ -33,8 +33,6 @@
 
 ## Block H — The public surface (the site a reader and an agent both read)
 
-- 📋 **DD322** (deps: —) **llms.txt still lists five window destinations and calls a UDP port plain text after the containers redesign** — An agent reads the page as the product's own account of itself, and two of its sentences went false on 5 November. → §DD322
-
 ## Block I — The site on the design system
 
 - ⏳ **DD285** (deps: viglet-design-system: VDS213–VDS215, claude-tray: T389) **The site keeps its own copy of the template that eight product sites share** — The site is not yet registered in the design system's consumers.json, which rewords that repo's README and census tests. → §DD285

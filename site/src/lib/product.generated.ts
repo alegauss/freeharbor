@@ -74,9 +74,10 @@ export const product: ProductData = {
       "Volumes",
       "Builds",
       "Engine",
+      "Settings",
       "About"
     ],
-    "machine": 5
+    "machine": 6
   },
   "help": [
     "FreeHarbor.exe installs and drives Docker on Windows.",
@@ -121,6 +122,9 @@ export const product: ProductData = {
     "  --api            version and containers, read through the Engine API",
     "  --watch          print /events as they happen, until Ctrl+C",
     "  --autostart      on | off | status  - off unless you turn it on",
+    "  --min-api        <version> | default | status  - the oldest Engine API the engine",
+    "                   admits; 1.24 lets clients like Testcontainers' docker-java in,",
+    "                   and it applies from the engine's next start",
     "",
     "  --version        what this build calls itself",
     "  --help           this, and -h does the same",

@@ -11,7 +11,7 @@ export const surface: SurfaceData = {
     "shapes": {
       "containers.list": 1906,
       "container.inspect": 1603,
-      "container.logs.tail200": 4170,
+      "container.logs.tail200": 4100,
       "network.inspect": 220
     }
   },
