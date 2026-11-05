@@ -166,10 +166,14 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
         // header until here (DD107). Its wait is not stored beside that count — it is read off the
         // containers, which end their own waits on the events that end them (DD108).
         var shown = ContainerRow.Grouped(_rows, _shape, _collapsed);
+
+        // DD297: a header's chip is drawn too, so it is dressed in the theme's brushes here, the one
+        // place headers exist.
+        var style = RowStyle.For(this);
         shown =
         [
             .. shown.Select(row => row.IsProject
-                ? ContainerRow.WithProjectWait(_activity.Dress(row), _rows)
+                ? ContainerRow.WithProjectWait(_activity.Dress(row), _rows).WithChip(style)
                 : row),
         ];
 
@@ -282,6 +286,19 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
                 UseShellExecute = true,
                 WorkingDirectory = Environment.SystemDirectory,
             })?.Dispose();
+        }
+    }
+
+    /// <summary>Copy the address of a port that does not speak HTTP (DD297).</summary>
+    /// <remarks>
+    /// A browser cannot open localhost:5432, and the client that can wants the address pasted in, so
+    /// copying it is the click's one useful outcome.
+    /// </remarks>
+    private void CopyAddress(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string address } && address.Length > 0)
+        {
+            System.Windows.Clipboard.SetText(address);
         }
     }
 

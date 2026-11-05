@@ -12,8 +12,38 @@ namespace FreeHarbor.Tray.Ui;
 /// </param>
 public sealed record PortLink(string Text, string? Url)
 {
-    /// <summary>Whether this one can be clicked.</summary>
+    /// <summary>
+    /// The address a click copies, for a published port that does not speak HTTP (DD297), or
+    /// <see langword="null"/>.
+    /// </summary>
+    public string? Address { get; init; }
+
+    /// <summary>Whether this one can be clicked to open a browser.</summary>
     public bool IsLink => Url is not null;
+
+    /// <summary>Whether this one can be clicked to copy its address.</summary>
+    public bool IsCopy => Address is not null;
+
+    /// <summary>What the copy chip's tooltip says, or empty where it does not copy.</summary>
+    public string CopyHint => Address is null ? "" : $"Copy {Address}";
+
+    /// <summary>Whether this one is plain text: exposed only, so there is nowhere to go.</summary>
+    public bool IsText => !IsLink && !IsCopy;
+
+    /// <summary>
+    /// The ports a container listens on that are known not to answer HTTP (DD297).
+    /// </summary>
+    /// <remarks>
+    /// Matched on the port inside the container, which is the one its server chose: a Postgres
+    /// published on 15432 still speaks Postgres. A list and not a probe, because a probe per port per
+    /// refresh is a call this window does not make; a port missing from it stays a link, which is
+    /// what it was before.
+    /// </remarks>
+    public static readonly IReadOnlySet<int> NotHttp = new HashSet<int>
+    {
+        21, 22, 23, 25, 53, 110, 143, 389, 465, 587, 993, 995, 1025, 1433, 1521, 1883, 2181,
+        3306, 4222, 5432, 5672, 6379, 9042, 9092, 11211, 27017,
+    };
 
     /// <summary>Read a binding.</summary>
     /// <param name="port">The binding.</param>
@@ -22,14 +52,21 @@ public sealed record PortLink(string Text, string? Url)
     {
         ArgumentNullException.ThrowIfNull(port);
 
-        // Only TCP gets a link. A published UDP port is real and http://localhost:x is not where it
-        // is, and a link that opens a browser onto nothing is worse than plain text.
-        var url = port.PublicPort is { } published
-            && port.Type.Equals("tcp", StringComparison.OrdinalIgnoreCase)
-                ? $"http://localhost:{published}"
-                : null;
+        if (port.PublicPort is not { } published)
+        {
+            return new PortLink(port.ToString(), null);
+        }
 
-        return new PortLink(port.ToString(), url);
+        // Only HTTP gets a link. A published UDP port, or a database's, is real and
+        // http://localhost:x is not where it is: a link that opens a browser onto nothing is worse
+        // than an address somebody can paste into the client that does speak it.
+        var http = port.Type.Equals("tcp", StringComparison.OrdinalIgnoreCase)
+            && !NotHttp.Contains(port.PrivatePort);
+        var number = published.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        return http
+            ? new PortLink(port.ToString(), $"http://localhost:{number}")
+            : new PortLink(port.ToString(), null) { Address = $"localhost:{number}" };
     }
 }
 
@@ -189,6 +226,102 @@ public sealed record ContainerRow(
             + $"{Total.ToString(System.Globalization.CultureInfo.InvariantCulture)} running"
         : "";
 
+    /// <summary>How many of the project's shown containers stopped and did not mean to (DD297).</summary>
+    public int Failed { get; init; }
+
+    /// <summary>
+    /// What the state chip says: the container's state, or the project's count (DD297).
+    /// </summary>
+    /// <remarks>
+    /// The header's count moved into the STATE column as a chip of its own, so the column a reader
+    /// scans for trouble says it for a project too, in the tone of what is under it.
+    /// </remarks>
+    public string ChipWord => IsProject ? ProjectCount : State;
+
+    /// <summary>
+    /// The shape before the chip's word (L8): shape carries the state, and colour only reinforces it.
+    /// </summary>
+    /// <remarks>
+    /// A filled circle for running, a hollow square for stopped, a triangle for a failure, as the
+    /// spec's shared vocabulary names them; and a half circle for the in-between tone the spec has no
+    /// word for, so a paused container or a half-up project is not drawn as either end.
+    /// </remarks>
+    public string ChipShape => Tone switch
+    {
+        RowTone.Good => "●",
+        RowTone.Bad => "▲",
+        RowTone.Warn => "◐",
+        _ => "□",
+    };
+
+    /// <summary>Why the chip says what it says: a container's evidence, or a sentence about the project's.</summary>
+    public string ChipEvidence => this switch
+    {
+        { IsContainer: true } => StateEvidence,
+        { Failed: > 0 } => $"{Failed.ToString(System.Globalization.CultureInfo.InvariantCulture)} of them "
+            + "stopped and did not mean to. Their logs say why.",
+        _ when Running == Total => "Every container under it is up.",
+        { Running: 0 } => "Nothing under it is running.",
+        _ => $"{(Total - Running).ToString(System.Globalization.CultureInfo.InvariantCulture)} of them "
+            + "stopped cleanly.",
+    };
+
+    /// <summary>
+    /// The link the Open button follows (DD297): a container's primary, or on a header the first
+    /// primary among its containers by name.
+    /// </summary>
+    /// <remarks>
+    /// By name and not in draw order, so re-sorting the list never changes where a project's Open
+    /// goes. A project has no link of its own (DD295), so its Open is one of its services'.
+    /// </remarks>
+    public DetailLink? OpenLink { get; init; }
+
+    /// <summary>
+    /// Whether the row draws an Open button: a project's header, or a container outside compose.
+    /// </summary>
+    /// <remarks>
+    /// A service under a header leaves Open to the header and keeps its link chips, which is the
+    /// spec's split. A row with nothing to open draws no button, because a button that can never be
+    /// pressed says nothing a missing one does not.
+    /// </remarks>
+    public bool ShowsOpen => OpenLink is not null && (IsProject || Project is null);
+
+    /// <summary>Whether Open can be pressed: disabled, and not hidden, while nothing is running.</summary>
+    public bool CanOpen => ShowsOpen && (IsProject ? Running > 0 : IsRunning);
+
+    /// <summary>
+    /// What the Open button says: the link's own name, or <c>Open</c> where the name is a port.
+    /// </summary>
+    public string OpenLabel => OpenLink is { Name: { Length: > 0 } name }
+        && !name.StartsWith(':') && !string.Equals(name, "Open", StringComparison.Ordinal)
+            ? name
+            : "Open";
+
+    /// <summary>
+    /// The port chips the PORTS cell draws: every port, less the one the Open button already opens.
+    /// </summary>
+    public IReadOnlyList<PortLink> PortChips => ShowsOpen
+        ? [.. Ports.Where(port => !string.Equals(port.Url, OpenLink!.Url, StringComparison.Ordinal))]
+        : Ports;
+
+    /// <summary>
+    /// Whether this row opens the Standalone containers block (DD297), and so draws its heading.
+    /// </summary>
+    /// <remarks>
+    /// A flag on the first such row rather than a third kind of row: the heading has no columns, no
+    /// verbs and no state, and one row type with a trigger is the shape DD106 chose and DD111 guards.
+    /// </remarks>
+    public bool StartsStandalone { get; init; }
+
+    /// <summary>
+    /// Whether the row offers to add details: a container outside compose with no description.
+    /// </summary>
+    /// <remarks>
+    /// The spec's one exception to "a missing description draws nothing". A service has its project
+    /// file to be described in; a standalone container has only this window.
+    /// </remarks>
+    public bool InvitesDetails => IsContainer && Project is null && Details is not null && !HasDescription;
+
     /// <summary>How far this row is pushed in — the whole signal that it belongs to the one above.</summary>
     public System.Windows.Thickness Indent =>
         IsProject || Project is null ? default : new System.Windows.Thickness(18, 0, 0, 0);
@@ -233,6 +366,14 @@ public sealed record ContainerRow(
             Project = project,
             Running = children.Count(child => child.IsRunning),
             Total = children.Count,
+            Failed = children.Count(child => child.Tone == RowTone.Bad),
+
+            // DD297: the project's Open is the first primary among its services, by name, so a re-sort
+            // never moves where it goes.
+            OpenLink = children
+                .OrderBy(child => child.Name, StringComparer.Ordinal)
+                .Select(child => child.Details?.Primary)
+                .FirstOrDefault(link => link is not null),
             Collapsed = collapsed,
         };
     }
@@ -338,6 +479,12 @@ public sealed record ContainerRow(
     /// </remarks>
     public RowTone Tone => this switch
     {
+        // DD297: a header's chip is its project's, which is failure when any container under it
+        // failed, up when all are, stopped when none are, and in between otherwise.
+        { IsProject: true, Failed: > 0 } => RowTone.Bad,
+        { IsProject: true, Total: > 0 } when Running == Total => RowTone.Good,
+        { IsProject: true, Running: 0 } => RowTone.Muted,
+        { IsProject: true } => RowTone.Warn,
         { IsRunning: true } => RowTone.Good,
         { State: "paused" } or { State: "restarting" } or { State: "created" } => RowTone.Warn,
         _ when ExitCode is 0 => RowTone.Muted,
@@ -485,8 +632,12 @@ public sealed record ContainerRow(
             {
                 nameof(Image), nameof(State), nameof(Status), nameof(Ports), nameof(Service),
                 nameof(DependsOn), nameof(ExitCode), nameof(StateEvidence), nameof(IsRunning),
-                nameof(IsLive), nameof(ChipFill), nameof(ChipText), nameof(ImageIsGone),
+                nameof(IsLive), nameof(ImageIsGone),
                 nameof(ImageNote), nameof(ImageEvidence),
+
+                // DD297: a header has no ports to chip, opens no standalone block and is described in
+                // its project file rather than invited to be.
+                nameof(PortChips), nameof(StartsStandalone), nameof(InvitesDetails),
 
                 // DD295: a header draws its project's details from its own Details, so the copy each
                 // container carries for it is a container's alone.
@@ -499,7 +650,7 @@ public sealed record ContainerRow(
             new HashSet<string>(StringComparer.Ordinal)
             {
                 nameof(Running), nameof(Total), nameof(Collapsed), nameof(Chevron),
-                nameof(ProjectCount),
+                nameof(ProjectCount), nameof(Failed),
             };
 
         /// <summary>
@@ -526,6 +677,12 @@ public sealed record ContainerRow(
                 nameof(HasFailure), nameof(AnyUp), nameof(CanStart), nameof(CanStop),
                 nameof(CanRestart), nameof(CanRemove), nameof(CanShell), nameof(ShellReason),
                 nameof(Tone), nameof(PrimaryVerb), nameof(HasPrimary), nameof(LogsVisibility),
+
+                // DD297: the header's count is a chip in the STATE column, in its project's tone, and
+                // a header and a standalone container each have an Open of their own.
+                nameof(ChipFill), nameof(ChipText), nameof(ChipWord), nameof(ChipShape),
+                nameof(ChipEvidence), nameof(OpenLink), nameof(ShowsOpen), nameof(CanOpen),
+                nameof(OpenLabel),
             };
     }
 
@@ -632,13 +789,22 @@ public sealed record ContainerRow(
         var order = Ordered(units.Select(unit => unit.Leads), shape);
         var at = order.Select((row, index) => (row.Id, index))
             .ToDictionary(pair => pair.Id, pair => pair.index, StringComparer.Ordinal);
+        var sorted = units
+            .OrderBy(unit => at.TryGetValue(unit.Leads.Id, out var index) ? index : int.MaxValue)
+            .ToList();
 
-        return
-        [
-            .. units
-                .OrderBy(unit => at.TryGetValue(unit.Leads.Id, out var index) ? index : int.MaxValue)
-                .SelectMany(unit => unit.Draws),
-        ];
+        // DD297: the projects first, then the containers started without compose in a block of their
+        // own, each half in the sort's order. The block has a heading only where there is a project
+        // above it to be told apart from; a machine running no compose project is the flat list it
+        // always was.
+        var projects = sorted.Where(unit => unit.Leads.Project is not null).SelectMany(unit => unit.Draws).ToList();
+        var standalone = sorted.Where(unit => unit.Leads.Project is null).Select(unit => unit.Leads).ToList();
+        if (projects.Count > 0 && standalone.Count > 0)
+        {
+            standalone[0] = standalone[0] with { StartsStandalone = true };
+        }
+
+        return [.. projects, .. standalone];
     }
 
     /// <summary>
@@ -843,6 +1009,7 @@ public sealed record ContainerRow(
             ? [new DetailLayer(ContainerDetails.EditedHere, mineToo), .. projectFromFiles]
             : projectFromFiles;
 
+        var details = ContainerDetails.Resolve(container, layers: layers);
         return new ContainerRow(
             container.DisplayName,
             container.ImageName,
@@ -852,7 +1019,7 @@ public sealed record ContainerRow(
             container.Id)
         {
             Project = project,
-            Details = ContainerDetails.Resolve(container, layers: layers),
+            Details = details,
             DetailsBeneath = ContainerDetails.Resolve(container, layers: fromFiles),
             ProjectDetails = project is null
                 ? null
@@ -865,6 +1032,7 @@ public sealed record ContainerRow(
             ConfigFiles = configFiles,
             ImageIsGone = container.ImageIsGone,
             Service = service,
+            OpenLink = details.Primary,
             DependsOn = ComposeOrder.DependenciesIn(
                 Label(container, ComposeOrder.DependsOnLabel)),
         };

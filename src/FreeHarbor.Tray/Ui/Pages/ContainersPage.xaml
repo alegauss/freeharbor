@@ -21,12 +21,15 @@
 
              Neither is BasedOn the Fluent Button, so neither has the problem that keeps RowAction in
              the window (DD34). -->
+        <!-- DD297: a tinted chip rather than bare accent text, so a link reads as a thing to press
+             and not as a sentence that happens to be blue. -->
         <Style x:Key="PortLink" TargetType="Button">
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Padding" Value="6,2" />
             <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="FontSize" Value="12" />
             <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}" />
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -39,7 +42,60 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Hit" Property="Background"
+                                        Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- DD297: a port that does not speak HTTP. Dashed, so it does not read as a link, and a
+             click copies its address for the client that does speak it. A Border cannot dash, so
+             the outline is a Rectangle under the text. -->
+        <Style x:Key="PortCopy" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Padding" Value="6,2" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Rectangle x:Name="Hit" RadiusX="4" RadiusY="4" StrokeThickness="1"
+                                       StrokeDashArray="3 2" Fill="{TemplateBinding Background}"
+                                       Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                            <TextBlock Margin="{TemplateBinding Padding}"
+                                       Foreground="{TemplateBinding Foreground}"><Run
+                                       Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" /> <Run
+                                       Text="⧉" /></TextBlock>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Hit" Property="Fill"
                                         Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- DD297: a link inside a sentence, which is what "Add icon and description" is. -->
+        <Style x:Key="TextLink" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <TextBlock x:Name="Words" Text="{TemplateBinding Content}" Background="Transparent"
+                                   Foreground="{TemplateBinding Foreground}" />
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Words" Property="TextDecorations" Value="Underline" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -106,6 +162,14 @@
 <ListView.ItemTemplate>
     <DataTemplate>
       <StackPanel>
+        <!-- DD297. The Standalone containers block's heading, drawn above the first container started
+             without compose. On that row and not a row of its own, because a heading has no columns
+             and no verbs, and a third kind of row is what DD111's member sets would have to answer
+             for. -->
+        <TextBlock Text="Standalone containers" Margin="0,10,0,10" FontSize="12"
+                   FontWeight="SemiBold"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                   Visibility="{Binding StartsStandalone, Converter={StaticResource Shown}}" />
         <Grid>
             <Grid.ColumnDefinitions>
                 <!-- Character for character the same as HeaderRow's, and a test asserts
@@ -162,6 +226,15 @@
                                FontSize="12"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                Visibility="{Binding HasDescription, Converter={StaticResource Shown}}" />
+                    <!-- DD297. A standalone container has no project file to be described in, so
+                         where it has no description it says so and offers the edit dialog. -->
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding InvitesDetails, Converter={StaticResource Shown}}">
+                        <TextBlock Text="No details yet · " FontSize="12" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                        <Button Content="Add icon and description" Tag="{Binding}" Click="EditDetails"
+                                Style="{StaticResource TextLink}" />
+                    </StackPanel>
                 </StackPanel>
             </DockPanel>
             <!-- DD167. A second Run rather than a second element: the note has to sit against the
@@ -189,66 +262,57 @@
                  than per row (Ui/RowStyle.cs). A chip is an assertion, so it carries the evidence
                  for itself in its tooltip — and the evidence is more than the status column already
                  shows, or the tooltip would be the same sentence twice. -->
+            <!-- DD297. The shape goes before the word (L8), and a header carries the chip too: its
+                 project's count, in the tone of what is under it. Of the containers under it and not
+                 of the project as the daemon knows it: the filter can hide some, and a count a reader
+                 cannot check against what is on screen is worse than none. -->
             <Border Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Center"
                     CornerRadius="5" Padding="8,2" Background="{Binding ChipFill}"
-                    ToolTip="{Binding StateEvidence}"
-                    Visibility="{Binding IsContainer, Converter={StaticResource Shown}}">
-                <TextBlock Text="{Binding State}" FontSize="12"
-                           Foreground="{Binding ChipText}" />
+                    ToolTip="{Binding ChipEvidence}">
+                <TextBlock FontSize="12" TextTrimming="CharacterEllipsis"
+                           Foreground="{Binding ChipText}"><Run
+                           Text="{Binding ChipShape, Mode=OneWay}" FontSize="10" /> <Run
+                           Text="{Binding ChipWord, Mode=OneWay}" /></TextBlock>
             </Border>
             <TextBlock Grid.Column="3" Text="{Binding Status}" TextTrimming="CharacterEllipsis"
                        VerticalAlignment="Center"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        Visibility="{Binding IsContainer, Converter={StaticResource Shown}}" />
-            <!-- What a project says instead of a status, in the column that already carries the
-                 sentence. Of the containers under it and not of the project as the daemon knows it:
-                 the filter can hide some, and a count a reader cannot check against what is on
-                 screen is worse than none. -->
-            <TextBlock Grid.Column="3" Text="{Binding ProjectCount}" TextTrimming="CharacterEllipsis"
-                       VerticalAlignment="Center"
-                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                       Visibility="{Binding IsProject, Converter={StaticResource Shown}}" />
-            <ItemsControl Grid.Column="4" ItemsSource="{Binding Ports}" VerticalAlignment="Center">
+            <!-- DD297. The Open button, on a header and on a container outside compose, then the port
+                 chips. Open is disabled rather than hidden while nothing is running, so the place it
+                 sits does not move when a project stops. -->
+            <WrapPanel Grid.Column="4" VerticalAlignment="Center">
+                <Button Content="{Binding OpenLabel}" Tag="{Binding OpenLink.Url}" Click="OpenPort"
+                        ToolTip="{Binding OpenLink.Url}" IsEnabled="{Binding CanOpen}"
+                        Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
+                        Margin="0,0,6,0" MinWidth="0"
+                        Visibility="{Binding ShowsOpen, Converter={StaticResource Shown}}" />
+            <ItemsControl ItemsSource="{Binding PortChips}" VerticalAlignment="Center">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <!-- One of the two shows. A DataTrigger rather than a converter:
-                             the whole condition is IsLink, and a converter class would
-                             be a file to explain that. -->
+                        <!-- One of the three shows: a tinted chip that opens a browser, a dashed one
+                             that copies the address of a port that does not speak HTTP, or plain
+                             text for a port only exposed. Each is its own flag on the port, so a
+                             trigger per element and no converter. -->
                         <Grid>
                             <Button Content="{Binding Text}" Tag="{Binding Url}"
-                                    Click="OpenPort" ToolTip="{Binding Url}">
-                                <Button.Style>
-                                    <Style TargetType="Button"
-                                           BasedOn="{StaticResource PortLink}">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsLink}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                            <TextBlock Text="{Binding Text}">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock"
-                                           BasedOn="{StaticResource PortText}">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsLink}" Value="False">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
+                                    Click="OpenPort" ToolTip="{Binding Url}"
+                                    Style="{StaticResource PortLink}"
+                                    Visibility="{Binding IsLink, Converter={StaticResource Shown}}" />
+                            <Button Content="{Binding Text}" Tag="{Binding Address}"
+                                    Click="CopyAddress" ToolTip="{Binding CopyHint}"
+                                    Style="{StaticResource PortCopy}"
+                                    Visibility="{Binding IsCopy, Converter={StaticResource Shown}}" />
+                            <TextBlock Text="{Binding Text}" Style="{StaticResource PortText}"
+                                       Visibility="{Binding IsText, Converter={StaticResource Shown}}" />
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+            </WrapPanel>
 
             <!-- The four verbs, or the one word that says the click landed. Optimistic:
                  the row goes pending on press and the event stream is what takes it
@@ -305,8 +369,11 @@
                  Both alignments are stated, and they are the whole of DD127: the Fluent Button style
                  sets Left and Center, a templated Border with no child measures to nothing, and a
                  hit target arranged at 0x0 catches no click at all — so the header looked like it
-                 folded and never did. Stated locally because a local value is what beats a style. -->
-            <Button Grid.Column="0" Grid.ColumnSpan="5" Tag="{Binding}" Click="ToggleProject"
+                 folded and never did. Stated locally because a local value is what beats a style.
+
+                 Four columns and not five since DD297: the PORTS cell holds the header's Open, and a
+                 hit target laid over it would fold the project instead of opening it. -->
+            <Button Grid.Column="0" Grid.ColumnSpan="4" Tag="{Binding}" Click="ToggleProject"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                     Background="Transparent" BorderThickness="0" Cursor="Hand"
                     ToolTip="Show or hide this project's containers"

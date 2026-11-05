@@ -47,6 +47,31 @@ public sealed class ContainerRowTests
         Assert.Equal("5353->53/udp", link.Text);
     }
 
+    [Theory]
+    [InlineData(5432, 15432, "tcp")]
+    [InlineData(6379, 6379, "tcp")]
+    [InlineData(53, 5353, "udp")]
+    public void A_published_port_that_does_not_speak_http_copies_its_address(int inside, int published, string type)
+    {
+        // DD297. A browser cannot open localhost:5432, and the client that can wants it pasted in.
+        // Matched on the port inside: a Postgres published on 15432 still speaks Postgres.
+        var link = PortLink.From(Port(inside, published, type));
+
+        Assert.False(link.IsLink);
+        Assert.True(link.IsCopy);
+        Assert.False(link.IsText);
+        Assert.Equal($"localhost:{published}", link.Address);
+    }
+
+    [Fact]
+    public void A_port_only_exposed_neither_opens_nor_copies()
+    {
+        var link = PortLink.From(Port(5432, null));
+
+        Assert.True(link.IsText);
+        Assert.Null(link.Address);
+    }
+
     [Fact]
     public void A_port_published_on_both_address_families_is_one_cell()
     {

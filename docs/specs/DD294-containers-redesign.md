@@ -78,6 +78,19 @@ with Logs and Restart as icons, is overruled by section 9.1.
 - **Free:** spacing, how a long description truncates, whether the description row
   collapses when empty (it should).
 
+As built (DD297):
+
+- The project chip sits in the STATE column, not beside the title, so the column a
+  reader scans for trouble covers projects too. A half-up project, like a paused
+  container, takes the in-between tone and a half circle.
+- A project's Open follows the first primary link among its services, ordered by name, so
+  a re-sort never moves it. The header's fold covers NAME to STATUS and leaves PORTS to
+  Open.
+- "Does not answer HTTP" is a list of well-known ports matched on the port inside the
+  container (`PortLink.NotHttp`), not a probe, because the list makes no call per refresh.
+- The Standalone heading appears only when a project sits above it. A machine with no
+  compose project is the flat list it always was.
+
 ## 3. A large project (DD298)
 
 What changes when a project has many services or many links. Under five services and

@@ -348,11 +348,87 @@ public sealed class ContainerGroupTests
             Summary("zzz-live-1", project: "zzz"),
             Summary("mmm-loose-1")));
 
-        // `aaa` is first alphabetically and last here, because the container leading it is stopped.
-        // Under it, `zzz` and the loose row are both running and fall back to the name tie-break.
+        // `aaa` is first alphabetically and last of the projects, because the container leading it
+        // is stopped. The loose row comes after every project, in the Standalone block (DD297).
         Assert.Equal(
-            ["mmm-loose-1-id", "compose:zzz", "zzz-live-1-id", "compose:aaa", "aaa-old-1-id"],
+            ["compose:zzz", "zzz-live-1-id", "compose:aaa", "aaa-old-1-id", "mmm-loose-1-id"],
             shown.Select(row => row.Id));
+    }
+
+    [Fact]
+    public void Containers_outside_compose_gather_under_one_heading_after_every_project()
+    {
+        // DD297. Interleaved, a standalone container read as a project's stray; gathered, it reads as
+        // what it is. The heading sits on the first of them and on nothing else.
+        var shown = Grouped(Rows(
+            Summary("b-loose", "exited"),
+            Summary("shop-api-1", project: "shop"),
+            Summary("a-loose")));
+
+        Assert.Equal(["compose:shop", "shop-api-1-id", "a-loose-id", "b-loose-id"], shown.Select(row => row.Id));
+        Assert.Equal(["a-loose-id"], shown.Where(row => row.StartsStandalone).Select(row => row.Id));
+    }
+
+    [Fact]
+    public void A_header_chip_takes_the_tone_of_what_is_under_it()
+    {
+        // Running when all run, stopped when none do, failure when any exited non-zero, and in
+        // between otherwise. Shape first (L8), so the tone is never carried by colour alone.
+        var all = Grouped(Rows(Summary("a-1", project: "all"), Summary("a-2", project: "all")))[0];
+        var none = Grouped(Rows(Summary("n-1", "exited", "none")))[0];
+        var half = Grouped(Rows(Summary("h-1", project: "half"), Summary("h-2", "exited", "half")))[0];
+        var crashed = Grouped(Rows(
+            Summary("c-1", project: "crash"),
+            Summary("c-2", "exited", "crash") with { Status = "Exited (137) 3 seconds ago" }))[0];
+
+        Assert.Equal((RowTone.Good, "●"), (all.Tone, all.ChipShape));
+        Assert.Equal((RowTone.Muted, "□"), (none.Tone, none.ChipShape));
+        Assert.Equal(RowTone.Warn, half.Tone);
+        Assert.Equal((RowTone.Bad, "▲"), (crashed.Tone, crashed.ChipShape));
+        Assert.Equal("1 of 2 running", crashed.ChipWord);
+        Assert.Contains("logs", crashed.ChipEvidence, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_headers_open_follows_its_first_service_with_a_link_and_waits_for_it_to_run()
+    {
+        // DD297. A project has no link of its own, so its Open is a service's, chosen by name so a
+        // re-sort never moves it; and it is disabled rather than hidden while nothing runs.
+        static ContainerSummary Web(string name, string state, int port) =>
+            Summary(name, state, "shop") with { Ports = [new PortBinding { PrivatePort = 80, PublicPort = port, Type = "tcp" }] };
+
+        var up = Grouped(Rows(Web("shop-web-1", "running", 8080), Web("shop-api-1", "running", 8081)))[0];
+        Assert.True(up.ShowsOpen);
+        Assert.True(up.CanOpen);
+        Assert.Equal("http://localhost:8081", up.OpenLink!.Url);
+        Assert.Equal("Open", up.OpenLabel);
+
+        var down = Grouped(Rows(Web("shop-web-1", "exited", 8080)))[0];
+        Assert.True(down.ShowsOpen);
+        Assert.False(down.CanOpen);
+
+        // A service under the header leaves Open to it and keeps its chips.
+        var service = Grouped(Rows(Web("shop-web-1", "running", 8080)))[1];
+        Assert.False(service.ShowsOpen);
+        Assert.Single(service.PortChips);
+    }
+
+    [Fact]
+    public void A_standalone_container_opens_itself_and_invites_details_it_lacks()
+    {
+        var bare = ContainerRow.From(Summary("nervous_tesla") with
+        {
+            Ports = [new PortBinding { PrivatePort = 80, PublicPort = 8025, Type = "tcp" }],
+        });
+
+        Assert.True(bare.ShowsOpen);
+        Assert.True(bare.CanOpen);
+
+        // The Open button already opens the one port, so it is not drawn a second time as a chip.
+        Assert.Empty(bare.PortChips);
+
+        Assert.True(bare.InvitesDetails);
+        Assert.False(ContainerRow.From(Summary("shop-api-1", project: "shop")).InvitesDetails);
     }
 
     [Fact]
@@ -434,11 +510,11 @@ public sealed class ContainerGroupTests
 
         var shown = Grouped(rows, ByState, "shop");
 
-        // The header keeps the place its leading container earned, folded or not — both are running
-        // here, so the name tie-break puts the loose row above it.
-        Assert.Equal(["loose-1-id", "compose:shop"], shown.Select(row => row.Id));
+        // The header keeps its place folded or not, and the loose row stays in the Standalone block
+        // under every project (DD297).
+        Assert.Equal(["compose:shop", "loose-1-id"], shown.Select(row => row.Id));
 
-        var header = shown[1];
+        var header = shown[0];
         Assert.True(header.Collapsed);
 
         // Still counts the whole project: folding it away is what makes the count the only thing

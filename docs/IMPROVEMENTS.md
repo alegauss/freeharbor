@@ -65,30 +65,6 @@ the cause is shown, not when a rerun goes green.
 
 ## Block C — The window (claude-tray's elements)
 
-### §DD297 The enriched list
-
-The list stays the default view, because it is the one that holds forty containers and
-still obeys L4 and L5 of the DD34 constitution. It changes in what each element says,
-not in its structure.
-
-A compose project's header (DD106) gains the resolved icon, title and description, the
-running-of-total chip, a primary Open button for the project's primary link, and Start
-or Stop as one verb, with the rest in the overflow. Open is disabled, not hidden, while
-the project is stopped.
-
-A row shows the state chip with its shape (L8), the service's title over its
-description, and keeps the port links DD7 drew, now as tinted chips. A port that does
-not answer HTTP copies its address instead of opening a browser. The row keeps DD36's
-Logs, one verb and an always-drawn overflow; nothing is revealed on hover.
-
-Containers started without compose are gathered in a final Standalone containers block.
-Its header carries no group verbs, because each row is its own unit with its own Open
-and Start or Stop. A container with no metadata shows its monogram and an "Add icon and
-description" link to the edit screen.
-
-The header columns still match the row columns, and a test still says so. Layout:
-docs/specs/DD294-containers-redesign.md section 2.
-
 ### §DD298 A large compose project
 
 The enriched list and the cards both assume a project of a handful of services. A real
