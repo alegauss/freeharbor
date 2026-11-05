@@ -67,12 +67,14 @@ public sealed class SampleMachine : IEngineClient
     /// &lt;condition&gt;:&lt;restart&gt;</c> — because a fixture that simplified the format would
     /// exercise a parser this project does not ship.
     /// </param>
-    /// <returns>The container.</returns>
+    /// <param name="details">
+    /// Labels a screen reads its title, description and icon from (DD294), or nothing.
+    /// </param>
     /// <returns>The container.</returns>
     private static ContainerSummary Container(
         string id, string name, string image, string state, string status,
         string? service = null, IReadOnlyList<PortBinding>? ports = null,
-        string? dependsOn = null) => new()
+        string? dependsOn = null, Dictionary<string, string>? details = null) => new()
     {
         Id = id,
         Names = ["/" + name],
@@ -81,8 +83,25 @@ public sealed class SampleMachine : IEngineClient
         State = state,
         Status = status,
         Ports = ports ?? [],
-        Labels = service is null ? null : ComposeLabels(service, dependsOn),
+        Labels = Merged(service is null ? null : ComposeLabels(service, dependsOn), details),
     };
+
+    private static Dictionary<string, string>? Merged(
+        Dictionary<string, string>? compose, Dictionary<string, string>? details)
+    {
+        if (details is null)
+        {
+            return compose;
+        }
+
+        var labels = compose ?? new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var (key, value) in details)
+        {
+            labels[key] = value;
+        }
+
+        return labels;
+    }
 
     /// <summary>
     /// Which image a tag names here, resolved the way the daemon resolves it (DD167).
@@ -171,13 +190,28 @@ public sealed class SampleMachine : IEngineClient
         // reaches api and worker before db rather than db first.
         Container("c1aaaaaaaaaa0000", Prefix + "api-1", ApiImage, "running",
             "Up 6 minutes", "api", [Published(8080, 8080)],
-            dependsOn: "db:service_healthy:true"),
+            dependsOn: "db:service_healthy:true",
+
+            // DD294: this product's own labels, the first source the resolver reads.
+            details: new(StringComparer.Ordinal)
+            {
+                ["freeharbor.title"] = "Shop API",
+                ["freeharbor.description"] = "Orders, carts and checkout",
+            }),
 
         // Running and healthy, so the status column carries something other than a duration. The
         // condition above is why it is healthy rather than merely up: a fixture whose db said
         // nothing about health would be one where the label it is depended on by made no sense.
         Container("c2bbbbbbbbbb0000", Prefix + "db-1", DbImage, "running",
-            "Up 6 minutes (healthy)", "db", [Published(5432, 5432)]),
+            "Up 6 minutes (healthy)", "db", [Published(5432, 5432)],
+
+            // DD294: Homepage's labels, the second source, so a machine labelled for that dashboard
+            // reads the same here.
+            details: new(StringComparer.Ordinal)
+            {
+                ["homepage.name"] = "PostgreSQL",
+                ["homepage.description"] = "Orders and customers",
+            }),
 
         // Killed. 137 is the exit code the whole diagnostic half of this product is about.
         Container("c3cccccccccc0000", Prefix + "worker-1", ApiImage, "exited",
@@ -185,7 +219,14 @@ public sealed class SampleMachine : IEngineClient
 
         // Exposed but not published: the port that is text rather than a link.
         Container("c4dddddddddd0000", Prefix + "cache-1", CacheImage, "running",
-            "Up 2 hours", ports: [Exposed(6379)]),
+            "Up 2 hours", ports: [Exposed(6379)],
+
+            // DD294: only the image's own OCI label, the third source, which docker copies onto
+            // every container made from the image.
+            details: new(StringComparer.Ordinal)
+            {
+                ["org.opencontainers.image.title"] = "Session cache",
+            }),
 
         // A clean exit, which reads differently from a kill and shares a row shape with it.
         Container("c5eeeeeeeeee0000", Prefix + "migrate-1", ApiImage, "exited",

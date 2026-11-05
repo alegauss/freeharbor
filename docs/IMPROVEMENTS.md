@@ -26,23 +26,6 @@ client note.
 
 ## Block C — The window (claude-tray's elements)
 
-### §DD294 Container metadata from labels
-
-Every richer view of the containers page needs the same four facts per container: a
-title, a description, an icon and the links it serves. They resolve in one place, in a
-fixed order, so the list, the cards and the detail page cannot disagree.
-
-1. `freeharbor.title`, `freeharbor.description`, `freeharbor.icon`, `freeharbor.url` and `freeharbor.url.<name>`, plus `freeharbor.primary` and `freeharbor.group` for large projects. A compose service carries them under `labels:`, a `docker run` under `--label`, an image under `LABEL`. Container labels arrive on the list response already, the same way the project label does for DD106, so this costs no second call.
-2. `homepage.name`, `homepage.icon`, `homepage.description` and `homepage.href`, the Homepage dashboard's labels, so a machine already labelled for it needs no edits.
-3. The image's `org.opencontainers.image.title`, `.description` and `.url`, read by one image inspect per image and cached.
-4. Fallback: a bundled icon chosen by image name (postgres, redis, nginx and the like), else a monogram coloured from a hash of the name.
-
-Icons are bundled or read from a local file. A remote icon URL is never fetched, because
-the product does not phone home. A link without a label is derived from a published
-port. The SampleMachine fixture carries labelled and unlabelled containers, so captures
-show both. Layout of every screen: docs/specs/DD294-containers-redesign.md, section 1
-for the shared elements.
-
 ### §DD295 Project metadata from .freeharbor and x-freeharbor
 
 Labels describe a container, and a project is not a container: no label says what a

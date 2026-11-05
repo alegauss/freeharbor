@@ -118,6 +118,35 @@ internal static class Palette
     public static readonly Color Stopped = Color.FromRgb(StoppedR, StoppedG, StoppedB);
 
     /// <summary>
+    /// The hues an icon tile sits on, as bytes (DD294), indexed by <c>ContainerDetails.HueOf</c>.
+    /// </summary>
+    /// <remarks>
+    /// Opaque, unlike the state chips: the tile carries a white glyph or letter, and white on a tint
+    /// would vanish on the light theme. Each one is dark enough for that white to read on either
+    /// theme. None of them is Danger, Running, Starting or Stopped, because a tile is identity and a
+    /// tile the colour of a state would read as one.
+    /// </remarks>
+    private static readonly (byte R, byte G, byte B)[] TileBytes =
+    [
+        (0x3B, 0x6F, 0xD8), // blue
+        (0x7A, 0x4F, 0xD3), // violet
+        (0xB8, 0x3B, 0x76), // magenta
+        (0xC0, 0x56, 0x2E), // rust
+        (0x9A, 0x6B, 0x12), // ochre
+        (0x2C, 0x7A, 0x6E), // pine
+        (0x14, 0x7D, 0x9C), // teal
+        (0x55, 0x65, 0x78), // slate
+    ];
+
+    /// <summary>What a tile's glyph or letter is drawn in, on every hue and both themes.</summary>
+    public static readonly Brush TileInk =
+        Frozen(new SolidColorBrush(Color.FromRgb(0xFF, 0xFF, 0xFF)));
+
+    /// <summary>The tile hues as frozen brushes, in the same order.</summary>
+    public static readonly IReadOnlyList<Brush> TileBrushes =
+        [.. TileBytes.Select(b => Frozen(new SolidColorBrush(Color.FromRgb(b.R, b.G, b.B))))];
+
+    /// <summary>
     /// The face everything but a log is set in, and the fallback Windows 10 actually has.
     /// </summary>
     /// <remarks>

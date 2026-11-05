@@ -134,8 +134,35 @@
                            VerticalAlignment="Center"
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                            Visibility="{Binding IsProject, Converter={StaticResource Shown}}" />
-                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"
-                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                <!-- DD294. The icon tile: a glyph for what the image is, a picture from disk, or the
+                     title's first letter, white on the hue hashed from the name. Opaque where the
+                     chips are tints, because white on a tint vanishes on the light theme. 40 px is
+                     the spec's size for the list (docs/specs/DD294-containers-redesign.md, §1). -->
+                <Border DockPanel.Dock="Left" Width="40" Height="40" CornerRadius="10"
+                        Margin="0,0,10,0" VerticalAlignment="Center"
+                        Background="{Binding TileFill}"
+                        Visibility="{Binding HasTile, Converter={StaticResource Shown}}">
+                    <Grid>
+                        <TextBlock Text="{Binding TileGlyph}" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="18" Foreground="{x:Static ui:Palette.TileInk}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding TileLetter}" FontSize="17" FontWeight="SemiBold"
+                                   Foreground="{x:Static ui:Palette.TileInk}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Image Source="{Binding TilePicture}" Width="26" Height="26"
+                               Stretch="Uniform" />
+                    </Grid>
+                </Border>
+                <!-- The title over what it is for. The container's own name, which the title
+                     replaced, is the tooltip, so nothing the daemon calls it is lost. -->
+                <StackPanel VerticalAlignment="Center" ToolTip="{Binding NameEvidence}">
+                    <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <TextBlock Text="{Binding Description}" TextTrimming="CharacterEllipsis"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Visibility="{Binding HasDescription, Converter={StaticResource Shown}}" />
+                </StackPanel>
             </DockPanel>
             <!-- DD167. A second Run rather than a second element: the note has to sit against the
                  image it is about, and anything laid out across the cell puts it at the far edge
@@ -149,6 +176,7 @@
                  tooltip carries what to do, because the reflex this provokes — restart it — is the
                  one thing that does not work. -->
             <TextBlock Grid.Column="1" TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        Visibility="{Binding IsContainer, Converter={StaticResource Shown}}"><Run
                        Text="{Binding Image, Mode=OneWay}" /> <Run
@@ -169,6 +197,7 @@
                            Foreground="{Binding ChipText}" />
             </Border>
             <TextBlock Grid.Column="3" Text="{Binding Status}" TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        Visibility="{Binding IsContainer, Converter={StaticResource Shown}}" />
             <!-- What a project says instead of a status, in the column that already carries the
@@ -176,9 +205,10 @@
                  the filter can hide some, and a count a reader cannot check against what is on
                  screen is worse than none. -->
             <TextBlock Grid.Column="3" Text="{Binding ProjectCount}" TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        Visibility="{Binding IsProject, Converter={StaticResource Shown}}" />
-            <ItemsControl Grid.Column="4" ItemsSource="{Binding Ports}">
+            <ItemsControl Grid.Column="4" ItemsSource="{Binding Ports}" VerticalAlignment="Center">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
@@ -223,7 +253,7 @@
             <!-- The four verbs, or the one word that says the click landed. Optimistic:
                  the row goes pending on press and the event stream is what takes it
                  back out, because a stop can take the daemon's full ten seconds. -->
-            <StackPanel Grid.Column="5" Orientation="Horizontal">
+            <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center">
                 <!-- First, and offered in every state including pending: the log is the
                      one artefact a container that exited two seconds in leaves, and
                      reading it changes nothing that could be in flight. -->

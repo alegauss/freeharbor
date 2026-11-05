@@ -1,4 +1,5 @@
 using FreeHarbor.Core.Api;
+using FreeHarbor.Core.Details;
 using FreeHarbor.Core.Engine;
 
 namespace FreeHarbor.Tray.Ui;
@@ -56,6 +57,50 @@ public sealed record ContainerRow(
     /// rather than joining an "other" group, because that group would name nothing.
     /// </remarks>
     public string? Project { get; init; }
+
+    /// <summary>
+    /// Its title, description, icon and links, resolved once by <see cref="ContainerDetails"/> (DD294).
+    /// </summary>
+    /// <remarks>
+    /// Null on a project's header, whose details are DD295's. Every property the tile and the title
+    /// draw reads this one, so no binding resolves a label on its own.
+    /// </remarks>
+    public ResolvedDetails? Details { get; init; }
+
+    /// <summary>What the name cell draws: the resolved title, or the name on a header.</summary>
+    public string Title => Details?.Title ?? Name;
+
+    /// <summary>The line under the title, or empty, in which case nothing is drawn.</summary>
+    public string Description => Details?.Description ?? "";
+
+    /// <summary>Whether there is a description to draw.</summary>
+    public bool HasDescription => Description.Length > 0;
+
+    /// <summary>
+    /// The name cell's tooltip: the container's own name, which the title replaced on screen.
+    /// </summary>
+    public string NameEvidence => Details is null || string.Equals(Title, Name, StringComparison.Ordinal)
+        ? Name
+        : $"{Name} ({Image})";
+
+    /// <summary>Whether the row has an icon tile: every container, and no header yet.</summary>
+    public bool HasTile => Details is not null;
+
+    /// <summary>The tile's hue.</summary>
+    public System.Windows.Media.Brush? TileFill =>
+        Details is { } details ? Palette.TileBrushes[details.Hue % Palette.TileBrushes.Count] : null;
+
+    /// <summary>The bundled glyph, or empty where the tile draws a picture or a letter.</summary>
+    public string TileGlyph => Details is { } details ? IconTile.GlyphFor(details.Icon) ?? "" : "";
+
+    /// <summary>The picture from disk, or null.</summary>
+    public System.Windows.Media.ImageSource? TilePicture =>
+        Details is { } details ? IconTile.PictureFor(details.Icon) : null;
+
+    /// <summary>The letter, drawn only when there is neither a glyph nor a picture.</summary>
+    public string TileLetter => Details is { } details && TileGlyph.Length == 0 && TilePicture is null
+        ? IconTile.LetterFor(details.Icon, details.Title)
+        : "";
 
     /// <summary>The compose service this container is an instance of, or nothing (DD107).</summary>
     public string? Service { get; init; }
@@ -395,6 +440,11 @@ public sealed record ContainerRow(
                 nameof(DependsOn), nameof(ExitCode), nameof(StateEvidence), nameof(IsRunning),
                 nameof(IsLive), nameof(ChipFill), nameof(ChipText), nameof(ImageIsGone),
                 nameof(ImageNote), nameof(ImageEvidence),
+
+                // DD294: a header has no details until DD295 gives projects their own, so it
+                // answers every one of these with nothing and draws no tile.
+                nameof(Details), nameof(Description), nameof(HasDescription), nameof(HasTile),
+                nameof(TileFill), nameof(TileGlyph), nameof(TilePicture), nameof(TileLetter),
             };
 
         /// <summary>What only a header answers. A container returns each of these empty.</summary>
@@ -419,6 +469,7 @@ public sealed record ContainerRow(
             new HashSet<string>(StringComparer.Ordinal)
             {
                 nameof(Name), nameof(Id), nameof(Project), nameof(IsProject), nameof(IsContainer),
+                nameof(Title), nameof(NameEvidence),
                 nameof(Indent), nameof(Pending), nameof(Failure), nameof(IsPending),
                 nameof(HasFailure), nameof(AnyUp), nameof(CanStart), nameof(CanStop),
                 nameof(CanRestart), nameof(CanRemove), nameof(CanShell), nameof(ShellReason),
@@ -631,7 +682,11 @@ public sealed record ContainerRow(
 
             // DD106: typing a project's name keeps the project. Without it the one word a reader
             // knows the group by is the one word that empties the list.
-            row.Project));
+            row.Project,
+
+            // DD294: the title and the line under it are what the row now shows, and a filter that
+            // could not find the words on screen would read as broken.
+            row.Title, row.Description));
 
     /// <summary>Order a list under the shape's column.</summary>
     private static IReadOnlyList<ContainerRow> Ordered(
@@ -653,7 +708,9 @@ public sealed record ContainerRow(
             // Running before anything else, which is what makes this the default rather than a
             // straight alphabetical sort on the word.
             Columns.State => By(kept, r => r.IsRunning ? 0 : r.IsLive ? 1 : 2, shape.Descending),
-            _ => By(kept, r => r.Name, shape.Descending, StringComparer.OrdinalIgnoreCase),
+            // By what the cell shows (DD294): sorting on the container's name under a column of
+            // titles would read as no sort at all.
+            _ => By(kept, r => r.Title, shape.Descending, StringComparer.OrdinalIgnoreCase),
         };
 
         return [.. ordered.ThenBy(row => row.Name, StringComparer.OrdinalIgnoreCase)];
@@ -702,6 +759,7 @@ public sealed record ContainerRow(
             container.Id)
         {
             Project = project,
+            Details = ContainerDetails.Resolve(container),
             ImageIsGone = container.ImageIsGone,
             Service = Label(container, Core.Agent.ContextPack.ServiceLabel),
             DependsOn = ComposeOrder.DependenciesIn(
