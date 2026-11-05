@@ -26,28 +26,6 @@ client note.
 
 ## Block C — The window (claude-tray's elements)
 
-### §DD295 Project metadata from .freeharbor and x-freeharbor
-
-Labels describe a container, and a project is not a container: no label says what a
-compose project as a whole is. Two file sources fill that gap, both carrying a project's
-`title`, `description` and `icon` plus a `services:` map with the same fields per
-service.
-
-1. `.freeharbor/project.yaml` in the project folder, with its icons in `.freeharbor/icons/` by relative path. It is FreeHarbor's own format, not a compose file, so no tool mistakes it for one, and it overrides the compose file the way `compose.override.yaml` does, without touching it. Committed, it gives a whole team the same names and icons.
-2. An `x-freeharbor:` block in the compose file itself. The compose spec reserves `x-` keys for extensions and the engine ignores them.
-
-Both are found from what compose writes on every container: `working_dir` for the folder
-and `com.docker.compose.project.config_files` for the files. The path can be gone, moved
-or unreadable (a WSL path, a deleted checkout), so absence is ordinary and falls through
-to the labels. Several compose files merge in compose's own order.
-
-Both are read, not baked into a container, so an edit shows on the next refresh with no
-`compose up`. That makes them the two project-side targets the edit screen can save to.
-
-Read order per field: saved in FreeHarbor, then `.freeharbor`, then `x-freeharbor`, then
-the labels and everything after them in DD294's order. File formats:
-docs/specs/DD294-containers-redesign.md section 8.
-
 ### §DD296 The edit details screen
 
 Labels and file sources only help someone who owns the file, and most containers come

@@ -151,16 +151,71 @@ public static class ProjectFile
         string? Scalar(string key) =>
             map.TryGetValue(key, out var value) && value is string text && text.Length > 0 ? text : null;
 
-        var icon = Scalar("icon");
-        if (icon is not null && !Uri.TryCreate(icon, UriKind.Absolute, out _)
-            && (icon.Contains('/', StringComparison.Ordinal) || icon.Contains('\\', StringComparison.Ordinal)
+        return new DetailFields(Scalar("title"), Scalar("description"), IconPath(Scalar("icon"), folder));
+    }
+
+    /// <summary>An icon as a file gives it: a path resolved against the file's folder, or a name.</summary>
+    /// <param name="icon">What the file says, or <see langword="null"/>.</param>
+    /// <param name="folder">The folder a relative path is under.</param>
+    /// <returns>An absolute path, a bundled icon's name or a URL as given, or null.</returns>
+    /// <remarks>
+    /// A bare word stays a name for the resolver to look up. Anything with a separator or an
+    /// extension is a path. A URL is left alone, and the resolver skips it, because nothing remote is
+    /// fetched.
+    /// </remarks>
+    public static string? IconPath(string? icon, string folder)
+    {
+        ArgumentNullException.ThrowIfNull(folder);
+        if (icon is null || Uri.TryCreate(icon, UriKind.Absolute, out _)
+            || !(icon.Contains('/', StringComparison.Ordinal) || icon.Contains('\\', StringComparison.Ordinal)
                 || Path.HasExtension(icon)))
         {
-            // A path, relative to the .freeharbor folder; a bare word stays a bundled icon's name.
-            icon = Path.GetFullPath(Path.Combine(folder, icon));
+            return icon;
         }
 
-        return new DetailFields(Scalar("title"), Scalar("description"), icon);
+        try
+        {
+            return Path.GetFullPath(Path.Combine(folder, icon));
+        }
+        catch (Exception failure) when (failure is ArgumentException or NotSupportedException
+            or PathTooLongException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Two sources, field by field: the first one's value wherever it has one.</summary>
+    /// <param name="first">The source read first, <c>.freeharbor</c> in the window.</param>
+    /// <param name="second">The one under it, <c>x-freeharbor</c>.</param>
+    /// <returns>The merged details, or <see langword="null"/> where neither says anything.</returns>
+    /// <remarks>
+    /// By field and not by file, so a <c>.freeharbor</c> that only renames a project keeps the
+    /// description the compose file's block gives it. That is the override a
+    /// <c>compose.override.yaml</c> makes, which is the model the format follows.
+    /// </remarks>
+    public static ProjectFileDetails? Merge(ProjectFileDetails? first, ProjectFileDetails? second)
+    {
+        if (first is null || second is null)
+        {
+            return first ?? second;
+        }
+
+        static DetailFields Over(DetailFields top, DetailFields? under) => under is null
+            ? top
+            : new DetailFields(top.Title ?? under.Title, top.Description ?? under.Description, top.Icon ?? under.Icon);
+
+        var services = new Dictionary<string, DetailFields>(StringComparer.Ordinal);
+        foreach (var (name, fields) in second.Services)
+        {
+            services[name] = fields;
+        }
+
+        foreach (var (name, fields) in first.Services)
+        {
+            services[name] = Over(fields, second.Services.GetValueOrDefault(name));
+        }
+
+        return new ProjectFileDetails(Over(first.Project, second.Project), services);
     }
 
     /// <summary>Indented maps of scalars, the whole of what the format uses.</summary>

@@ -177,13 +177,14 @@ public sealed class SampleMachine : IEngineClient
     /// What the sample project's own <c>.freeharbor/project.yaml</c> says (DD295), by folder.
     /// </summary>
     /// <param name="folder">The folder a container names as its working directory.</param>
+    /// <param name="configFiles">Its compose files, which the sample has none of.</param>
     /// <returns>The sample's details for its own folder, and nothing for any other.</returns>
     /// <remarks>
     /// Parsed from the text a user would write rather than built as records, so a capture exercises
     /// the reader as well as the screen. The worker is renamed and the rest left to their labels,
     /// which is the override the file exists for.
     /// </remarks>
-    public static Details.ProjectFileDetails? ProjectFiles(string? folder) =>
+    public static Details.ProjectFileDetails? ProjectFiles(string? folder, string? configFiles) =>
         string.Equals(folder, ProjectFolder, StringComparison.OrdinalIgnoreCase)
             ? Details.ProjectFile.Parse(
                 """

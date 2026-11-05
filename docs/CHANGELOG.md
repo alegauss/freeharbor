@@ -166,7 +166,7 @@
 - ✅ **DD240** **--drive-window never returns when no window is open, which is the machine it was written to serve** — The launched window goes through the shell, so it gets its own handles and the driver's exit closes the caller's pipe; measured at 2.4 seconds where it used to never return.
 - ✅ **DD241** **the driver cannot reach the compaction, so the one path with a UAC prompt is only ever exercised by hand** — --compact drives the compaction and goes on into the elevated half where the page offers it, stopping at the UAC prompt because that one is nobody's to automate.
 - ✅ **DD294** **A container shows only its name and image, so nothing says what it is for or gives it an icon** — Rows draw an icon tile with the resolved title and description (design superseded: image labels arrive on the list) (design recorded in `src/FreeHarbor.Core/Details/ContainerDetails.cs`).
-- ✅ **DD295 (the .freeharbor file)** **A compose project has no title, description or icon of its own, only the directory name compose gave it** — A .freeharbor/project.yaml titles a project's header and renames its services, read again whenever the file changes.
+- ✅ **DD295** **A compose project has no title, description or icon of its own, only the directory name compose gave it** — An x-freeharbor block is read through compose in the background, under .freeharbor field by field (design recorded in `src/FreeHarbor.Core/Details/ComposeExtension.cs`).
 
 ## Block D — Container operations (what a user came to do)
 

@@ -36,6 +36,9 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     {
         InitializeComponent();
         _api = api;
+        ProjectFiles = (folder, files) => Core.Details.ProjectFile.Merge(
+            Core.Details.ProjectFile.For(folder), _extension.For(folder, files));
+        _extension.Changed += (_, _) => Dispatcher.InvokeAsync(() => RefreshAsync());
         _engineState = engineState;
         _startEngine = startEngine;
     }
@@ -44,12 +47,18 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     /// What a project's own file says, by the folder compose recorded (DD295).
     /// </summary>
     /// <remarks>
-    /// Read from disk unless <c>--fixture</c> sets the sample's, because the folder the sample names
-    /// exists on no machine that captures it. A property and not a constructor seam, so the shell
-    /// that builds this page carries none of it.
+    /// Given the folder compose ran in and the compose files it read. By default
+    /// <c>.freeharbor/project.yaml</c> over the compose file's <c>x-freeharbor</c> block, field by
+    /// field. <c>--fixture</c> sets the sample's instead, because the folder the sample names exists
+    /// on no machine that captures it. A property and not a constructor seam, so the shell that
+    /// builds this page carries none of it.
     /// </remarks>
-    internal Func<string?, Core.Details.ProjectFileDetails?> ProjectFiles { get; set; } =
-        Core.Details.ProjectFile.For;
+    internal Func<string?, string?, Core.Details.ProjectFileDetails?> ProjectFiles { get; set; }
+
+    // The x-freeharbor reader (DD295). Compose takes half a second, so it reads in the background
+    // and says when it has something new; the page redraws once then, instead of waiting on it.
+    private readonly Core.Details.ComposeExtension _extension =
+        new(new Core.Agent.BundledComposeCli());
 
     /// <summary>
     /// Re-read the list. Called when an event says the list changed, never on a timer and never

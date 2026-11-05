@@ -752,12 +752,12 @@ public sealed record ContainerRow(
     /// <summary>Project one summary, reading its project's files (DD295).</summary>
     /// <param name="container">What the API returned.</param>
     /// <param name="files">
-    /// What the project file in a folder says, or <see langword="null"/> to read none. The window
-    /// passes <see cref="ProjectFile.For"/>; a test passes what it wants the folder to hold.
+    /// What a project's own files say, given the folder compose ran in and the compose files it
+    /// read; or <see langword="null"/> to read none. A test passes what it wants them to hold.
     /// </param>
     /// <returns>The row.</returns>
     public static ContainerRow From(
-        ContainerSummary container, Func<string?, ProjectFileDetails?>? files)
+        ContainerSummary container, Func<string?, string?, ProjectFileDetails?>? files)
     {
         ArgumentNullException.ThrowIfNull(container);
 
@@ -781,7 +781,11 @@ public sealed record ContainerRow(
         var service = Label(container, Core.Agent.ContextPack.ServiceLabel);
 
         // DD295: the project's own file, found from the folder compose stamped on the container.
-        var file = project is null ? null : files?.Invoke(Label(container, ProjectFile.WorkingDirLabel));
+        var file = project is null
+            ? null
+            : files?.Invoke(
+                Label(container, ProjectFile.WorkingDirLabel),
+                Label(container, ComposeExtension.ConfigFilesLabel));
         DetailFields? ofService = null;
         if (file is not null && service is not null)
         {
