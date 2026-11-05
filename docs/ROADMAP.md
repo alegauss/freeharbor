@@ -13,7 +13,7 @@
 ## Block C — The window (claude-tray's elements)
 
 - ⏳ **DD298** (deps: DD297 ✅, DD300) **A project of twenty containers and ten links fills the page, and its two broken services sit among eighteen healthy ones** — Still to build: the primary split button with pinned links and a filterable menu, the tier filter, and the card health bar once DD300 lands. → §DD298
-- 📋 **DD299** (deps: DD294 ✅) **Nothing shows one project whole: its endpoints, every service, and why the one that stopped stopped** — Clicking a project or a standalone container opens a detail page with its endpoints, every service, recent output and the daemon's words for a failure. → §DD299
+- ⏳ **DD299** (deps: DD294 ✅) **Nothing shows one project whole: its endpoints, every service, and why the one that stopped stopped** — Still to build: the rail of projects and standalone containers, the Recent output pane, the title link, and memory and CPU where reported. → §DD299
 - 📋 **DD300** (deps: DD294 ✅, DD297 ✅) **The containers page has one dense layout, so a user with five projects reads a table built for forty** — A Cards view shows each project as a card with icon, description, links and its services, beside List behind a switch; the choice, filter and sort persist. → §DD300
 - 📋 **DD301** (deps: DD295 ✅, DD296 ✅) **Nothing the user prefers can be set in the window, so where an edit is saved cannot be chosen at all** — A Settings destination chooses where edits are saved (FreeHarbor, .freeharbor or the compose file), lists the projects that differ and states the read order. → §DD301
 

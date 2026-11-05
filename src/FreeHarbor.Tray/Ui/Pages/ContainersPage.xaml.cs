@@ -161,8 +161,75 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     private LiveRows<ContainerRow> _live =>
         _liveRows ??= new LiveRows<ContainerRow>(Containers, row => row.Id);
 
-    /// <summary>Draw the rows in hand, shaped.</summary>
+    /// <summary>Draw the rows in hand, shaped, and the detail page over them where one is open.</summary>
     private void Show()
+    {
+        ShowList();
+        ShowDetail();
+    }
+
+    /// <summary>
+    /// What the detail page is open on (DD299), or <see langword="null"/> while the list is showing.
+    /// </summary>
+    /// <remarks>
+    /// A key and not a view: the view is rebuilt from the rows in hand on every redraw, so the page
+    /// follows the engine's events the way the list does.
+    /// </remarks>
+    private string? _detailKey;
+
+    /// <summary>Lay the detail page over the list, or take it away.</summary>
+    private void ShowDetail()
+    {
+        var view = _detailKey is null ? null : DetailView.For(_detailKey, _rows);
+
+        // What it was opened on went away (removed, or the engine stopped): back to the list, which
+        // says what is there now, rather than a page about nothing.
+        if (view is null)
+        {
+            _detailKey = null;
+            Detail.Visibility = Visibility.Collapsed;
+            Detail.DataContext = null;
+            Filter.Visibility = Visibility.Visible;
+            return;
+        }
+
+        // The header the page is about is made here as the list's are, so it is dressed the same way:
+        // the theme's chip, its refusals by id, and the wait its containers are under.
+        var head = view.Head.IsProject
+            ? ContainerRow.WithProjectWait(_activity.Dress(view.Head), _rows).WithChip(RowStyle.For(this))
+            : view.Head;
+        Detail.DataContext = view with { Head = head };
+
+        Detail.Visibility = Visibility.Visible;
+        Containers.Visibility = Visibility.Collapsed;
+        HeaderRow.Visibility = Visibility.Collapsed;
+        Empty.Visibility = Visibility.Collapsed;
+        Filter.Visibility = Visibility.Collapsed;
+    }
+
+    /// <summary>Open the detail page on a project or a standalone container (DD299).</summary>
+    private void ShowDetails(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: ContainerRow row })
+        {
+            _detailKey = DetailView.KeyFor(row);
+            Show();
+        }
+    }
+
+    /// <summary>Open the detail page on a compose project by name, drawn on the next redraw.</summary>
+    /// <param name="project">The project's compose name.</param>
+    internal void OpenDetail(string project) => _detailKey = ContainerRow.ProjectId(project);
+
+    /// <summary>Back to the list, at the scroll position it was left at: it was never torn down.</summary>
+    private void CloseDetails(object sender, RoutedEventArgs e)
+    {
+        _detailKey = null;
+        Show();
+    }
+
+    /// <summary>Draw the rows in hand, shaped.</summary>
+    private void ShowList()
     {
         // The headers are made by the grouping, so they are dressed after it rather than with the
         // containers: the count that came back refused is state about the header, and there is no

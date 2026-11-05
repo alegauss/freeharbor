@@ -338,6 +338,10 @@
                         Visibility="{Binding CanRemove, Converter={StaticResource Shown}}">
                     <Button.ContextMenu>
                         <ContextMenu>
+                            <!-- DD299. First, because it is the one item that only reads: the page
+                                 that says what this project serves and why a service stopped. -->
+                            <MenuItem Header="Details" Click="ShowDetails" Tag="{Binding}" />
+                            <Separator />
                             <!-- Disabled rather than absent, because "you cannot do this yet" and
                                  "this does not exist" are different answers and only the tooltip
                                  tells them apart. It has more room here than on a cramped button. -->
@@ -411,5 +415,147 @@
         Padding="18,8" HorizontalAlignment="Center" Visibility="Collapsed"
         Click="StartEngine" />
         </StackPanel>
+
+  <!-- DD299. The detail page, laid over the list rather than replacing it: the list stays built and
+       collapsed underneath, so Back finds it at the scroll position it was left at. Its DataContext
+       is a DetailView, rebuilt from the rows in hand on every redraw like the list itself. -->
+  <ScrollViewer Grid.Row="0" Grid.RowSpan="3" x:Name="Detail" Visibility="Collapsed"
+                VerticalScrollBarVisibility="Auto" Padding="10,0,10,10">
+    <StackPanel>
+      <Button Content="‹ Back" Click="CloseDetails" HorizontalAlignment="Left"
+              Style="{DynamicResource RowAction}" Margin="0,0,0,14" />
+
+      <DockPanel>
+        <!-- The 64 px tile the spec gives the detail page (section 1). -->
+        <Border DockPanel.Dock="Left" Width="64" Height="64" CornerRadius="16" Margin="0,0,16,0"
+                VerticalAlignment="Top" Background="{Binding Head.TileFill}">
+          <Grid>
+            <TextBlock Text="{Binding Head.TileGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="28"
+                       Foreground="{x:Static ui:Palette.TileInk}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding Head.TileLetter}" FontSize="26" FontWeight="SemiBold"
+                       Foreground="{x:Static ui:Palette.TileInk}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Image Source="{Binding Head.TilePicture}" Width="40" Height="40" Stretch="Uniform" />
+          </Grid>
+        </Border>
+        <!-- The verbs: Open, the one primary verb, and Edit details. The same handlers the list's
+             header uses, addressed to the same row, so the two places cannot do different things. -->
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+          <Button Content="{Binding Head.OpenLabel}" Tag="{Binding Head.OpenLink.Url}" Click="OpenPort"
+                  ToolTip="{Binding Head.OpenLink.Url}" IsEnabled="{Binding Head.CanOpen}"
+                  Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
+                  Margin="0,0,6,0" MinWidth="0"
+                  Visibility="{Binding Head.ShowsOpen, Converter={StaticResource Shown}}" />
+          <Button Content="{Binding Head.PrimaryVerb}" Tag="{Binding Head}" Click="PrimaryAction"
+                  Style="{DynamicResource RowAction}"
+                  Visibility="{Binding Head.HasPrimary, Converter={StaticResource Shown}}" />
+          <Button Content="Edit details…" Tag="{Binding Head}" Click="EditDetails"
+                  Style="{DynamicResource RowAction}" />
+          <TextBlock Text="{Binding Head.Pending}" VerticalAlignment="Center"
+                     Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                     Visibility="{Binding Head.IsPending, Converter={StaticResource Shown}}" />
+        </StackPanel>
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="{Binding Head.Title}" FontSize="20" VerticalAlignment="Center"
+                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Border Margin="12,0,0,0" CornerRadius="5" Padding="8,2" VerticalAlignment="Center"
+                    Background="{Binding Head.ChipFill}" ToolTip="{Binding Head.ChipEvidence}">
+              <TextBlock FontSize="12" Foreground="{Binding Head.ChipText}"><Run
+                         Text="{Binding Head.ChipShape, Mode=OneWay}" FontSize="10" /> <Run
+                         Text="{Binding Head.ChipWord, Mode=OneWay}" /></TextBlock>
+            </Border>
+          </StackPanel>
+          <TextBlock Text="{Binding Head.Description}" Margin="0,4,0,0" TextWrapping="Wrap"
+                     Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                     Visibility="{Binding Head.HasDescription, Converter={StaticResource Shown}}" />
+          <TextBlock Text="{Binding Subtitle}" Margin="0,4,0,0" FontSize="12"
+                     TextTrimming="CharacterEllipsis"
+                     Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+        </StackPanel>
+      </DockPanel>
+
+      <!-- One line per service that stopped and did not mean to: the daemon's own sentence, then the
+           one verb that answers it. -->
+      <ItemsControl ItemsSource="{Binding Problems}" Margin="0,16,0,0"
+                    Visibility="{Binding HasProblems, Converter={StaticResource Shown}}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <DockPanel Margin="0,0,0,6">
+              <Button DockPanel.Dock="Right" Content="{Binding StartLabel}" Tag="{Binding Row}"
+                      Click="PrimaryAction" Style="{DynamicResource RowAction}"
+                      Visibility="{Binding Row.CanStart, Converter={StaticResource Shown}}" />
+              <TextBlock VerticalAlignment="Center" TextWrapping="Wrap"
+                         Foreground="{x:Static ui:Palette.DangerBrush}"><Run Text="▲" FontSize="10" /> <Run
+                         Text="{Binding Sentence, Mode=OneWay}" /></TextBlock>
+            </DockPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <TextBlock Text="ENDPOINTS" Margin="0,20,0,8" FontSize="12" FontWeight="SemiBold"
+                 Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                 Visibility="{Binding HasEndpoints, Converter={StaticResource Shown}}" />
+      <ItemsControl ItemsSource="{Binding Endpoints}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Width="220" Margin="0,0,10,10" Padding="12,10" CornerRadius="6"
+                    BorderThickness="1" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+              <StackPanel>
+                <TextBlock TextTrimming="CharacterEllipsis"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"><Run
+                           Text="{Binding Label, Mode=OneWay}" /> <Run Text="·"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" /> <Run
+                           Text="{Binding Service, Mode=OneWay}"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" /></TextBlock>
+                <TextBlock Text="{Binding Address}" Margin="0,2,0,8" FontSize="12"
+                           TextTrimming="CharacterEllipsis" ToolTip="{Binding CopyText}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="Open" Tag="{Binding Url}" Click="OpenPort"
+                          Style="{DynamicResource RowAction}"
+                          Visibility="{Binding CanOpen, Converter={StaticResource Shown}}" />
+                  <Button Content="Copy" Tag="{Binding CopyText}" Click="CopyAddress"
+                          Style="{DynamicResource RowAction}" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <TextBlock Text="SERVICES" Margin="0,14,0,8" FontSize="12" FontWeight="SemiBold"
+                 Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+      <ItemsControl ItemsSource="{Binding Services}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <DockPanel Margin="0,0,0,8">
+              <Button DockPanel.Dock="Right" Content="Logs" Tag="{Binding}" Click="OpenLogs"
+                      Style="{DynamicResource RowAction}" />
+              <Border DockPanel.Dock="Right" Margin="0,0,12,0" CornerRadius="5" Padding="8,2"
+                      VerticalAlignment="Center" Background="{Binding ChipFill}"
+                      ToolTip="{Binding ChipEvidence}">
+                <TextBlock FontSize="12" Foreground="{Binding ChipText}"><Run
+                           Text="{Binding ChipShape, Mode=OneWay}" FontSize="10" /> <Run
+                           Text="{Binding ChipWord, Mode=OneWay}" /></TextBlock>
+              </Border>
+              <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                         ToolTip="{Binding NameEvidence}"><Run Text="{Binding Title, Mode=OneWay}"
+                         Foreground="{DynamicResource TextFillColorPrimaryBrush}" />   <Run
+                         Text="{Binding Image, Mode=OneWay}"
+                         Foreground="{DynamicResource TextFillColorTertiaryBrush}" />   <Run
+                         Text="{Binding Status, Mode=OneWay}"
+                         Foreground="{DynamicResource TextFillColorSecondaryBrush}" /></TextBlock>
+            </DockPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
 </Grid>
 </UserControl>
