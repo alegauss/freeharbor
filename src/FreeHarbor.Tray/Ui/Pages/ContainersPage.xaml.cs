@@ -123,6 +123,9 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
                 // this is the one place the daemon has actually answered, so it is the only evidence
                 // that a project is gone rather than unreachable (DD112).
                 _collapsed = ContainerRow.FoldedStillThere(_collapsed, projected);
+                var present = ContainerRow.FoldedStillThere(
+                    _openTiers.Select(ContainerRow.ProjectOfTierKey).ToHashSet(StringComparer.Ordinal), projected);
+                _ = _openTiers.RemoveWhere(key => !present.Contains(ContainerRow.ProjectOfTierKey(key)));
 
                 // Resolved once for the whole render rather than per row: this list is rebuilt on
                 // every engine event, and a FindResource per row is a dictionary walk per row.
@@ -165,7 +168,7 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
         // containers: the count that came back refused is state about the header, and there is no
         // header until here (DD107). Its wait is not stored beside that count — it is read off the
         // containers, which end their own waits on the events that end them (DD108).
-        var shown = ContainerRow.Grouped(_rows, _shape, _collapsed);
+        var shown = ContainerRow.Grouped(_rows, _shape, _collapsed, _openTiers);
 
         // DD297: a header's chip is drawn too, so it is dressed in the theme's brushes here, the one
         // place headers exist.
@@ -232,6 +235,15 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     /// </remarks>
     private HashSet<string> _collapsed = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// The healthy tiers somebody opened, by <see cref="ContainerRow.TierKey"/> (DD298).
+    /// </summary>
+    /// <remarks>
+    /// Beside <see cref="_collapsed"/> for its reason, and narrowed with it: a project's absence
+    /// forgets its tiers' folds as it forgets its own (DD112).
+    /// </remarks>
+    private readonly HashSet<string> _openTiers = new(StringComparer.Ordinal);
+
     /// <summary>Fold a project away, or open it again.</summary>
     /// <remarks>
     /// Redrawn from the rows in hand: which rows are hidden is presentation, and asking the daemon
@@ -239,8 +251,28 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     /// </remarks>
     private void ToggleProject(object sender, RoutedEventArgs e)
     {
-        if (sender is not FrameworkElement { Tag: ContainerRow { IsProject: true, Project: { } project } })
+        if (sender is not FrameworkElement { Tag: ContainerRow { IsProject: true, Project: { } project } row })
         {
+            return;
+        }
+
+        // DD298: a tier's fold is held the other way round, as the tiers somebody opened, because a
+        // healthy tier starts folded. A tier with a problem is never folded away, so its click does
+        // nothing rather than hide the thing that needs looking at.
+        if (row is { IsTier: true, Tier: { } tier })
+        {
+            if (row.Problems > 0)
+            {
+                return;
+            }
+
+            var key = ContainerRow.TierKey(project, tier);
+            if (!_openTiers.Add(key))
+            {
+                _ = _openTiers.Remove(key);
+            }
+
+            Show();
             return;
         }
 

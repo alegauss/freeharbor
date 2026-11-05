@@ -155,7 +155,7 @@ public sealed record ContainerRow(
         : $"{Name} ({Image})";
 
     /// <summary>Whether the row has an icon tile: every container and every project header.</summary>
-    public bool HasTile => Details is not null;
+    public bool HasTile => Details is not null && !IsTier;
 
     /// <summary>The tile's hue.</summary>
     public System.Windows.Media.Brush? TileFill =>
@@ -230,13 +230,48 @@ public sealed record ContainerRow(
     public int Failed { get; init; }
 
     /// <summary>
+    /// Whether this header is a <c>freeharbor.group</c> tier inside a project rather than the project
+    /// itself (DD298).
+    /// </summary>
+    /// <remarks>
+    /// A header and not a third kind of row: a tier folds, counts and carries a chip exactly as a
+    /// project does, and what it lacks is verbs, which <see cref="HasPrimary"/> and
+    /// <see cref="CanRemove"/> withhold. A Stop on a tier would read as stopping the tier and, sent
+    /// through the project's fan-out, would stop the whole project.
+    /// </remarks>
+    public bool IsTier { get; init; }
+
+    /// <summary>The tier a container is drawn under, or a tier header's own name (DD298).</summary>
+    public string? Tier { get; init; }
+
+    /// <summary>
+    /// How many of a tier's containers are a problem: stopped and not meaning to, or stuck in between.
+    /// </summary>
+    /// <remarks>
+    /// A clean exit is not one, so a tier holding a finished migration still reads as healthy and
+    /// stays folded.
+    /// </remarks>
+    public int Problems { get; init; }
+
+    /// <summary>The name a container with no <c>freeharbor.group</c> is drawn under, in a tiered project.</summary>
+    public const string OtherTier = "Other";
+
+    /// <summary>
     /// What the state chip says: the container's state, or the project's count (DD297).
     /// </summary>
     /// <remarks>
     /// The header's count moved into the STATE column as a chip of its own, so the column a reader
     /// scans for trouble says it for a project too, in the tone of what is under it.
     /// </remarks>
-    public string ChipWord => IsProject ? ProjectCount : State;
+    public string ChipWord => this switch
+    {
+        { IsTier: true, Problems: 1 } => "1 problem",
+        { IsTier: true, Problems: > 1 } =>
+            $"{Problems.ToString(System.Globalization.CultureInfo.InvariantCulture)} problems",
+        { IsTier: true, Total: > 0 } when Running == Total => "all running",
+        { IsProject: true } => ProjectCount,
+        _ => State,
+    };
 
     /// <summary>
     /// The shape before the chip's word (L8): shape carries the state, and colour only reinforces it.
@@ -323,8 +358,14 @@ public sealed record ContainerRow(
     public bool InvitesDetails => IsContainer && Project is null && Details is not null && !HasDescription;
 
     /// <summary>How far this row is pushed in — the whole signal that it belongs to the one above.</summary>
-    public System.Windows.Thickness Indent =>
-        IsProject || Project is null ? default : new System.Windows.Thickness(18, 0, 0, 0);
+    public System.Windows.Thickness Indent => this switch
+    {
+        // DD298: a tier sits one step in under its project, and a container in a tier one further.
+        { IsTier: true } => new System.Windows.Thickness(18, 0, 0, 0),
+        { IsProject: true } or { Project: null } => default,
+        { Tier: not null } => new System.Windows.Thickness(36, 0, 0, 0),
+        _ => new System.Windows.Thickness(18, 0, 0, 0),
+    };
 
     /// <summary>The id a project's header is reconciled by (DD70), which is not a container's.</summary>
     /// <param name="project">The project.</param>
@@ -436,7 +477,7 @@ public sealed record ContainerRow(
     /// A project too, since DD107 gave the header verbs of its own — the removal is fanned across
     /// its containers and its dialog names the count rather than a container.
     /// </remarks>
-    public bool CanRemove => !IsPending;
+    public bool CanRemove => !IsPending && !IsTier;
 
     /// <summary>
     /// Whether a shell can be opened: running, and nothing else in flight.
@@ -481,6 +522,12 @@ public sealed record ContainerRow(
     {
         // DD297: a header's chip is its project's, which is failure when any container under it
         // failed, up when all are, stopped when none are, and in between otherwise.
+        // DD298: a tier is healthy unless something in it is a problem, so a clean exit beside running
+        // services leaves it muted rather than in between.
+        { IsTier: true, Failed: > 0 } => RowTone.Bad,
+        { IsTier: true, Problems: > 0 } => RowTone.Warn,
+        { IsTier: true, Total: > 0 } when Running == Total => RowTone.Good,
+        { IsTier: true } => RowTone.Muted,
         { IsProject: true, Failed: > 0 } => RowTone.Bad,
         { IsProject: true, Total: > 0 } when Running == Total => RowTone.Good,
         { IsProject: true, Running: 0 } => RowTone.Muted,
@@ -583,7 +630,7 @@ public sealed record ContainerRow(
     public string PrimaryVerb => CanStop ? "Stop" : "Start";
 
     /// <summary>Whether the primary verb is offered at all.</summary>
-    public bool HasPrimary => CanStop || CanStart;
+    public bool HasPrimary => !IsTier && (CanStop || CanStart);
 
     /// <summary>
     /// Whether the Logs button is drawn, and how it is not (DD107).
@@ -651,6 +698,9 @@ public sealed record ContainerRow(
             {
                 nameof(Running), nameof(Total), nameof(Collapsed), nameof(Chevron),
                 nameof(ProjectCount), nameof(Failed),
+
+                // DD298: only a header can be a tier, and only a tier counts problems.
+                nameof(IsTier), nameof(Problems),
             };
 
         /// <summary>
@@ -683,6 +733,9 @@ public sealed record ContainerRow(
                 nameof(ChipFill), nameof(ChipText), nameof(ChipWord), nameof(ChipShape),
                 nameof(ChipEvidence), nameof(OpenLink), nameof(ShowsOpen), nameof(CanOpen),
                 nameof(OpenLabel),
+
+                // DD298: a tier header's own name, and the tier a container is drawn under.
+                nameof(Tier),
             };
     }
 
@@ -757,12 +810,20 @@ public sealed record ContainerRow(
     /// hold, for DD37's reason: this list is rebuilt on every engine event, so a collapse living in
     /// the ListView would spring open while somebody was reading it.</para>
     /// </remarks>
+    /// <param name="openTiers">
+    /// The healthy tiers somebody opened, by <see cref="TierKey"/> (DD298); every other healthy tier
+    /// starts folded. Omitted, none.
+    /// </param>
     public static IReadOnlyList<ContainerRow> Grouped(
-        IEnumerable<ContainerRow> rows, ListShape shape, IReadOnlySet<string> collapsed)
+        IEnumerable<ContainerRow> rows,
+        ListShape shape,
+        IReadOnlySet<string> collapsed,
+        IReadOnlySet<string>? openTiers = null)
     {
         ArgumentNullException.ThrowIfNull(rows);
         ArgumentNullException.ThrowIfNull(shape);
         ArgumentNullException.ThrowIfNull(collapsed);
+        openTiers ??= new HashSet<string>(StringComparer.Ordinal);
 
         var kept = Kept(rows, shape).ToList();
 
@@ -781,7 +842,9 @@ public sealed record ContainerRow(
         {
             var children = Ordered(project, shape);
             var header = ProjectHeader(project.Key, children, collapsed.Contains(project.Key));
-            units.Add((children[0], collapsed.Contains(project.Key) ? [header] : [header, .. children]));
+            units.Add((children[0], collapsed.Contains(project.Key)
+                ? [header]
+                : [header, .. Tiered(project.Key, children, openTiers)]));
         }
 
         // Ordered by the leading row and never by the header: a header carries no state, no status
@@ -806,6 +869,104 @@ public sealed record ContainerRow(
 
         return [.. projects, .. standalone];
     }
+
+    /// <summary>The key a tier's fold is remembered by: its project and its name.</summary>
+    /// <param name="project">The project.</param>
+    /// <param name="tier">The tier.</param>
+    /// <returns>The key.</returns>
+    public static string TierKey(string project, string tier) => project + "\u001f" + tier;
+
+    /// <summary>The project a <see cref="TierKey"/> belongs to.</summary>
+    /// <param name="key">The key.</param>
+    /// <returns>The project.</returns>
+    public static string ProjectOfTierKey(string key)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        var at = key.IndexOf('\u001f', StringComparison.Ordinal);
+        return at < 0 ? key : key[..at];
+    }
+
+    /// <summary>
+    /// A project's containers split into its <c>freeharbor.group</c> tiers, each under a header of its
+    /// own (DD298).
+    /// </summary>
+    /// <param name="project">The project.</param>
+    /// <param name="children">Its shown containers, already in the sort's order.</param>
+    /// <param name="openTiers">The healthy tiers somebody opened.</param>
+    /// <returns>The rows to draw under the project's header.</returns>
+    /// <remarks>
+    /// <b>No label, no tiers</b>: a project nobody grouped is the plain list, so this costs nothing
+    /// where it is not asked for. A container left out of a grouped project goes in a last
+    /// <see cref="OtherTier"/>, because hiding it would be worse than an untidy name.
+    ///
+    /// <para><b>Tiers in first-seen order, by container name</b>, and never by the sort: a tier that
+    /// moved each time a service stopped would make the one stable landmark on a large project move.
+    /// </para>
+    ///
+    /// <para><b>A healthy tier starts folded and a problem is never folded away.</b> The fold that is
+    /// remembered is the opposite of the default, the tiers somebody opened, so a tier that goes bad
+    /// opens on its own and one that recovers goes back to whatever the user last chose.</para>
+    /// </remarks>
+    private static IReadOnlyList<ContainerRow> Tiered(
+        string project, IReadOnlyList<ContainerRow> children, IReadOnlySet<string> openTiers)
+    {
+        if (!children.Any(child => child.Details?.Group is not null))
+        {
+            return children;
+        }
+
+        static string TierOf(ContainerRow row) => row.Details?.Group ?? OtherTier;
+
+        var names = children
+            .OrderBy(child => child.Name, StringComparer.Ordinal)
+            .Select(TierOf)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(name => string.Equals(name, OtherTier, StringComparison.Ordinal) ? 1 : 0)
+            .ToList();
+
+        var drawn = new List<ContainerRow>();
+        foreach (var name in names)
+        {
+            var members = children
+                .Where(child => string.Equals(TierOf(child), name, StringComparison.Ordinal))
+                .Select(child => child with { Tier = name })
+                .ToList();
+            var problems = members.Count(IsProblem);
+            var folded = problems == 0 && !openTiers.Contains(TierKey(project, name));
+
+            var titles = members.Select(member => member.Title).ToList();
+            var count = members.Count == 1
+                ? "1 container"
+                : $"{members.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} containers";
+            var summary = count + " · " + string.Join(", ", titles.Take(3)) + (titles.Count > 3 ? "…" : "");
+
+            drawn.Add(new ContainerRow(name, "", "", "", [], ProjectId(project) + "/tier:" + name)
+            {
+                IsProject = true,
+                IsTier = true,
+                Tier = name,
+                Project = project,
+                Details = new ResolvedDetails(
+                    name, summary, new DetailIcon(IconKind.Monogram, ""), 0, [], null, name),
+                Running = members.Count(member => member.IsRunning),
+                Total = members.Count,
+                Failed = members.Count(member => member.Tone == RowTone.Bad),
+                Problems = problems,
+                Collapsed = folded,
+            });
+
+            if (!folded)
+            {
+                drawn.AddRange(members);
+            }
+        }
+
+        return drawn;
+    }
+
+    /// <summary>Whether a container is a problem: not running, and not a clean exit either.</summary>
+    private static bool IsProblem(ContainerRow row) =>
+        row.IsContainer && !row.IsRunning && row.Tone is RowTone.Bad or RowTone.Warn;
 
     /// <summary>
     /// Give a project header the wait its containers are actually under (DD108).
@@ -841,7 +1002,10 @@ public sealed record ContainerRow(
 
         var waits = rows
             .Where(row => row.IsContainer
-                && string.Equals(row.Project, header.Project, StringComparison.Ordinal))
+                && string.Equals(row.Project, header.Project, StringComparison.Ordinal)
+
+                // DD298: a tier waits only for what is in it.
+                && (!header.IsTier || string.Equals(row.Details?.Group ?? OtherTier, header.Tier, StringComparison.Ordinal)))
             .Select(row => row.Pending)
             .Where(pending => pending is not null)
             .Distinct(StringComparer.Ordinal)
@@ -904,7 +1068,10 @@ public sealed record ContainerRow(
 
             // DD294: the title and the line under it are what the row now shows, and a filter that
             // could not find the words on screen would read as broken.
-            row.Title, row.Description));
+            row.Title, row.Description,
+
+            // DD298: the tier a service is drawn under is a word on screen too.
+            row.Details?.Group));
 
     /// <summary>Order a list under the shape's column.</summary>
     private static IReadOnlyList<ContainerRow> Ordered(

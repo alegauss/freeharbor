@@ -413,6 +413,80 @@ public sealed class ContainerGroupTests
         Assert.Single(service.PortChips);
     }
 
+    // ---- tiers (DD298) ---------------------------------------------------------------------------
+
+    private static ContainerSummary InGroup(string name, string group, string state = "running", string? status = null)
+    {
+        var summary = Summary(name, state, "plat");
+        var labels = new Dictionary<string, string>(summary.Labels!, StringComparer.Ordinal) { ["freeharbor.group"] = group };
+        return summary with { Labels = labels, Status = status ?? summary.Status };
+    }
+
+    [Fact]
+    public void A_healthy_tier_starts_folded_and_a_tier_with_a_problem_opens()
+    {
+        var shown = Grouped(Rows(
+            InGroup("gateway", "Edge"),
+            InGroup("admin", "Edge"),
+            InGroup("payments", "Workers", "exited", "Exited (1) 2 minutes ago"),
+            InGroup("indexer", "Workers")));
+
+        // The project, then Edge folded behind its summary, then Workers open with both rows.
+        Assert.Equal(
+            ["compose:plat", "compose:plat/tier:Edge", "compose:plat/tier:Workers", "indexer-id", "payments-id"],
+            shown.Select(row => row.Id));
+
+        var edge = shown[1];
+        Assert.True(edge.IsTier);
+        Assert.True(edge.Collapsed);
+        Assert.Equal("all running", edge.ChipWord);
+        Assert.Equal("2 containers · admin, gateway", edge.Description);
+        Assert.False(edge.HasPrimary);
+        Assert.False(edge.CanRemove);
+
+        var workers = shown[2];
+        Assert.False(workers.Collapsed);
+        Assert.Equal("1 problem", workers.ChipWord);
+        Assert.Equal(RowTone.Bad, workers.Tone);
+        Assert.Equal(new System.Windows.Thickness(36, 0, 0, 0), shown[3].Indent);
+    }
+
+    [Fact]
+    public void A_healthy_tier_somebody_opened_stays_open_and_a_problem_cannot_be_folded()
+    {
+        var rows = Rows(
+            InGroup("gateway", "Edge"),
+            InGroup("payments", "Workers", "exited", "Exited (1) 2 minutes ago"));
+
+        var open = ContainerRow.Grouped(rows, ByState, new HashSet<string>(StringComparer.Ordinal),
+            new HashSet<string>(StringComparer.Ordinal) { ContainerRow.TierKey("plat", "Edge") });
+
+        Assert.Contains(open, row => row.Id == "gateway-id");
+        Assert.Contains(open, row => row.Id == "payments-id");
+    }
+
+    [Fact]
+    public void A_clean_exit_is_not_a_problem_and_an_ungrouped_service_goes_last_under_other()
+    {
+        var shown = Grouped(Rows(
+            InGroup("migrate", "Data", "exited"),
+            InGroup("postgres", "Data"),
+            Summary("aaa-loose-in-project", project: "plat")));
+
+        var tiers = shown.Where(row => row.IsTier).ToList();
+        Assert.Equal(["Data", ContainerRow.OtherTier], tiers.Select(row => row.Tier));
+        Assert.True(tiers[0].Collapsed);
+        Assert.Equal(RowTone.Muted, tiers[0].Tone);
+    }
+
+    [Fact]
+    public void A_project_with_no_group_label_is_the_plain_list()
+    {
+        var shown = Grouped(Rows(Summary("a-1", project: "p"), Summary("b-1", project: "p")));
+
+        Assert.DoesNotContain(shown, row => row.IsTier);
+    }
+
     [Fact]
     public void A_standalone_container_opens_itself_and_invites_details_it_lacks()
     {
