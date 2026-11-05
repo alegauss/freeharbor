@@ -24,26 +24,6 @@ client note. DD321 is a full-run test failure on the same pipe, a second connect
 made in 30 seconds, whose cause is still open; if its message shows the relay stopped
 accepting, it is this engine-side reading reproduced.
 
-### §DD305 The error-mode test races its neighbours
-
-Seen on 5 November 2026: the full suite went red once on
-`TrayTests.A_child_Windows_refuses_to_start_cannot_hold_the_teardown_on_a_modal_box`,
-then passed alone and on the next full run, with no change between.
-
-The test calls `HardErrorBox.Suppress()` twice and asserts that the second answer keeps
-every flag the first one had. The error mode is one process-wide word, shared with the
-WinForms and WPF runtimes and with every test running in parallel, and its own comment
-says another writer may add a flag in between. A writer can also clear one: anything
-that calls `SetErrorMode` with a value of its own, rather than adding to the current
-one, makes the second answer lose a bit the first had, and the assertion fails on code
-that is fine.
-
-Fix: run the error-mode tests in a collection of their own, the way `ConsoleCollection`
-serialises the tests that swap the console, and find which test or runtime path sets the
-mode outright. If that path is in this product, it is a real defect, since a cleared
-`SEM_FAILCRITICALERRORS` brings the modal box back. Done when the full suite has run ten
-times in a row without this test failing.
-
 ### §DD308 Stream order inverted once on CI
 
 CI run 42024365310 (commit bef1139, 5 November 2026) failed one test:
@@ -87,7 +67,8 @@ accepting.
 What to do next: read that message from the next failing run. A relay that says it has
 stopped accepting is DD142's defect and belongs with DD303's engine-side reading; one
 still accepting, with a fast `IOException`, is the client's, and the helper should retry
-that error as it retries a timeout.
+that error as it retries a timeout. A later ten-run loop saw five live-engine relay
+tests fail together in one run only: a burst's shape.
 
 ## Block B — The daemon client (talk to the engine)
 

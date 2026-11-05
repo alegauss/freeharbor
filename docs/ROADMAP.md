@@ -4,7 +4,6 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
-- 📋 **DD305** (deps: —) **The error-mode test fails now and then in a full run and passes alone, with nothing changed** — A red gate nobody can reproduce teaches people to rerun until green, which is how a real loss of the flag would slip through. → §DD305
 - 📋 **DD308** (deps: —) **On CI a tool's stderr line once came back after a stdout line it was written two seconds before** — The order is what makes a repair transcript readable, and the one failure has no cause shown yet. → §DD308
 
 ## Block B — The daemon client (talk to the engine)

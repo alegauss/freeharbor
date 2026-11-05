@@ -668,11 +668,26 @@ public sealed class TrayTests
         Assert.Equal(
             HardErrorBox.FailCriticalErrors, mode & HardErrorBox.FailCriticalErrors);
 
-        // Added rather than assigned, so calling it again is not how a flag something else set goes
-        // missing. The error mode is one word shared with the WinForms and WPF runtimes in here,
-        // and with every test running beside this one, so the second answer may carry a flag
-        // somebody else added in between: what it may not do is lose one the first answer had.
-        Assert.Equal(mode, HardErrorBox.Suppress() & mode);
+        // Again, and the flag is still what it answers with.
+        Assert.Equal(
+            HardErrorBox.FailCriticalErrors, HardErrorBox.Suppress() & HardErrorBox.FailCriticalErrors);
+    }
+
+    [Theory]
+    [InlineData(0x0000u)]
+    [InlineData(0x0002u)]
+    [InlineData(0x8002u)]
+    [InlineData(0x8003u)]
+    public void The_error_mode_is_added_to_and_never_assigned(uint current)
+    {
+        // Added rather than assigned, so no flag something else set goes missing (DD270). Asserted
+        // over a value and not the live word (DD305): that word is shared with the WinForms and WPF
+        // runtimes and every test beside this one, and anything that sets a flag for a moment and
+        // restores the old word made a comparison of two live readings fail on code that was fine.
+        var mode = HardErrorBox.Including(current);
+
+        Assert.Equal(current, mode & current);
+        Assert.Equal(HardErrorBox.FailCriticalErrors, mode & HardErrorBox.FailCriticalErrors);
     }
 
     [Fact]

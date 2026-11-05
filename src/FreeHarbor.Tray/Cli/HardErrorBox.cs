@@ -44,10 +44,20 @@ internal static class HardErrorBox
     /// </remarks>
     internal static uint Suppress()
     {
-        var mode = GetErrorMode() | FailCriticalErrors;
+        var mode = Including(GetErrorMode());
         _ = SetErrorMode(mode);
         return mode;
     }
+
+    /// <summary>The error mode <see cref="Suppress"/> sets, given the one in force.</summary>
+    /// <param name="current">The process's error mode now.</param>
+    /// <returns>The same flags, and the one this adds.</returns>
+    /// <remarks>
+    /// Its own function so "added rather than assigned" is asserted over a value (DD305). Asserted
+    /// over the live word, it raced every test and runtime path beside it that sets a flag for a
+    /// moment and puts the old word back, and the gate went red on code that was fine.
+    /// </remarks>
+    internal static uint Including(uint current) => current | FailCriticalErrors;
 
     // DllImport rather than LibraryImport, for the reason ParentConsole states: the generated
     // marshalling stubs need AllowUnsafeBlocks, and neither of these marshals anything.
