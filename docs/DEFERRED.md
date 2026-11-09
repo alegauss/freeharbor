@@ -9,6 +9,8 @@
 
 ## Block C — The window (claude-tray's elements)
 
+- ⏸ **DD331** (deps: —) **Settings is plain radios in a 720 px column, where settings.png draws titled radio cards with tags and paths** — set aside (Needs the owner to pick DD301's column or the cards.): Adopting the board reverses DD301's plain column, which is the owner's call. → §DD331
+
 ## Block D — Container operations (what a user came to do)
 
 ## Block E — Images, volumes and networks
