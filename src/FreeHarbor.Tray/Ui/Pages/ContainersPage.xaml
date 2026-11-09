@@ -86,6 +86,82 @@
             </Setter>
         </Style>
 
+        <!-- DD326: a state chip over the list, as a pill. Not BasedOn the Fluent Button, so a
+             StaticResource is correct here (see the note at the top). The chosen one is the accent
+             tint and stroke the link chips use, so "this one is in force" reads the same way twice. -->
+        <Style x:Key="Pill" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border x:Name="Hit" CornerRadius="13" Background="{TemplateBinding Background}" />
+                            <Border CornerRadius="13" BorderThickness="1" BorderBrush="{TemplateBinding BorderBrush}"
+                                    Padding="12,4">
+                                <ContentPresenter VerticalAlignment="Center" />
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Hit" Property="Background"
+                                        Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="PillChosen" TargetType="Button" BasedOn="{StaticResource Pill}">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border CornerRadius="13" Opacity="0.25"
+                                    Background="{DynamicResource AccentFillColorDefaultBrush}" />
+                            <Border CornerRadius="13" BorderThickness="1" BorderBrush="{TemplateBinding BorderBrush}"
+                                    Padding="12,4">
+                                <ContentPresenter VerticalAlignment="Center" />
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- DD326: one half of the Cards/List switch, which is one segmented control: the halves sit
+             inside one outline and the chosen one is filled. -->
+        <Style x:Key="Segment" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Hit" CornerRadius="4" Padding="12,3" Background="{TemplateBinding Background}">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Hit" Property="Background"
+                                        Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SegmentChosen" TargetType="Button" BasedOn="{StaticResource Segment}">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+        </Style>
+
         <!-- The ⋯ menu, one per button that shows it (x:Shared), and one definition so the list's row
              and a project card cannot offer different things (DD326). OpenOverflow hands it the
              button's Tag as its DataContext. -->
@@ -273,11 +349,20 @@
   <!-- DD320: the counts and the chips on the left, the switch and the box on the right. As one
        right-aligned row the four together were wider than the window's default width, and the
        filter box was the half cut off. -->
-  <StackPanel Grid.Row="0" x:Name="Summary" Orientation="Horizontal" HorizontalAlignment="Left"
-              Margin="10,0,10,10">
+  <!-- DD326: two lines, the page's name and what it holds, then the pills under them. One line held
+       the title, the counts and four pills, and at the default width it ran under the switch, which
+       is the overlap DD320 removed. -->
+  <StackPanel Grid.Row="0" x:Name="Summary" HorizontalAlignment="Left" Margin="10,0,10,10">
+  <StackPanel Orientation="Horizontal">
+    <!-- DD326: the page's name before what it holds, as the board heads it. -->
+    <TextBlock Text="Containers" Margin="0,0,14,0" VerticalAlignment="Center" FontSize="20"
+               FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
     <TextBlock x:Name="Counts" Margin="0,0,16,0" VerticalAlignment="Center" FontSize="12"
                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-    <!-- The state chips, each with its count; the one in force is filled in the accent. -->
+  </StackPanel>
+  <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+    <!-- The state chips as pills (DD326), each its word then its count in tertiary text; the one in
+         force carries the accent. -->
     <Button x:Name="ChipAll" Tag="All" Click="ChooseChip" Margin="0,0,4,0"
             VerticalAlignment="Center" FontSize="12" Padding="10,3" MinWidth="0" />
     <Button x:Name="ChipRunning" Tag="Running" Click="ChooseChip" Margin="0,0,4,0"
@@ -287,16 +372,21 @@
     <Button x:Name="ChipProblems" Tag="Problems" Click="ChooseChip"
             VerticalAlignment="Center" FontSize="12" Padding="10,3" MinWidth="0" />
   </StackPanel>
+  </StackPanel>
   <StackPanel Grid.Row="0" x:Name="Toolbar" Orientation="Horizontal" HorizontalAlignment="Right"
-              Margin="10,0,10,10">
+              VerticalAlignment="Top" Margin="10,0,10,10">
     <!-- The switch before the box and not after it: the box keeps the right edge it always held,
          and a capture showed a button placed past it clipped by the page's edge. -->
-    <Button x:Name="CardsSwitch" Content="Cards" Click="ChooseCards" Margin="0,0,4,0"
-            VerticalAlignment="Center" FontSize="12" Padding="10,3" MinWidth="0"
-            ToolTip="One card per project" />
-    <Button x:Name="ListSwitch" Content="List" Click="ChooseList" Margin="0,0,10,0"
-            VerticalAlignment="Center" FontSize="12" Padding="10,3" MinWidth="0"
-            ToolTip="One row per container" />
+    <!-- DD326: one segmented control, both halves in one outline, the chosen half filled. -->
+    <Border Margin="0,0,10,0" Padding="2" CornerRadius="6" BorderThickness="1" VerticalAlignment="Center"
+            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+      <StackPanel Orientation="Horizontal">
+        <Button x:Name="CardsSwitch" Content="Cards" Click="ChooseCards"
+                Style="{StaticResource Segment}" ToolTip="One card per project" />
+        <Button x:Name="ListSwitch" Content="List" Click="ChooseList"
+                Style="{StaticResource Segment}" ToolTip="One row per container" />
+      </StackPanel>
+    </Border>
     <TextBox x:Name="Filter" Style="{DynamicResource FilterBox}"
              TextChanged="FilterChanged"
              ToolTip="Narrow by name, image, state or port" />

@@ -280,6 +280,17 @@ As built (DD326, the card):
 - The footer has the first running service's status on the left, or the first service's
   where none runs, and the one verb on the right.
 
+As built (DD326, the page head):
+
+- A `Containers` title, then the counts line, then the state chips on a line of their own.
+  On one line, the title, the counts and four pills ran under the switch at the default
+  width, which is the overlap DD320 removed.
+- A chip is a pill: its word, then its count in tertiary text. The chosen one carries the
+  link chips' accent tint and stroke.
+- Cards and List are one segmented control in one outline, with the chosen half filled.
+  The filter box keeps the right edge; moving it into the shell's strip is DD35's
+  business.
+
 ## 6. The edit details dialog (DD296)
 
 A dialog owned by the main window, about 980 px wide.

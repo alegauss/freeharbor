@@ -185,7 +185,7 @@
 - ✅ **DD329** **The fixture has one three-service project with no icons, named links or tiers, so most boards cannot be captured** — --fixture captures four iconed projects, named Open links, and a 20-service Platform in four tiers with two failures (design recorded in `docs/specs/DD294-containers-redesign.md`).
 - ✅ **DD324** **In the list a project is loose rows under a header, not one bordered group, and its description is cut at NAME** — Each project and the standalone block is one card with dividers, and a header's description runs under its title to PORTS (design recorded in `docs/specs/DD294-containers-redesign.md`).
 - ✅ **DD325** **A port reads 8080->8080/tcp and Open has no glyph or name, where the board shows a :8080 chip and Open site** — A port chip reads :8080 in mono on an accent tint with its mapping as tooltip, and Open carries a glyph and the link's name (design recorded in `docs/specs/DD294-containers-redesign.md`).
-- ✅ **DD326 (the card)** **A project card lacks the board's meta line, ⋯, link row, service ports and states, and the uptime in its footer** — A project card has the board's anatomy: ⋯, meta line, Open with its host, copy chips, service rows with port and state, and the uptime.
+- ✅ **DD326** **A project card lacks the board's meta line, ⋯, link row, service ports and states, and the uptime in its footer** — The page head has a Containers title, pill state chips with dimmed counts on a line of theirs, and a segmented view switch (design recorded in `docs/specs/DD294-containers-redesign.md`).
 
 ## Block D — Container operations (what a user came to do)
 

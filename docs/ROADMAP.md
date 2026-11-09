@@ -8,7 +8,6 @@
 
 ## Block C — The window (claude-tray's elements)
 
-- ⏳ **DD326** (deps: DD325 ✅) **A project card lacks the board's meta line, ⋯, link row, service ports and states, and the uptime in its footer** — The page head still lacks the Containers title, pill state chips with dimmed counts and one segmented Cards/List switch. → §DD326
 - 📋 **DD327** (deps: DD325 ✅) **Standalone containers in the cards view are one full-width strip each, not cards in the grid** — cards.png lays standalone containers out as cards at the project cards' width, each with tile, chip, description, details line and its own verbs. → §DD327
 - 📋 **DD328** (deps: DD325 ✅) **The detail page clips its header verbs at the right edge and stacks Services and Recent output, unlike detail.png** — The board puts the failure in a tinted banner, the endpoints' URLs in accent mono, and Services beside Recent output, with the rail marking the open project. → §DD328
 - 📋 **DD330** (deps: —) **The edit details dialog has no capture, so it has never been compared with edit-project.png or edit-container.png** — --capture-window renders the main window only, and the dialog is its own window, so its layout is checked by nobody. → §DD330

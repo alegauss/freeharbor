@@ -232,8 +232,17 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
                  })
         {
             var count = _rows.Count(row => ContainerRow.Passes(row, chip));
-            button.Content = $"{chip} {count.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
-            button.Style = (Style)FindResource(chip == _chip ? "AccentButtonStyle" : "RowAction");
+
+            // DD326: the word, then the count dimmed, so the eye reads which chip before how many.
+            var label = new System.Windows.Controls.TextBlock();
+            label.Inlines.Add(new System.Windows.Documents.Run(chip.ToString()));
+            label.Inlines.Add(new System.Windows.Documents.Run(
+                "  " + count.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            {
+                Foreground = (System.Windows.Media.Brush)FindResource("TextFillColorTertiaryBrush"),
+            });
+            button.Content = label;
+            button.Style = (Style)FindResource(chip == _chip ? "PillChosen" : "Pill");
         }
 
         Counts.Text = _rows.Count > 0 ? ContainerRow.Counts(_rows) : "";
@@ -312,8 +321,8 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     /// </summary>
     private void ShowCards()
     {
-        CardsSwitch.Style = (Style)FindResource(_cards ? "AccentButtonStyle" : "RowAction");
-        ListSwitch.Style = (Style)FindResource(_cards ? "RowAction" : "AccentButtonStyle");
+        CardsSwitch.Style = (Style)FindResource(_cards ? "SegmentChosen" : "Segment");
+        ListSwitch.Style = (Style)FindResource(_cards ? "Segment" : "SegmentChosen");
 
         // The list's own empty state still speaks for both: no rows is no rows in either view.
         if (!_cards || Empty.Visibility == Visibility.Visible)

@@ -55,22 +55,6 @@ tests fail together in one run only: a burst's shape.
 
 ## Block C — The window (claude-tray's elements)
 
-### §DD326 The project card's anatomy, as the board draws it
-
-Against `docs/specs/DD294-containers-redesign/cards.png` and `--capture-window
-containers --fixture --cards`. The card itself landed (spec section 5, as built DD326);
-what is left is the page head both views share.
-
-1. A `Containers` title before the counts line, in the page's heading size.
-2. The state chips as pills (full radius), the word then the count in tertiary text, the
-   chosen one filled. Today they are square buttons with the count in the word.
-3. The Cards/List switch as one segmented control, the chosen half filled. Today they are
-   two separate buttons, the chosen one accent-filled.
-
-The board puts the filter box in the window's top strip; that is the shell's (DD35) and
-not this task. Kept: the chips narrow both views (DD300), and the choice is remembered
-with the window (DD39).
-
 ### §DD327 Standalone cards, as the board draws them
 
 Against `docs/specs/DD294-containers-redesign/cards.png`, under the Standalone
