@@ -42,6 +42,12 @@ internal static class WindowCapture
     /// <summary>What draws the containers page as cards rather than as its list (DD300).</summary>
     public const string CardsFlag = "--cards";
 
+    /// <summary>
+    /// What photographs the edit details dialog instead of the main window (DD330), on a project or
+    /// one of its services: <c>--edit=shop</c> or <c>--edit=shop/api</c>.
+    /// </summary>
+    public const string EditFlag = "--edit=";
+
     /// <summary>Render the window to a PNG.</summary>
     /// <param name="args">The output path, a tab header, and <c>--fixture</c>, all optional but the path.</param>
     /// <returns>The process exit code.</returns>
@@ -64,6 +70,10 @@ internal static class WindowCapture
         // DD300: the containers page's view is named, never inherited from this account's own choice.
         var cards = args.Contains(CardsFlag, StringComparer.Ordinal);
         args = [.. args.Where(a => !string.Equals(a, CardsFlag, StringComparison.Ordinal))];
+
+        // DD330: the edit dialog is its own window, so it is named the way the detail page is.
+        var edit = args.FirstOrDefault(a => a.StartsWith(EditFlag, StringComparison.Ordinal))?[EditFlag.Length..];
+        args = [.. args.Where(a => !a.StartsWith(EditFlag, StringComparison.Ordinal))];
 
         if (args.Length > 2)
         {
@@ -203,6 +213,39 @@ internal static class WindowCapture
                 return;
             }
 
+            // DD330: the dialog is opened only now, once the rows it is built from are in, shown
+            // off-screen as the window is, and photographed after a settle of its own. A name that
+            // opens nothing is refused rather than photographing the main window under its name.
+            if (edit is { Length: > 0 })
+            {
+                var dialog = window.Containers.EditorFor(edit);
+                if (dialog is null)
+                {
+                    Console.Error.WriteLine(
+                        $"{CommandLine.ExecutableName}: nothing is named {edit}, so there is no edit dialog to "
+                        + "capture. Name a compose project, or a project and a service as project/service");
+                    code = Usage;
+                    app.Shutdown();
+                    return;
+                }
+
+                dialog.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
+                dialog.Left = -32000;
+                dialog.Top = -32000;
+                dialog.ThemeMode = System.Windows.ThemeMode.Dark;
+                dialog.Show();
+
+                var opened = new System.Windows.Threading.DispatcherTimer { Interval = Settle };
+                opened.Tick += (_, _) =>
+                {
+                    opened.Stop();
+                    code = Save(dialog, outPath, $"the edit dialog on {edit}");
+                    app.Shutdown();
+                };
+                opened.Start();
+                return;
+            }
+
             try
             {
                 var (width, height) = Ui.WindowSnapshot.Save(window, outPath);
@@ -230,6 +273,24 @@ internal static class WindowCapture
         // The fixture holds nothing to release; the real client holds a pipe and a pool.
         (api as IDisposable)?.Dispose();
         return code;
+    }
+
+    /// <summary>Render one window to the path and say what was written.</summary>
+    private static int Save(System.Windows.Window window, string outPath, string what)
+    {
+        try
+        {
+            var (width, height) = Ui.WindowSnapshot.Save(window, outPath);
+            Console.Out.WriteLine($"wrote {outPath}: {width}x{height}, {what} rendered off-screen");
+            return Ok;
+        }
+        catch (Exception exception) when (exception is IOException
+            or UnauthorizedAccessException or InvalidOperationException
+            or ArgumentException or NotSupportedException)
+        {
+            Console.Error.WriteLine($"{CommandLine.ExecutableName}: {exception.Message}");
+            return Failed;
+        }
     }
 
     private static int Complain(string problem)

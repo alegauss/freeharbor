@@ -368,6 +368,14 @@ container, the `.freeharbor` folder Save writes, and the one-time compose diff.
   new `docker run`, with a link that copies the `--label` flags.
 - **Fixed:** the identity block, the source per field, no confirmation on Save.
 
+As built (DD330):
+
+- `FreeHarbor.exe --capture-window <png> containers --fixture --edit=<project>[/<service>]`
+  photographs the dialog, opened from the fixture on that target once the rows are in,
+  through the same `WindowSnapshot`. A name that opens nothing is refused, as `--detail=`
+  is. The page's ⋯ and the capture build the dialog in one place (`ContainersPage.Editor`).
+- What the capture showed against the boards is DD333.
+
 ## 7. Settings (DD301)
 
 A destination in the nav strip, before About, built as a page (L2).

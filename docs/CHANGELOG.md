@@ -188,6 +188,7 @@
 - ✅ **DD326** **A project card lacks the board's meta line, ⋯, link row, service ports and states, and the uptime in its footer** — The page head has a Containers title, pill state chips with dimmed counts on a line of theirs, and a segmented view switch (design recorded in `docs/specs/DD294-containers-redesign.md`).
 - ✅ **DD327** **Standalone containers in the cards view are one full-width strip each, not cards in the grid** — Standalone containers are cards in the project grid, each with tile, chip, description, a mono details line, Open, its verb and ⋯ (design recorded in `docs/specs/DD294-containers-redesign.md`).
 - ✅ **DD328** **The detail page clips its header verbs at the right edge and stacks Services and Recent output, unlike detail.png** — Services sits beside Recent output, and the rail marks the open project with counts and coloured shapes under a Filter box (design recorded in `docs/specs/DD294-containers-redesign.md`).
+- ✅ **DD330** **The edit details dialog has no capture, so it has never been compared with edit-project.png or edit-container.png** — --capture-window --edit=project[/service] photographs the edit dialog from the fixture, refusing a name that opens nothing (design recorded in `docs/specs/DD294-containers-redesign.md`).
 
 ## Block D — Container operations (what a user came to do)
 

@@ -905,6 +905,42 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
             return;
         }
 
+        if (Editor(row).ShowDialog() == true)
+        {
+            await RefreshAsync().ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>
+    /// The edit dialog on a compose project, or on one of its services, by name (DD330), for a
+    /// capture: <c>shop</c> or <c>shop/api</c>.
+    /// </summary>
+    /// <param name="target">The project's compose name, optionally a slash and a service.</param>
+    /// <returns>The dialog, built and not shown, or <see langword="null"/> where nothing has that name.</returns>
+    internal EditDetailsWindow? EditorFor(string target)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(target);
+        var slash = target.IndexOf('/', StringComparison.Ordinal);
+        var project = slash < 0 ? target : target[..slash];
+        var service = slash < 0 ? null : target[(slash + 1)..];
+
+        var children = _rows.Where(child => string.Equals(child.Project, project, StringComparison.Ordinal)).ToList();
+        if (children.Count == 0)
+        {
+            return null;
+        }
+
+        var row = service is null
+            ? ContainerRow.ProjectHeader(project, children, collapsed: false)
+            : children.FirstOrDefault(child => string.Equals(child.Service, service, StringComparison.Ordinal));
+        return row is { DetailsBeneath: not null } ? Editor(row) : null;
+    }
+
+    /// <summary>The edit dialog on a row, owned by this page's window, built and not shown.</summary>
+    /// <param name="row">What was asked to be edited: a project's header or a container.</param>
+    /// <returns>The dialog.</returns>
+    private EditDetailsWindow Editor(ContainerRow row)
+    {
         // The project and every one of its containers, folded or not, so the dialog's rail can name
         // the whole project in one sitting. A container outside compose is its only target.
         var children = row.Project is { } project
@@ -918,15 +954,11 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
             ? header
             : targets.FirstOrDefault(target => string.Equals(target.Id, row.Id, StringComparison.Ordinal)) ?? row;
 
-        var dialog = new EditDetailsWindow(
+        return new EditDetailsWindow(
             targets, initial, Saved, _recall?.SavePreference, _recall is { } recall ? recall.RememberSavePreference : null)
         {
             Owner = Window.GetWindow(this),
         };
-        if (dialog.ShowDialog() == true)
-        {
-            await RefreshAsync().ConfigureAwait(true);
-        }
     }
 
     private void RemoveContainer(object sender, RoutedEventArgs e)

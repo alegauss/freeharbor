@@ -55,25 +55,6 @@ tests fail together in one run only: a burst's shape.
 
 ## Block C — The window (claude-tray's elements)
 
-### §DD330 A capture for the edit dialog
-
-`--capture-window` photographs the main window and its destinations. Edit details
-(DD296) is a separate owned window, so no capture of it exists and the two boards for
-it, `edit-project.png` and `edit-container.png`, have never been held against what it
-draws.
-
-Add `--edit=<project>[/<service>]` to the capture verb, opening the dialog from the
-fixture on that target and rendering the dialog instead of the main window, through the
-same `WindowSnapshot`. A name that opens nothing is refused, as DD323 does for
-`--detail=`.
-
-Then compare and file what differs. Points the board fixes and the wireframe repeats:
-the header with the compose files and Copy path / Open folder, the rail of project then
-services with `service · container` in mono, the Editing strip with its kind chip, the
-preview panel, the icon row with Choose file as a dashed button, the colour swatches,
-each field's source beside its label, the 0 / 120 counter, and the footer naming where
-Save writes with Save to, Cancel and Save.
-
 ### §DD331 Settings against its board
 
 DD301 shipped Settings as a left-aligned column at most 720 px wide, like About, with
@@ -109,6 +90,26 @@ section 10's last bullet, which records the stand-ins.
 
 Not a logo set: these are glyphs of a kind of thing, which is the rule the bundled icons
 already follow.
+
+### §DD333 The edit dialog, as the board draws it
+
+Held against `edit-project.png` with `--capture-window <png> containers --fixture
+--edit=sample` (DD330), and `--edit=sample/db` for `edit-container.png`.
+
+1. **Width.** 826 px today; spec section 6 says about 980.
+2. **Header.** The compose path in mono, `+ compose.override.yaml` per further file, then Copy path and Open folder on that line.
+3. **Rail.** `PROJECT` and `SERVICES` captions, a 24 px tile per item, title over `service · container` in mono, the selected item card-filled rather than accent-filled.
+4. **Editing strip.** In the form column: `EDITING`, a kind chip (`Compose project`, `Service`, `Container`), the name in bold mono, then `files … working dir … services n` in mono.
+5. **Preview.** A bordered panel captioned `PREVIEW` on its left.
+6. **Icon.** The bundled glyphs as square buttons, the chosen one outlined in the accent, then `Choose file…` dashed. Today it is a dropdown.
+7. **Labels.** Title-case and bold, the source in tertiary beside them. Today they are capitals.
+8. **Footer.** A save glyph before the sentence, and `Save to` with its dropdown beside Cancel and Save where more than one place can be written.
+
+Open choice: the board's colour swatches set a tile hue, which no details source carries
+(the hue is hashed from the name). Adding it is a new field in all three sources;
+leaving it out is a departure for spec section 9.
+
+Kept: the Links field (DD296), which the board does not draw.
 
 ## Block D — Container operations (what a user came to do)
 
