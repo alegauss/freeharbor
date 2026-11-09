@@ -73,12 +73,16 @@ internal partial class EditDetailsWindow : Window
         _beneath = initial.DetailsBeneath ?? initial.Details!;
 
         FillShared(initial);
+        // DD333: captioned the way the board captions it, the project and then its services.
+        var firstService = true;
         foreach (var target in _targets)
         {
-            Rail.Items.Add(new RailItem(target));
+            var heading = target.IsProject ? "PROJECT" : firstService ? "SERVICES" : "";
+            firstService &= target.IsProject;
+            Rail.Items.Add(new RailItem(target, heading));
         }
 
-        RailColumn.Width = _targets.Count > 1 ? new GridLength(200) : new GridLength(0);
+        RailColumn.Width = _targets.Count > 1 ? new GridLength(240) : new GridLength(0);
         Rail.Visibility = _targets.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
         if (_targets.Count > 1)
         {
@@ -577,12 +581,19 @@ internal partial class EditDetailsWindow : Window
 
     /// <summary>One entry in the rail: the target's title over what compose calls it.</summary>
     /// <param name="Row">The target.</param>
-    private sealed record RailItem(ContainerRow Row)
+    /// <param name="Heading">
+    /// The caption drawn above it (DD333): <c>PROJECT</c> over the project, <c>SERVICES</c> over the
+    /// first service, and nothing over the rest.
+    /// </param>
+    private sealed record RailItem(ContainerRow Row, string Heading = "")
     {
         /// <summary>Under the title: the project and its size, or the service and its container.</summary>
         public string Caption => Row.IsProject
             ? $"{Row.Project} · {Row.Total}"
             : $"{Row.Service ?? Row.Name} · {Row.Name}";
+
+        /// <summary>Whether a caption is drawn above it.</summary>
+        public bool HasHeading => Heading.Length > 0;
     }
 
     /// <summary>One place Save can write, shown by the name Settings gives it (DD301).</summary>
@@ -603,6 +614,12 @@ internal partial class EditDetailsWindow : Window
     /// <param name="Value">What is stored: a bundled name, a path, or null for automatic.</param>
     private sealed record IconChoice(string Label, string? Value)
     {
+        /// <summary>The glyph its button draws (DD333), or empty where it draws its words instead.</summary>
+        public string Glyph => Value is not null && IconTile.Glyphs.TryGetValue(Value, out var glyph) ? glyph : "";
+
+        /// <summary>What a button with no glyph says: <c>Auto</c> for automatic, a file's name for a file.</summary>
+        public string Words => Glyph.Length > 0 ? "" : Value is null ? "Auto" : Label;
+
         public override string ToString() => Label;
     }
 }

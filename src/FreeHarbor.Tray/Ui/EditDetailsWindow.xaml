@@ -11,7 +11,7 @@
         xmlns:ui="clr-namespace:FreeHarbor.Tray.Ui"
         x:ClassModifier="internal"
         Title="Edit details"
-        Width="640" SizeToContent="Height"
+        Width="980" SizeToContent="Height"
         MinWidth="520"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
@@ -29,14 +29,22 @@
             <Setter Property="Margin" Value="8,0,0,0" />
             <Setter Property="FontSize" Value="12" />
         </Style>
-        <Style x:Key="Caption" TargetType="TextBlock">
+        <!-- DD333: a field's label is title-case and bold, as the board labels it; the overline is
+             kept for the panels that caption a region rather than a field. -->
+        <Style x:Key="Overline" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11" />
             <Setter Property="Margin" Value="0,14,0,4" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         </Style>
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,16,0,6" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        </Style>
         <Style x:Key="Source" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="Margin" Value="8,14,0,4" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="10,16,0,6" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
         </Style>
@@ -78,25 +86,82 @@
 
         <!-- The project and each of its services, so a whole project is named in one sitting.
              Moving along it keeps what was typed for the one being left. -->
-        <ListBox Grid.Column="0" x:Name="Rail" Margin="12,12,0,0" BorderThickness="0"
+        <!-- DD333: captioned PROJECT and SERVICES, each item its 24 px tile and its title over
+             service · container in mono, the selected one on the card's fill and stroke. -->
+        <ListBox Grid.Column="0" x:Name="Rail" Margin="12,8,0,0" BorderThickness="0"
                  Background="Transparent" SelectionChanged="RailChanged"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Heading}" FontSize="11" Margin="8,10,0,6"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasHeading}" Value="False">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <Border x:Name="Hit" CornerRadius="6" Padding="8,6" BorderThickness="1"
+                                            BorderBrush="Transparent" Background="Transparent">
+                                        <ContentPresenter />
+                                    </Border>
+                                </StackPanel>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Hit" Property="Background"
+                                                Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Hit" Property="Background"
+                                                Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+                                        <Setter TargetName="Hit" Property="BorderBrush"
+                                                Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <StackPanel Margin="0,2">
-                        <TextBlock Text="{Binding Row.Title}" TextTrimming="CharacterEllipsis"
-                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                        <TextBlock FontSize="11" TextTrimming="CharacterEllipsis"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                   Text="{Binding Caption}" />
-                    </StackPanel>
+                    <DockPanel>
+                        <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="6" Margin="0,0,10,0"
+                                VerticalAlignment="Center" Background="{Binding Row.TileFill}">
+                            <Grid>
+                                <TextBlock Text="{Binding Row.TileGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                           Foreground="{x:Static ui:Palette.TileInk}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Row.TileLetter}" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{x:Static ui:Palette.TileInk}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Image Source="{Binding Row.TilePicture}" Width="16" Height="16" Stretch="Uniform" />
+                            </Grid>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Row.Title}" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            <TextBlock FontSize="11" TextTrimming="CharacterEllipsis"
+                                       FontFamily="{x:Static ui:Palette.Mono}"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       Text="{Binding Caption}" />
+                        </StackPanel>
+                    </DockPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
 
         <StackPanel Grid.Column="1" Margin="20,6,20,0">
             <!-- The row as it will be drawn, redrawn as the fields change. -->
-            <TextBlock Text="PREVIEW" Style="{StaticResource Caption}" />
+            <TextBlock Text="PREVIEW" Style="{StaticResource Overline}" />
             <DockPanel LastChildFill="True">
                 <Border x:Name="Tile" DockPanel.Dock="Left" Width="40" Height="40" CornerRadius="10"
                         Margin="0,0,10,0">
@@ -122,19 +187,84 @@
             <DockPanel>
                 <Button DockPanel.Dock="Right" Content="Reset" Click="ResetIcon" Margin="8,10,0,0"
                         Style="{StaticResource Small}" />
-                <TextBlock Text="ICON" Style="{StaticResource Caption}" />
+                <TextBlock Text="Icon" Style="{StaticResource Caption}" />
                 <TextBlock x:Name="IconSource" Style="{StaticResource Source}" />
             </DockPanel>
+            <!-- DD333: every bundled glyph as a square button, the chosen one outlined in the accent,
+                 then Choose file as a dashed button: a picture to point at rather than a name to read
+                 out of a list. A ListBox, so the code that fills and reads it is the ComboBox's. -->
             <DockPanel LastChildFill="True">
-                <Button DockPanel.Dock="Right" Content="Choose file…" Click="ChooseFile"
-                        Style="{StaticResource Small}" />
-                <ComboBox x:Name="IconBox" SelectionChanged="FieldChanged" />
+                <Button DockPanel.Dock="Right" Click="ChooseFile" Cursor="Hand" VerticalAlignment="Top"
+                        Margin="6,0,0,0">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Grid>
+                                <Rectangle x:Name="Hit" RadiusX="6" RadiusY="6" StrokeThickness="1"
+                                           StrokeDashArray="3 2" Fill="Transparent"
+                                           Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                                <TextBlock Text="Choose file…" Margin="12,9" FontSize="12"
+                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Hit" Property="Fill"
+                                            Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+                <ListBox x:Name="IconBox" SelectionChanged="FieldChanged" BorderThickness="0"
+                         Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="ToolTip" Value="{Binding Label}" />
+                            <Setter Property="Cursor" Value="Hand" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="Hit" MinWidth="36" Height="36" Margin="0,0,6,6" Padding="8,0"
+                                                CornerRadius="6" BorderThickness="1"
+                                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Hit" Property="Background"
+                                                        Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Hit" Property="BorderBrush"
+                                                        Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                                <Setter TargetName="Hit" Property="BorderThickness" Value="2" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <TextBlock Text="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <TextBlock Text="{Binding Words}" FontSize="12"
+                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
             </DockPanel>
 
             <DockPanel>
                 <Button DockPanel.Dock="Right" Content="Reset" Click="ResetTitle" Margin="8,10,0,0"
                         Style="{StaticResource Small}" />
-                <TextBlock Text="TITLE" Style="{StaticResource Caption}" />
+                <TextBlock Text="Title" Style="{StaticResource Caption}" />
                 <TextBlock x:Name="TitleSource" Style="{StaticResource Source}" />
             </DockPanel>
             <TextBox x:Name="TitleBox" MaxLength="60" TextChanged="FieldChanged" />
@@ -143,7 +273,7 @@
                 <Button DockPanel.Dock="Right" Content="Reset" Click="ResetDescription" Margin="8,10,0,0"
                         Style="{StaticResource Small}" />
                 <TextBlock x:Name="Counter" DockPanel.Dock="Right" Style="{StaticResource Source}" />
-                <TextBlock Text="DESCRIPTION" Style="{StaticResource Caption}" />
+                <TextBlock Text="Description" Style="{StaticResource Caption}" />
                 <TextBlock x:Name="DescriptionSource" Style="{StaticResource Source}" />
             </DockPanel>
             <TextBox x:Name="DescriptionBox" MaxLength="120" TextChanged="FieldChanged" />
@@ -151,7 +281,7 @@
             <DockPanel>
                 <Button DockPanel.Dock="Right" Content="Reset" Click="ResetLinks" Margin="8,10,0,0"
                         Style="{StaticResource Small}" />
-                <TextBlock Text="LINKS" Style="{StaticResource Caption}" />
+                <TextBlock Text="Links" Style="{StaticResource Caption}" />
                 <TextBlock x:Name="LinksSource" Style="{StaticResource Source}" />
             </DockPanel>
             <!-- One per line, a name and then the address, the shape the files keep them in. -->

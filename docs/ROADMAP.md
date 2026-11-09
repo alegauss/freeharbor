@@ -8,7 +8,7 @@
 
 ## Block C — The window (claude-tray's elements)
 
-- 📋 **DD333** (deps: DD330 ✅) **The edit dialog is narrower than spec, picks an icon from a dropdown, and lacks the board's rail tiles and Editing strip** — DD330's capture held against edit-project.png shows eight differences, and only the colour swatches need a decision first. → §DD333
+- ⏳ **DD333** (deps: DD330 ✅) **The edit dialog is narrower than spec, picks an icon from a dropdown, and lacks the board's rail tiles and Editing strip** — The dialog's header, Editing strip, preview panel and footer still differ from the board, and the colour swatches await a decision. → §DD333
 
 ## Block D — Container operations (what a user came to do)
 

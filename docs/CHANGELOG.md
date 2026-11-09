@@ -190,6 +190,7 @@
 - ✅ **DD328** **The detail page clips its header verbs at the right edge and stacks Services and Recent output, unlike detail.png** — Services sits beside Recent output, and the rail marks the open project with counts and coloured shapes under a Filter box (design recorded in `docs/specs/DD294-containers-redesign.md`).
 - ✅ **DD330** **The edit details dialog has no capture, so it has never been compared with edit-project.png or edit-container.png** — --capture-window --edit=project[/service] photographs the edit dialog from the fixture, refusing a name that opens nothing (design recorded in `docs/specs/DD294-containers-redesign.md`).
 - ✅ **DD332** **A project tile can only draw an image's glyph, so Storefront shows a globe where the boards show a bag** — Five bundled names say what a project is for (shop, search, docs, chat, analytics): Storefront draws a bag, Search lab a magnifier (design recorded in `docs/specs/DD294-containers-redesign.md`).
+- ✅ **DD333 (the form)** **The edit dialog is narrower than spec, picks an icon from a dropdown, and lacks the board's rail tiles and Editing strip** — The edit dialog is 980 px with a captioned, tiled rail, a row of glyph buttons for the icon, and title-case field labels.
 
 ## Block D — Container operations (what a user came to do)
 

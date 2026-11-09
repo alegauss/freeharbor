@@ -73,16 +73,13 @@ since it would no longer be true.
 ### §DD333 The edit dialog, as the board draws it
 
 Held against `edit-project.png` with `--capture-window <png> containers --fixture
---edit=sample` (DD330), and `--edit=sample/db` for `edit-container.png`.
+--edit=sample`, and `--edit=sample/db` for `edit-container.png`. The width, the rail,
+the icon row and the labels landed (spec section 6, as built DD333). What is left:
 
-1. **Width.** 826 px today; spec section 6 says about 980.
-2. **Header.** The compose path in mono, `+ compose.override.yaml` per further file, then Copy path and Open folder on that line.
-3. **Rail.** `PROJECT` and `SERVICES` captions, a 24 px tile per item, title over `service · container` in mono, the selected item card-filled rather than accent-filled.
-4. **Editing strip.** In the form column: `EDITING`, a kind chip (`Compose project`, `Service`, `Container`), the name in bold mono, then `files … working dir … services n` in mono.
-5. **Preview.** A bordered panel captioned `PREVIEW` on its left.
-6. **Icon.** The bundled glyphs as square buttons, the chosen one outlined in the accent, then `Choose file…` dashed. Today it is a dropdown.
-7. **Labels.** Title-case and bold, the source in tertiary beside them. Today they are capitals.
-8. **Footer.** A save glyph before the sentence, and `Save to` with its dropdown beside Cancel and Save where more than one place can be written.
+1. **Header.** The compose path in mono, `+ compose.override.yaml` per further file, then Copy path and Open folder on that line, not at the far right.
+2. **Editing strip.** In the form column, not the header: `EDITING`, a kind chip (`Compose project`, `Service`, `Container`), the name in bold mono, then `files … working dir … services n` in mono.
+3. **Preview.** A bordered panel captioned `PREVIEW` on its left.
+4. **Footer.** A save glyph before the sentence, and `Save to` with its dropdown beside Cancel and Save where more than one place can be written.
 
 Open choice: the board's colour swatches set a tile hue, which no details source carries
 (the hue is hashed from the name). Adding it is a new field in all three sources;

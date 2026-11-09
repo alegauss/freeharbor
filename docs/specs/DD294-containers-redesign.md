@@ -376,6 +376,17 @@ As built (DD330):
   is. The page's ⋯ and the capture build the dialog in one place (`ContainersPage.Editor`).
 - What the capture showed against the boards is DD333.
 
+As built (DD333, the form):
+
+- The dialog is 980 px wide. The rail is 240 px, captioned `PROJECT` and `SERVICES`,
+  each item its 24 px tile and its title over `service · container` in mono, and the
+  selected item is on the card's fill and stroke.
+- The icon is a row of square buttons, one per bundled name, with `Auto` first and the
+  chosen one outlined in the accent; `Choose file…` is dashed beside them. Names that
+  share a glyph (the five databases) each keep a button, told apart by its tooltip,
+  because the name is what is saved.
+- Field labels are title-case and semibold, with the source in tertiary text beside them.
+
 ## 7. Settings (DD301)
 
 A destination in the nav strip, before About, built as a page (L2).
