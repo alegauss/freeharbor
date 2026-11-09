@@ -191,6 +191,7 @@
 - ✅ **DD330** **The edit details dialog has no capture, so it has never been compared with edit-project.png or edit-container.png** — --capture-window --edit=project[/service] photographs the edit dialog from the fixture, refusing a name that opens nothing (design recorded in `docs/specs/DD294-containers-redesign.md`).
 - ✅ **DD332** **A project tile can only draw an image's glyph, so Storefront shows a globe where the boards show a bag** — Five bundled names say what a project is for (shop, search, docs, chat, analytics): Storefront draws a bag, Search lab a magnifier (design recorded in `docs/specs/DD294-containers-redesign.md`).
 - ✅ **DD333** **The edit dialog is narrower than spec, picks an icon from a dropdown, and lacks the board's rail tiles and Editing strip** — The dialog's header, Editing strip with kind chip, preview panel and footer match the board; swatches went to DD335 (design recorded in `docs/specs/DD294-containers-redesign.md`).
+- ✅ **DD334** **A database's published port resolves to an http:// link, so the edit dialog offers http://localhost:5432** — A port that does not speak HTTP is no longer resolved to a web link; its chip still copies it, and the resolver and chip share one list.
 
 ## Block D — Container operations (what a user came to do)
 

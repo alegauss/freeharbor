@@ -24,6 +24,24 @@ public sealed class ContainerDetailsTests
         new() { PrivatePort = 80, PublicPort = published, Type = "tcp" };
 
     [Fact]
+    public void A_port_that_does_not_speak_http_is_not_made_a_web_link()
+    {
+        // DD334. The edit dialog offered http://localhost:5432 for a Postgres, ready to be saved as
+        // though somebody had named it. The port's chip still copies the address; it is not a link.
+        var details = ContainerDetails.Resolve(Container(
+            image: "postgres:16",
+            ports:
+            [
+                new PortBinding { PrivatePort = 5432, PublicPort = 5432, Type = "tcp" },
+                Tcp(8080),
+            ]));
+
+        var link = Assert.Single(details.Links, link => link.Served);
+        Assert.Equal("http://localhost:8080", link.Url);
+        Assert.DoesNotContain(details.Links, link => link.Url.Contains("5432", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void A_container_with_nothing_set_is_titled_by_its_service_and_never_blank()
     {
         var details = ContainerDetails.Resolve(Container(labels: new()

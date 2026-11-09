@@ -43,19 +43,14 @@ public sealed record PortLink(string Text, string? Url)
     public bool IsText => !IsLink && !IsCopy;
 
     /// <summary>
-    /// The ports a container listens on that are known not to answer HTTP (DD297).
+    /// The ports a container listens on that are known not to answer HTTP (DD297): the resolver's
+    /// list since DD334, so a chip and a link cannot disagree about a port.
     /// </summary>
     /// <remarks>
-    /// Matched on the port inside the container, which is the one its server chose: a Postgres
-    /// published on 15432 still speaks Postgres. A list and not a probe, because a probe per port per
-    /// refresh is a call this window does not make; a port missing from it stays a link, which is
-    /// what it was before.
+    /// A list and not a probe, because a probe per port per refresh is a call this window does not
+    /// make; a port missing from it stays a link, which is what it was before.
     /// </remarks>
-    public static readonly IReadOnlySet<int> NotHttp = new HashSet<int>
-    {
-        21, 22, 23, 25, 53, 110, 143, 389, 465, 587, 993, 995, 1025, 1433, 1521, 1883, 2181,
-        3306, 4222, 5432, 5672, 6379, 9042, 9092, 11211, 27017,
-    };
+    public static IReadOnlySet<int> NotHttp => ContainerDetails.NotHttp;
 
     /// <summary>Read a binding.</summary>
     /// <param name="port">The binding.</param>

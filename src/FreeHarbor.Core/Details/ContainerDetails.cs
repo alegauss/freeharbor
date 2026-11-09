@@ -124,6 +124,22 @@ public static class ContainerDetails
         ["valkey"] = "redis",
     };
 
+    /// <summary>
+    /// The ports a container listens on that are known not to answer HTTP (DD297), by the port inside
+    /// the container, which is the one its server chose: a Postgres published on 15432 still speaks
+    /// Postgres.
+    /// </summary>
+    /// <remarks>
+    /// Here since DD334, so the resolver and the port chip read one list: the resolver made every
+    /// published TCP port a web link while the chip knew better, and the edit dialog then offered
+    /// <c>http://localhost:5432</c> to be saved as if somebody had named it.
+    /// </remarks>
+    public static readonly IReadOnlySet<int> NotHttp = new HashSet<int>
+    {
+        21, 22, 23, 25, 53, 110, 143, 389, 465, 587, 993, 995, 1025, 1433, 1521, 1883, 2181,
+        3306, 4222, 5432, 5672, 6379, 9042, 9092, 11211, 27017,
+    };
+
     /// <summary>What a source says for a value saved in FreeHarbor (DD296).</summary>
     public const string EditedHere = "edited here";
 
@@ -374,10 +390,13 @@ public static class ContainerDetails
 
         // Nothing named, so the published TCP ports are the links, the way DD7 made them. A named
         // link is somebody saying which address matters, and the ports would only repeat it.
+        // DD334: and only the ones that answer HTTP. A database's port is still a chip that copies
+        // its address; it is not a web link, and it must not be offered as one to be saved.
         if (links.Count == 0)
         {
             foreach (var port in ports.Where(p => p.PublicPort is not null
-                         && string.Equals(p.Type, "tcp", StringComparison.Ordinal))
+                         && string.Equals(p.Type, "tcp", StringComparison.Ordinal)
+                         && !NotHttp.Contains(p.PrivatePort))
                          .Select(p => p.PublicPort!.Value)
                          .Distinct()
                          .Order())

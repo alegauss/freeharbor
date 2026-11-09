@@ -8,8 +8,6 @@
 
 ## Block C — The window (claude-tray's elements)
 
-- 📋 **DD334** (deps: —) **A database's published port resolves to an http:// link, so the edit dialog offers http://localhost:5432** — The resolver makes every published TCP port a web link, though PortLink already knows which ports do not speak HTTP. → §DD334
-
 ## Block D — Container operations (what a user came to do)
 
 ## Block E — Images, volumes and networks

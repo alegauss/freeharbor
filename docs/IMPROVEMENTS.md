@@ -70,24 +70,6 @@ than a task because adopting it reverses a recorded decision:
 If adopted, the spec's section 7 "As built" paragraph is rewritten in the same commit,
 since it would no longer be true.
 
-### §DD334 Ports that are not web links
-
-`ContainerDetails.Links` turns every published TCP port into `http://localhost:<port>`,
-whatever listens on it. The list never shows the damage, because `ContainerRow.Openable`
-and `PortLink.NotHttp` keep Open off a port that does not speak HTTP. But the resolved
-links travel further: the edit dialog's Links box (DD296) shows `:5432
-http://localhost:5432` for the fixture's Postgres, and a Save writes that line into the
-store or the project file as if somebody had named it.
-
-Apply the rule `PortLink.From` already follows, in the resolver: a published port whose
-inside port is in `NotHttp`, or that is not TCP, is not made into an http link. Either
-leave it out of `Links` (its chip still copies the address), or carry it as a link the
-container serves with no scheme, which `Endpoint` already models as copy-only. The
-second keeps the detail page's endpoint card for it; check the detail page and the cards
-view by capture after the change, since both read `Links`.
-
-Seen with `--capture-window <png> containers --fixture --edit=sample/db` (DD330).
-
 ### §DD335 Choosing a tile's colour
 
 `edit-project.png` draws a row of colour swatches under the icon, so a project or
