@@ -74,6 +74,127 @@ tests fail together in one run only: a burst's shape.
 
 ## Block C — The window (claude-tray's elements)
 
+### §DD324 The list's group, as the board draws it
+
+Compared at the same scale, `--capture-window containers --fixture` against
+`docs/specs/DD294-containers-redesign/list.png`. Tile sizes already match the spec (40
+px), so what differs is composition.
+
+1. Each project, and the Standalone block, is one GroupCard (DD34 section 3: card fill, card stroke, 8 px radius) holding the header and its rows, with a hairline divider between rows. Today the header and rows sit loose on the page background.
+2. The header's description spans from the title to the verbs, because a header has no image, state or port cells to share the row with. Today it is clipped to the NAME column ("Shop API, the wor...").
+3. A service row inside a project leads with its state shape (spec section 2: "State shape, title over description, image..."), not a 40 px tile. The tile belongs to the header and to standalone rows. Dropping it gives the title and description back the width they lose now ("Orders, carts and..."), and stops the title running into the IMAGE column with no gap.
+4. The Standalone block gets the same header strip as a project: tile, heading, `n of m running`, one line of description.
+
+Fixed by the spec and kept: the project chip in the STATE column (as built, DD297),
+verbs always drawn (section 9.1), the header strip folding (9.2).
+
+### §DD325 Link chips and Open, as the board draws them
+
+Seen in the list, the cards and the detail page, so done once in the shared vocabulary
+(spec section 1) and picked up by all three.
+
+1. A link chip reads `:8080` or `:8081/admin` (the host port, then the path when the link has one) in the mono face from `Palette`, on the accent-tinted fill. The `8080->8080/tcp` mapping moves to the tooltip, where it still says what is bound to what.
+2. A non-HTTP port keeps its dashed chip and copy glyph, in the same `:5432` form.
+3. A stopped container's chips are dimmed, not hidden (list.png, Team wiki).
+4. The Open button carries the external-link glyph and the link's name (`Open site`, `Console`, `Inbox`), falling back to `Open` when the link has no name. Today every Open reads `Open` with no glyph.
+5. The fixture's project has no named primary link, so the capture shows the fallback only. The fixture task (spec section 10) gives it one.
+
+Kept: Open stays the Fluent accent (section 9.4), and is disabled rather than hidden
+when nothing runs.
+
+### §DD326 The project card's anatomy, as the board draws it
+
+Against `docs/specs/DD294-containers-redesign/cards.png` and `--capture-window
+containers --fixture --cards`.
+
+1. Header: tile, title, project chip beside the title, and `⋯` at the top right with the same menu as the list header. Today the card has no `⋯`.
+2. A meta line under the description in tertiary text: `compose · <project> · n services`.
+3. Link row: Open as the accent button with the host after the name (`Open site  localhost:8080`), the pinned links as outlined buttons with glyph and host, and non-HTTP ports as dashed copy chips (`db :5432`) on the next line. Uses the chip from DD325.
+4. A divider, then one row per service: state shape, name, image in tertiary, and at the right the port in mono and the state word in its state colour. Today the services are bullets with name and image only, in alphabetical order with the failure first.
+5. Footer: the uptime on the left, the verbs on the right. The single primary verb stays (as built DD300: no Restart beside it), so the board's Logs and Restart are not added.
+6. Page head: the board puts a `Containers` title before the counts line, draws the state chips as pills with the count dimmed, and the Cards/List switch as one segmented control. Today they are separate square buttons, the chosen one accent-filled.
+
+Kept: a stopped project dims its links, never the card; the failure line under the
+header.
+
+### §DD327 Standalone cards, as the board draws them
+
+Against `docs/specs/DD294-containers-redesign/cards.png`, under the Standalone
+containers heading.
+
+1. Each standalone container is a card in the same grid as the project cards (UniformGrid, at least 400 px wide), not a strip across the page.
+2. Inside: the 44 px tile, the title with the state chip beside it, the description (two lines at most), and a details line in tertiary text: image in mono, then the port, then the uptime, truncated at the end.
+3. At the right: Open as the accent button where the container has a link (`Inbox`), the one primary verb, and `⋯`.
+4. A container with no details shows `No details yet · Add icon and description`, with the second half a link that opens Edit details, as the spec's section 1 requires and cards.png draws for `nervous_tesla`.
+5. The heading carries its explanation beside it in secondary text: `Started with docker run, outside any compose project`.
+
+### §DD328 The detail page, as the board draws it
+
+Against `docs/specs/DD294-containers-redesign/detail.png` and `--capture-window
+containers --fixture --detail=sample` (which DD323 made work).
+
+1. **Right edge.** `Edit details…`, `Start Order worker` and `Logs` touch the window's edge and lose their right border; the list's filter box does the same. The page needs the right inset it has on the left.
+2. **Header verbs.** Open (accent, glyph, link name), Restart, the primary verb and `⋯`. Edit details moves into `⋯`, as everywhere else.
+3. **Failure banner.** A panel on a Danger-tinted fill with a Danger stroke: triangle, the service name in bold, the daemon's sentence, and the Start button inside it at the right. Today it is red text and a loose button.
+4. **Endpoints.** Each card leads with `Label · service` in secondary text, then the URL in accent mono (`http://localhost:2700/console`), then Open as the accent button and Copy. Today the first line is the port mapping and the address is plain.
+5. **Services and Recent output** sit in two columns. Services is one bordered list of every service: state shape, title over image, the state word at the right. Today only the failing service is in view.
+6. **Rail.** The open project's item is selected (card fill and stroke), each item has its count or status under the title, and its state shape takes its state colour. The filter box shows `Filter` as its placeholder.
+
+Kept: Back stays (as built DD299); memory and CPU stay out.
+
+### §DD329 The fixture the boards need
+
+`SampleMachine` today holds one compose project, `sample` (Storefront, three services),
+and three standalone containers. Spec section 10 asks for more, and every board
+comparison runs into the gap:
+
+1. No project or service has an icon, so every tile is a monogram where the boards show the bundled glyphs (Storefront's bag, Search lab's magnifier). The tile code is right; the fixture never exercises it.
+2. No link has a name or a `freeharbor.primary`, so Open always reads `Open` (DD325).
+3. No project has twenty services in four `freeharbor.group` tiers with two failures, so `large-project.png` has nothing to compare against.
+4. There is one project, so the rail, the chips' counts and the cards grid cannot look like the boards' three.
+
+Add the board's projects as fixture data: Storefront (four services, all running,
+`x-freeharbor` details and icons), Search lab (three services, one exited 143), Team
+wiki (stopped), and Platform (twenty services in four tiers). Keep `sample` or rename
+it, but the capture command in the spec and the tests that name it move together.
+
+Done first: every other open task in this group is verified by capture, and a capture is
+only as good as what the fixture puts in front of it.
+
+### §DD330 A capture for the edit dialog
+
+`--capture-window` photographs the main window and its destinations. Edit details
+(DD296) is a separate owned window, so no capture of it exists and the two boards for
+it, `edit-project.png` and `edit-container.png`, have never been held against what it
+draws.
+
+Add `--edit=<project>[/<service>]` to the capture verb, opening the dialog from the
+fixture on that target and rendering the dialog instead of the main window, through the
+same `WindowSnapshot`. A name that opens nothing is refused, as DD323 does for
+`--detail=`.
+
+Then compare and file what differs. Points the board fixes and the wireframe repeats:
+the header with the compose files and Copy path / Open folder, the rail of project then
+services with `service · container` in mono, the Editing strip with its kind chip, the
+preview panel, the icon row with Choose file as a dashed button, the colour swatches,
+each field's source beside its label, the 0 / 120 counter, and the footer naming where
+Save writes with Save to, Cancel and Save.
+
+### §DD331 Settings against its board
+
+DD301 shipped Settings as a left-aligned column at most 720 px wide, like About, with
+plain radio buttons and their explanation under each. The spec records that as a
+deliberate departure. `settings.png` draws something else, and an idea is filed rather
+than a task because adopting it reverses a recorded decision:
+
+1. A `Settings` page title, then each section heading in semibold at the body size.
+2. Each choice a radio card: card fill and stroke, the chosen one with the accent stroke and an accent-tinted fill, a tag after the name in accent text (`default`, `shared through git`, `edits your file`), the explanation, and a mono line with where it writes (`%LOCALAPPDATA%\FreeHarbor\details`, `<project>\.freeharbor\project.yaml`, `<project>\compose.yaml · x-freeharbor:`).
+3. Projects that save somewhere else as a bordered table: name and compose path in mono, the destination, and a ✕ to drop it.
+4. The read order as a numbered list with its keys in mono, all six steps visible. Today the capture shows the heading and step 1 only before the fold.
+
+If adopted, the spec's section 7 "As built" paragraph is rewritten in the same commit,
+since it would no longer be true.
+
 ## Block D — Container operations (what a user came to do)
 
 ## Block E — Images, volumes and networks
