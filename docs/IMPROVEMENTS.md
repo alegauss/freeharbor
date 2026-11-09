@@ -60,12 +60,14 @@ tests fail together in one run only: a burst's shape.
 Against `docs/specs/DD294-containers-redesign/detail.png` and `--capture-window
 containers --fixture --detail=sample` (which DD323 made work).
 
-1. **Right edge.** `Edit details…`, `Start Order worker` and `Logs` touch the window's edge and lose their right border; the list's filter box does the same. The page needs the right inset it has on the left.
-2. **Header verbs.** Open (accent, glyph, link name), Restart, the primary verb and `⋯`. Edit details moves into `⋯`, as everywhere else.
-3. **Failure banner.** A panel on a Danger-tinted fill with a Danger stroke: triangle, the service name in bold, the daemon's sentence, and the Start button inside it at the right. Today it is red text and a loose button.
-4. **Endpoints.** Each card leads with `Label · service` in secondary text, then the URL in accent mono (`http://localhost:2700/console`), then Open as the accent button and Copy. Today the first line is the port mapping and the address is plain.
-5. **Services and Recent output** sit in two columns. Services is one bordered list of every service: state shape, title over image, the state word at the right. Today only the failing service is in view.
-6. **Rail.** The open project's item is selected (card fill and stroke), each item has its count or status under the title, and its state shape takes its state colour. The filter box shows `Filter` as its placeholder.
+The right edge landed first, and it was the capture: `WindowSnapshot` drew every picture
+shifted right by the content's margin, so the page never lacked an inset. What is left:
+
+1. **Header verbs.** Open (accent, glyph, link name), Restart, the primary verb and `⋯` (the shared `RowOverflow` menu). Edit details moves into `⋯`, as everywhere else.
+2. **Failure banner.** A panel on a Danger-tinted fill with a Danger stroke: triangle, the service name in bold, the daemon's sentence, and the Start button inside it at the right. Today it is red text and a loose button.
+3. **Endpoints.** Each card leads with `Label · service` in secondary text, then the URL in accent mono (`http://localhost:2700/console`), then Open as the accent button and Copy. Today the second line is the bare address.
+4. **Services and Recent output** sit in two columns. Services is one bordered list of every service: state shape, title over image, the state word at the right.
+5. **Rail.** The open project's item is selected (card fill and stroke), each item has its count or status under the title, and its state shape takes its state colour. The filter box shows `Filter` as its placeholder.
 
 Kept: Back stays (as built DD299); memory and CPU stay out.
 

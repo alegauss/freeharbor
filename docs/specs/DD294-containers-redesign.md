@@ -114,8 +114,9 @@ As built (DD324):
   tile belongs to the header and to standalone rows.
 - The standalone block opens with a strip: a box glyph tile, the heading, `n of m
   running` and one line saying what the block is.
-- The card's right edge meets the page edge and is lost there with the filter box's; the
-  page's right inset is DD328's.
+- The card's right edge looked lost at the page edge, with the filter box's. That was the
+  capture, not the window: `WindowSnapshot` shifted every picture right by the content's
+  margin until DD328 pinned its viewbox to the client rectangle.
 
 ## 3. A large project (DD298)
 

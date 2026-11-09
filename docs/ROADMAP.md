@@ -8,7 +8,7 @@
 
 ## Block C — The window (claude-tray's elements)
 
-- 📋 **DD328** (deps: DD325 ✅) **The detail page clips its header verbs at the right edge and stacks Services and Recent output, unlike detail.png** — The board puts the failure in a tinted banner, the endpoints' URLs in accent mono, and Services beside Recent output, with the rail marking the open project. → §DD328
+- ⏳ **DD328** (deps: DD325 ✅) **The detail page clips its header verbs at the right edge and stacks Services and Recent output, unlike detail.png** — The detail page still lacks the board's header verbs, failure banner, mono endpoint URLs, two columns and selected rail item. → §DD328
 - 📋 **DD330** (deps: —) **The edit details dialog has no capture, so it has never been compared with edit-project.png or edit-container.png** — --capture-window renders the main window only, and the dialog is its own window, so its layout is checked by nobody. → §DD330
 - 💭 **DD331** (deps: —) **Settings is plain radios in a 720 px column, where settings.png draws titled radio cards with tags and paths** — DD301 chose About's plain column on purpose; matching the board means reversing that choice, which is the owner's call. → §DD331
 - 📋 **DD332** (deps: —) **A project tile can only draw an image's glyph, so Storefront shows a globe where the boards show a bag** — Every bundled icon names an image, so no name a project file can give says what the project is for. → §DD332

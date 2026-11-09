@@ -70,10 +70,25 @@ internal static class WindowSnapshot
             // A Fluent window's backdrop is drawn by the system behind the window and is not in the
             // visual tree, so without this the render is light text on transparency.
             canvas.DrawRectangle(backdrop, null, whole);
+
+            // DD328: the viewbox is the window's client rectangle, stated and not left to the brush.
+            // The brush draws the content at its own offset, which is its margin, so the client
+            // rectangle starts at the origin. By default a VisualBrush frames its visual's descendant
+            // bounds instead, and the water's negative margin reaches 20 px past the grid on both
+            // sides: those bounds started at the client's left edge, the rectangle they were drawn
+            // into started a margin further in, and every capture came out shifted right by the margin
+            // with its right edge cut off. Read as the page lacking a right inset, which it never did.
             canvas.DrawRectangle(
-                new VisualBrush(target) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top },
+                new VisualBrush(target)
+                {
+                    Stretch = Stretch.None,
+                    AlignmentX = AlignmentX.Left,
+                    AlignmentY = AlignmentY.Top,
+                    ViewboxUnits = BrushMappingMode.Absolute,
+                    Viewbox = whole,
+                },
                 null,
-                new Rect(margin.Left, margin.Top, target.ActualWidth, target.ActualHeight));
+                whole);
         }
 
         var width = (int)(wide * scale);
