@@ -86,9 +86,11 @@ internal static class ConsoleTool
             // the tool emitted them in, and what a reader saw was e2fsck's version banner printed
             // below the summary line it belongs above.
             var pieces = new List<Piece>();
-            var reading = Task.WhenAll(
-                PumpAsync(process.StandardOutput.BaseStream, Out, pieces),
-                PumpAsync(process.StandardError.BaseStream, Error, pieces));
+            var pumps = new[]
+            {
+                Pump(process.StandardOutput.BaseStream, Out, pieces),
+                Pump(process.StandardError.BaseStream, Error, pieces),
+            };
 
             if (!process.WaitForExit((int)budget.TotalMilliseconds))
             {
@@ -101,7 +103,11 @@ internal static class ConsoleTool
                     null, "", $"{fileName} did not finish within {Spell(budget)}");
             }
 
-            reading.GetAwaiter().GetResult();
+            foreach (var pump in pumps)
+            {
+                pump.Join();
+            }
+
             return new ProcessOutput(process.ExitCode, Interleave(pieces), null);
         }
         catch (Exception exception) when (exception is System.ComponentModel.Win32Exception
@@ -145,33 +151,52 @@ internal static class ConsoleTool
     /// <summary>A piece off standard error.</summary>
     internal static Piece FromError(byte[] bytes) => new(Error, bytes);
 
-    /// <summary>Read one stream until it ends, appending what arrives to the shared list.</summary>
+    /// <summary>Read one stream until it ends on a thread of its own, appending what arrives.</summary>
     /// <param name="from">The stream.</param>
     /// <param name="which">Which one it is.</param>
     /// <param name="into">Where the pieces go, in arrival order.</param>
-    /// <returns>The work.</returns>
+    /// <returns>The thread, already started.</returns>
     /// <remarks>
-    /// The lock is what makes the list an ordering rather than a race. Two tasks append to it and
-    /// the interleaving is the whole point: a piece added under no lock could land beside the wrong
-    /// neighbour, which is the defect this replaced said out loud.
+    /// <b>A thread and not the pool (DD308).</b> The order of the pieces is the order the reads
+    /// return in, so whatever schedules a read decides the transcript. With <c>ReadAsync</c> that was
+    /// the thread pool, and CI run 42626319551 failed with 83 work items queued over 6 threads: the
+    /// stderr continuation ran after a stdout line written two seconds later. A blocking read on a
+    /// dedicated thread returns when the pipe has bytes, whatever else the process is doing.
+    ///
+    /// <para>The lock is what makes the list an ordering rather than a race. Two threads append to it
+    /// and the interleaving is the whole point: a piece added under no lock could land beside the
+    /// wrong neighbour, which is the defect this replaced said out loud.</para>
+    ///
+    /// <para>Background, so a pipe a killed tool's child still holds open cannot keep this process
+    /// alive; the timeout path returns without joining it.</para>
     /// </remarks>
-    private static async Task PumpAsync(Stream from, int which, List<Piece> into)
+    private static Thread Pump(Stream from, int which, List<Piece> into)
     {
-        var buffer = new byte[8192];
-        while (true)
+        var thread = new Thread(() =>
         {
-            var read = await from.ReadAsync(buffer).ConfigureAwait(false);
-            if (read == 0)
+            var buffer = new byte[8192];
+            try
             {
-                return;
+                while (from.Read(buffer) is var read and > 0)
+                {
+                    var piece = new Piece(which, buffer[..read]);
+                    lock (into)
+                    {
+                        into.Add(piece);
+                    }
+                }
             }
-
-            var piece = new Piece(which, buffer[..read]);
-            lock (into)
+            catch (Exception failure) when (failure is IOException or ObjectDisposedException)
             {
-                into.Add(piece);
+                // The pipe closed under the read, which is a killed tool's ending: what arrived stays.
             }
-        }
+        })
+        {
+            IsBackground = true,
+            Name = which == Out ? "stdout pump" : "stderr pump",
+        };
+        thread.Start();
+        return thread;
     }
 
     /// <summary>Decode the pieces back into one text, in the order they arrived (DD217).</summary>

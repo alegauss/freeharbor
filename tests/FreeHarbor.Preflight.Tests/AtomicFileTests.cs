@@ -42,20 +42,24 @@ public sealed class AtomicFileTests : IDisposable
     }
 
     [Fact]
-    public async Task A_lock_that_lets_go_within_the_retries_is_waited_out()
+    public void A_lock_that_lets_go_within_the_retries_is_waited_out()
     {
         File.WriteAllText(_path, "old");
         var held = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.None);
 
         // Let go after one pause and a bit: the first try meets the lock, a later one does not.
-        var release = Task.Run(async () =>
+        // On a thread of its own and not Task.Run (DD308): CI run 42626319551 had 83 pool items
+        // queued, the release ran after every retry, and the test failed on the runner's load.
+        var release = new Thread(() =>
         {
-            await Task.Delay(AtomicFile.Pause + TimeSpan.FromMilliseconds(20));
-            await held.DisposeAsync();
-        });
+            Thread.Sleep(AtomicFile.Pause + TimeSpan.FromMilliseconds(20));
+            held.Dispose();
+        })
+        { IsBackground = true };
+        release.Start();
 
         AtomicFile.Replace(_path, "new");
-        await release;
+        release.Join();
 
         Assert.Equal("new", File.ReadAllText(_path));
     }

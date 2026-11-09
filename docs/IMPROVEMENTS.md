@@ -24,25 +24,6 @@ client note. DD321 is a full-run test failure on the same pipe, a second connect
 made in 30 seconds, whose cause is still open; if its message shows the relay stopped
 accepting, it is this engine-side reading reproduced.
 
-### §DD308 Stream order inverted once on CI
-
-CI run 42024365310 (commit bef1139, 5 November 2026) failed one test:
-`ConsoleDecodeTests.A_real_tool_that_writes_to_one_stream_and_then_the_other_comes_back_in_that_order`,
-with stderr's "banner" arriving after stdout's "summary". The same test passed on CI for
-670a14b an hour earlier, bef1139 touches nothing in `ProcessOutput`, and it passes on
-every local run.
-
-`ProcessOutput.PumpAsync` reads each pipe with `ReadAsync` and orders pieces by when the
-read's continuation runs. A read or a continuation delayed past the test's two-second
-`ping` pause would invert the order. Flooding this machine's thread pool with 512
-blocking work items did not reproduce it, so pool starvation is not confirmed as the
-cause.
-
-If it recurs: record the runner's load and the two pieces' arrival times in the failure
-message, and if it is the pump, read each stream on a dedicated thread
-(`TaskCreationOptions.LongRunning`) so the order stops depending on the pool. Done when
-the cause is shown, not when a rerun goes green.
-
 ### §DD321 A relay that stops accepting under load
 
 On 5 November 2026 `PipeSurvivalTests.A_healthy_relay_stumbles_over_nothing` failed once

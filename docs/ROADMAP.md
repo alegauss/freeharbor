@@ -8,7 +8,7 @@
 
 ## Block C — The window (claude-tray's elements)
 
-- 📋 **DD325** (deps: DD329 ✅) **A port reads 8080->8080/tcp and Open has no glyph or name, where the board shows a :8080 chip and Open site** — Spec section 1's link chip is label then host in monospace, and the Open button carries the link's name and an external-link glyph. → §DD325
+- 🛠 **DD325** (deps: DD329 ✅) **A port reads 8080->8080/tcp and Open has no glyph or name, where the board shows a :8080 chip and Open site** — Spec section 1's link chip is label then host in monospace, and the Open button carries the link's name and an external-link glyph. → §DD325
 - 📋 **DD326** (deps: DD325) **A project card lacks the board's meta line, ⋯, link row, service ports and states, and the uptime in its footer** — cards.png gives a card a fixed anatomy, and today's card is a header, a bullet list of names and one button. → §DD326
 - 📋 **DD327** (deps: DD325) **Standalone containers in the cards view are one full-width strip each, not cards in the grid** — cards.png lays standalone containers out as cards at the project cards' width, each with tile, chip, description, details line and its own verbs. → §DD327
 - 📋 **DD328** (deps: DD325) **The detail page clips its header verbs at the right edge and stacks Services and Recent output, unlike detail.png** — The board puts the failure in a tinted banner, the endpoints' URLs in accent mono, and Services beside Recent output, with the rail marking the open project. → §DD328

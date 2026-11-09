@@ -113,7 +113,7 @@
 - ✅ **DD318** **A CI run whose test host crashes says nothing about which test was running when it died** — check.yml runs the tests with --blame, so a crashed test host names the tests that were running when it died.
 - ✅ **DD321 (diagnosis)** **In a full test run the pipe relay once took no second connection for thirty seconds, then passed alone** — The test now names the exception, the time it took and the relay's figures; pool starvation is ruled out on both ends.
 - ✅ **DD305** **The error-mode test fails now and then in a full run and passes alone, with nothing changed** — The error-mode test asserts its own flag and checks added-not-assigned over a value, and passed ten full runs in a row (design superseded: the race was a transient flag, not a collection).
-- ✅ **DD308 (diagnosis)** **On CI a tool's stderr line once came back after a stdout line it was written two seconds before** — The order test's failure now carries the run's length, the pool's backlog and the output, which tell a delayed pump read from a busy runner.
+- ✅ **DD308** **On CI a tool's stderr line once came back after a stdout line it was written two seconds before** — CI run 42626319551 showed 83 pool items queued; each pipe is now read on its own thread, and the lock test releases off the pool.
 
 ## Block B — The daemon client (talk to the engine)
 
