@@ -941,45 +941,64 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <TextBlock x:Name="StandaloneHeading" Text="Standalone containers" Margin="0,8,0,10" FontSize="12"
-                 FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+      <!-- DD327: the heading carries what the block is beside it. -->
+      <StackPanel x:Name="StandaloneHeading" Orientation="Horizontal" Margin="0,8,0,10">
+        <TextBlock Text="Standalone containers" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
+                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+        <TextBlock Text="Started with docker run, outside any compose project" Margin="12,0,0,0"
+                   FontSize="12" VerticalAlignment="Center"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+      </StackPanel>
+      <!-- DD327: a card each, in the project cards' grid and at their width, not a strip across the
+           page. -->
       <ItemsControl x:Name="StandaloneCards">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <UniformGrid Columns="{Binding CardColumns, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                         VerticalAlignment="Top" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate>
-            <Border Margin="0,0,0,8" Padding="12,10" CornerRadius="8" BorderThickness="1"
+            <Border Margin="0,0,12,12" Padding="16,14" CornerRadius="8" BorderThickness="1"
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
               <DockPanel>
-                <Border DockPanel.Dock="Left" Width="40" Height="40" CornerRadius="10" Margin="0,0,12,0"
-                        Background="{Binding TileFill}">
+                <Border DockPanel.Dock="Left" Width="44" Height="44" CornerRadius="11" Margin="0,0,12,0"
+                        VerticalAlignment="Center" Background="{Binding TileFill}">
                   <Grid>
-                    <TextBlock Text="{Binding TileGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                    <TextBlock Text="{Binding TileGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="20"
                                Foreground="{x:Static ui:Palette.TileInk}"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding TileLetter}" FontSize="17" FontWeight="SemiBold"
+                    <TextBlock Text="{Binding TileLetter}" FontSize="18" FontWeight="SemiBold"
                                Foreground="{x:Static ui:Palette.TileInk}"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    <Image Source="{Binding TilePicture}" Width="26" Height="26" Stretch="Uniform" />
+                    <Image Source="{Binding TilePicture}" Width="28" Height="28" Stretch="Uniform" />
                   </Grid>
                 </Border>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- Open where it has a link, the one verb, and the list's ⋯ menu. -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
+                            Margin="12,0,0,0">
                   <Button Content="{Binding OpenLabel}" ContentTemplate="{StaticResource OpenContent}" Tag="{Binding OpenLink.Url}" Click="OpenPort"
                           ToolTip="{Binding OpenLink.Url}" IsEnabled="{Binding CanOpen}"
                           Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
                           Margin="0,0,6,0" MinWidth="0"
                           Visibility="{Binding ShowsOpen, Converter={StaticResource Shown}}" />
-                  <Button Content="Logs" Tag="{Binding}" Click="OpenLogs" Style="{DynamicResource RowAction}" />
                   <Button Content="{Binding PrimaryVerb}" Tag="{Binding}" Click="PrimaryAction"
                           Style="{DynamicResource RowAction}"
                           Visibility="{Binding HasPrimary, Converter={StaticResource Shown}}" />
                   <TextBlock Text="{Binding Pending}" VerticalAlignment="Center"
                              Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                              Visibility="{Binding IsPending, Converter={StaticResource Shown}}" />
+                  <Button Content="⋯" Click="OpenOverflow" Tag="{Binding}"
+                          Style="{DynamicResource RowAction}"
+                          ToolTip="Details, shell, restart, edit details and remove"
+                          ContextMenu="{StaticResource RowOverflow}" />
                 </StackPanel>
                 <StackPanel VerticalAlignment="Center">
                   <StackPanel Orientation="Horizontal">
                     <Button Content="{Binding Title}" Tag="{Binding}" Click="ShowDetails"
-                            Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontSize="14"
+                            Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontSize="15"
                             Style="{StaticResource TextLink}" VerticalAlignment="Center" />
                     <Border Margin="10,0,0,0" CornerRadius="5" Padding="8,2" VerticalAlignment="Center"
                             Background="{Binding ChipFill}" ToolTip="{Binding ChipEvidence}">
@@ -988,9 +1007,11 @@
                                  Text="{Binding ChipWord, Mode=OneWay}" /></TextBlock>
                     </Border>
                   </StackPanel>
-                  <TextBlock FontSize="12" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
-                             Foreground="{DynamicResource TextFillColorTertiaryBrush}"><Run
-                             Text="{Binding Image, Mode=OneWay}" /> · <Run Text="{Binding Status, Mode=OneWay}" /></TextBlock>
+                  <!-- Two lines at most: a description longer than that belongs to the page. -->
+                  <TextBlock Text="{Binding Description}" FontSize="12" Margin="0,2,0,0"
+                             TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="34"
+                             Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                             Visibility="{Binding HasDescription, Converter={StaticResource Shown}}" />
                   <StackPanel Orientation="Horizontal"
                               Visibility="{Binding InvitesDetails, Converter={StaticResource Shown}}">
                     <TextBlock Text="No details yet · " FontSize="12" VerticalAlignment="Center"
@@ -998,6 +1019,12 @@
                     <Button Content="Add icon and description" Tag="{Binding}" Click="EditDetails"
                             Style="{StaticResource TextLink}" />
                   </StackPanel>
+                  <!-- DD327: the details line, image in mono, then the ports, then the uptime,
+                       cut at the end where the card is narrow. -->
+                  <TextBlock FontSize="12" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"
+                             Foreground="{DynamicResource TextFillColorTertiaryBrush}"><Run
+                             Text="{Binding Image, Mode=OneWay}" FontFamily="{x:Static ui:Palette.Mono}" /> · <Run
+                             Text="{Binding PortsLine, Mode=OneWay}" /> · <Run Text="{Binding Status, Mode=OneWay}" /></TextBlock>
                 </StackPanel>
               </DockPanel>
             </Border>

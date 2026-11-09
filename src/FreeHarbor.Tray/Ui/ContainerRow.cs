@@ -187,6 +187,14 @@ public sealed record ContainerRow(
     public string FirstPort => Ports.Count > 0 ? Ports[0].Text : "";
 
     /// <summary>
+    /// Every port's chip text on one line, for a standalone card's details line (DD327), or a phrase
+    /// saying there is none rather than a gap between two separators.
+    /// </summary>
+    public string PortsLine => IsProject ? "" : Ports.Count > 0
+        ? string.Join(" ", Ports.Select(port => port.Text))
+        : "no published ports";
+
+    /// <summary>
     /// Where Open goes, without the scheme, which a card writes after the button's name (DD326):
     /// <c>localhost:8080</c>. Empty where there is no Open.
     /// </summary>
@@ -829,8 +837,8 @@ public sealed record ContainerRow(
                 // carried by the container that opens it.
                 nameof(HasStateShape), nameof(ShapeInk), nameof(StandaloneCount),
 
-                // DD326: a card's service row reads its first port.
-                nameof(FirstPort),
+                // DD326, DD327: a card's service row reads its first port, a standalone card all of them.
+                nameof(FirstPort), nameof(PortsLine),
 
                 // DD295: a header draws its project's details from its own Details, so the copy each
                 // container carries for it is a container's alone.

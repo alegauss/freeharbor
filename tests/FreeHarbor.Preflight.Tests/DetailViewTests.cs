@@ -216,6 +216,17 @@ public sealed class DetailViewTests
     }
 
     [Fact]
+    public void A_standalone_cards_details_line_names_its_ports_or_says_there_are_none()
+    {
+        // DD327: image · ports · uptime, and never an empty slot between two separators.
+        var (_, standalone) = DetailView.Cards(
+            Rows(Summary("mail", privatePort: 8025, published: 8025), Summary("bare")), ByState);
+
+        Assert.Equal(":8025", standalone.Single(row => row.Name == "mail").PortsLine);
+        Assert.Equal("no published ports", standalone.Single(row => row.Name == "bare").PortsLine);
+    }
+
+    [Fact]
     public void A_stopped_cards_footer_says_how_long_it_has_been_down()
     {
         var card = Assert.Single(DetailView.Cards(Rows(Summary("wiki-web-1", "exited", "wiki")), ByState).Projects);

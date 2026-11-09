@@ -291,6 +291,16 @@ As built (DD326, the page head):
   The filter box keeps the right edge; moving it into the shell's strip is DD35's
   business.
 
+As built (DD327, standalone cards):
+
+- Each standalone container is a card in the project cards' grid and at their width, under
+  a heading that says `Started with docker run, outside any compose project` beside it.
+- A card has a 44 px tile, the title with its state chip, at most two lines of
+  description or the `No details yet` invitation, and a details line: the image in mono,
+  every port (or `no published ports`), then the status, cut at the end.
+- On the right: Open where it has a link, the one verb, and the shared `⋯`. Logs is not
+  drawn, as on a project card; the container's page is a click away.
+
 ## 6. The edit details dialog (DD296)
 
 A dialog owned by the main window, about 980 px wide.

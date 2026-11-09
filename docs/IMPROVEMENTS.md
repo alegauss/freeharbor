@@ -55,17 +55,6 @@ tests fail together in one run only: a burst's shape.
 
 ## Block C — The window (claude-tray's elements)
 
-### §DD327 Standalone cards, as the board draws them
-
-Against `docs/specs/DD294-containers-redesign/cards.png`, under the Standalone
-containers heading.
-
-1. Each standalone container is a card in the same grid as the project cards (UniformGrid, at least 400 px wide), not a strip across the page.
-2. Inside: the 44 px tile, the title with the state chip beside it, the description (two lines at most), and a details line in tertiary text: image in mono, then the port, then the uptime, truncated at the end.
-3. At the right: Open as the accent button where the container has a link (`Inbox`), the one primary verb, and `⋯`.
-4. A container with no details shows `No details yet · Add icon and description`, with the second half a link that opens Edit details, as the spec's section 1 requires and cards.png draws for `nervous_tesla`.
-5. The heading carries its explanation beside it in secondary text: `Started with docker run, outside any compose project`.
-
 ### §DD328 The detail page, as the board draws it
 
 Against `docs/specs/DD294-containers-redesign/detail.png` and `--capture-window
