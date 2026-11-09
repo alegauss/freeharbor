@@ -87,6 +87,42 @@ leaving it out is a departure for spec section 9.
 
 Kept: the Links field (DD296), which the board does not draw.
 
+### §DD334 Ports that are not web links
+
+`ContainerDetails.Links` turns every published TCP port into `http://localhost:<port>`,
+whatever listens on it. The list never shows the damage, because `ContainerRow.Openable`
+and `PortLink.NotHttp` keep Open off a port that does not speak HTTP. But the resolved
+links travel further: the edit dialog's Links box (DD296) shows `:5432
+http://localhost:5432` for the fixture's Postgres, and a Save writes that line into the
+store or the project file as if somebody had named it.
+
+Apply the rule `PortLink.From` already follows, in the resolver: a published port whose
+inside port is in `NotHttp`, or that is not TCP, is not made into an http link. Either
+leave it out of `Links` (its chip still copies the address), or carry it as a link the
+container serves with no scheme, which `Endpoint` already models as copy-only. The
+second keeps the detail page's endpoint card for it; check the detail page and the cards
+view by capture after the change, since both read `Links`.
+
+Seen with `--capture-window <png> containers --fixture --edit=sample/db` (DD330).
+
+### §DD335 Choosing a tile's colour
+
+`edit-project.png` draws a row of colour swatches under the icon, so a project or
+service can choose its tile's colour. Nothing carries that today: the hue is hashed from
+the name (`ContainerDetails.HueOf`), so the same name is the same colour on every
+machine, and no label, project file key or store field names a colour.
+
+Adopting it means a new field in all three sources (a `freeharbor.colour` label, a
+`colour:` key in `.freeharbor/project.yaml` and `x-freeharbor`, and the store), a value
+limited to the `Palette` tile hues by index or name (never a hex, L1), the resolver
+preferring it over the hash, and a swatch row in the dialog after the icon row.
+
+Leaving it out is a departure to record in spec section 9: the hash already gives every
+name a stable colour, and a colour somebody chose on one machine would differ from the
+teammate's who did not.
+
+Which is the owner's call, so this is an idea and not a task.
+
 ## Block D — Container operations (what a user came to do)
 
 ## Block E — Images, volumes and networks

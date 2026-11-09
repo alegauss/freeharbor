@@ -236,9 +236,9 @@ internal partial class EditDetailsWindow : Window
 
         var files = (row.ConfigFiles ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries
             | StringSplitOptions.TrimEntries);
-        Files.Text = files.Length == 0
-            ? ""
-            : files[0] + string.Concat(files.Skip(1).Select(file => " + " + Path.GetFileName(file)));
+        // DD333: the project's own file in mono, then each file merged over it by name.
+        Files.Text = files.Length == 0 ? "" : files[0];
+        MoreFiles.Text = string.Concat(files.Skip(1).Select(file => " + " + Path.GetFileName(file)));
         FilesRow.Visibility = files.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
 
         SaveTo.Items.Add(new SaveTarget(SaveDestination.FreeHarbor));
@@ -256,6 +256,7 @@ internal partial class EditDetailsWindow : Window
         var chosen = _preference.For(SavePreference.KeyFor(row), [.. targets.Select(target => target.Destination)]);
         SaveTo.SelectedIndex = targets.FindIndex(target => target.Destination == chosen);
         SaveTo.Visibility = SaveTo.Items.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        SaveToLabel.Visibility = SaveTo.Visibility;
     }
 
     /// <summary>Show one target, from what was typed for it if anything was, or from its row.</summary>
@@ -266,13 +267,15 @@ internal partial class EditDetailsWindow : Window
         _beneath = row.DetailsBeneath ?? row.Details!;
         var project = row.Project;
 
-        Editing.Text = row.IsProject && project is not null
-            ? $"EDITING  project {project}"
+        // DD333: what kind of thing it is as a chip, and what it is called in bold mono after it.
+        (EditingKind.Text, EditingName.Text) = row.IsProject && project is not null
+            ? ("Compose project", project)
             : row.Service is { } service && project is not null
-                ? $"EDITING  service {project} / {service}"
-                : $"EDITING  container {row.Name}";
+                ? ("Service", $"{project} / {service}")
+                : ("Container", row.Name);
+        // DD333: as the board's strip spells it, the files by name, the folder, the size.
         Identity.Text = row.IsProject
-            ? $"{row.Total} container(s), in {row.WorkingDir ?? "a folder compose did not record"}"
+            ? $"files {ComposeFileNames(row)}   working dir {row.WorkingDir ?? "not recorded"}   services {row.Total}"
             : $"container {row.Name}   image {row.Image}   id {row.Id[..Math.Min(12, row.Id.Length)]}";
         KeyNote.Text = row.IsProject
             ? $"Saved under {project}, so it survives a recreate."
@@ -574,6 +577,16 @@ internal partial class EditDetailsWindow : Window
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return false;
         }
+    }
+
+    /// <summary>A project's compose files by name, comma-separated, or a word saying there are none.</summary>
+    private static string ComposeFileNames(ContainerRow row)
+    {
+        var names = (row.ConfigFiles ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(Path.GetFileName)
+            .ToList();
+        return names.Count == 0 ? "none recorded" : string.Join(", ", names);
     }
 
     /// <summary>What was typed for one target.</summary>

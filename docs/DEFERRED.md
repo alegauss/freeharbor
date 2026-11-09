@@ -10,6 +10,7 @@
 ## Block C — The window (claude-tray's elements)
 
 - ⏸ **DD331** (deps: —) **Settings is plain radios in a 720 px column, where settings.png draws titled radio cards with tags and paths** — set aside (Needs the owner to pick DD301's column or the cards.): Adopting the board reverses DD301's plain column, which is the owner's call. → §DD331
+- ⏸ **DD335** (deps: —) **A tile's colour cannot be chosen, where edit-project.png draws colour swatches under the icon** — set aside (Needs the owner to want a chosen colour over the hash.): The hue is hashed from the name and no source carries a colour, so adopting it is a new field the owner has to want. → §DD335
 
 ## Block D — Container operations (what a user came to do)
 

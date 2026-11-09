@@ -386,6 +386,16 @@ As built (DD333, the form):
   share a glyph (the five databases) each keep a button, told apart by its tooltip,
   because the name is what is saved.
 - Field labels are title-case and semibold, with the source in tertiary text beside them.
+- The header has the compose path in mono, each further file by name, and Copy path and
+  Open folder on the same line.
+- The Editing strip sits in the form column: `EDITING`, the kind as an accent chip
+  (`Compose project`, `Service`, `Container`), the name in bold mono, then `files …
+  working dir … services n` (a project) or `container … image … id` (a container) in mono.
+- The preview is a bordered panel captioned `PREVIEW` on its left.
+- The footer has a save glyph before its sentence, and `Save to` names the dropdown
+  whenever there is more than one place to write.
+- The board's colour swatches are not drawn: no source carries a colour, and whether one
+  should is DD335.
 
 ## 7. Settings (DD301)
 

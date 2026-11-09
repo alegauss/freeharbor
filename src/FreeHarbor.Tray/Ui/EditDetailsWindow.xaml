@@ -59,22 +59,20 @@
             <StackPanel>
                 <TextBlock x:Name="Heading" FontSize="16" TextTrimming="CharacterEllipsis"
                            Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                <DockPanel x:Name="FilesRow" Margin="0,6,0,0" LastChildFill="True">
-                    <Button DockPanel.Dock="Right" Content="Open folder" Click="OpenFolder"
-                            Style="{StaticResource Small}" />
-                    <Button DockPanel.Dock="Right" Content="Copy path" Click="CopyPath"
-                            Style="{StaticResource Small}" />
-                    <TextBlock x:Name="Files" FontSize="12" VerticalAlignment="Center"
-                               TextTrimming="CharacterEllipsis"
+                <!-- DD333: the project's file in mono, each file merged over it by name, and the two
+                     verbs on the same line rather than at the far edge. -->
+                <StackPanel x:Name="FilesRow" Margin="0,6,0,0" Orientation="Horizontal">
+                    <TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,8,0"
+                               VerticalAlignment="Center"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                </DockPanel>
-                <TextBlock x:Name="Editing" Margin="0,12,0,0" FontSize="12"
-                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                <TextBlock x:Name="Identity" Margin="0,2,0,0" FontSize="12"
-                           TextTrimming="CharacterEllipsis"
-                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                <TextBlock x:Name="KeyNote" Margin="0,2,0,0" FontSize="12" TextWrapping="Wrap"
-                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock x:Name="Files" FontSize="12" VerticalAlignment="Center"
+                               FontFamily="{x:Static ui:Palette.Mono}"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <TextBlock x:Name="MoreFiles" FontSize="12" VerticalAlignment="Center" Margin="6,0,4,0"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <Button Content="Copy path" Click="CopyPath" Style="{StaticResource Small}" />
+                    <Button Content="Open folder" Click="OpenFolder" Style="{StaticResource Small}" />
+                </StackPanel>
             </StackPanel>
         </Border>
 
@@ -161,8 +159,35 @@
 
         <StackPanel Grid.Column="1" Margin="20,6,20,0">
             <!-- The row as it will be drawn, redrawn as the fields change. -->
-            <TextBlock Text="PREVIEW" Style="{StaticResource Overline}" />
+            <!-- DD333: the Editing strip, in the form it describes: the kind as a chip, the name in
+                 bold mono, then where it came from and what a save is keyed by. -->
+            <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                <TextBlock Text="EDITING" FontSize="11" VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <Grid Margin="10,0,10,0" VerticalAlignment="Center">
+                    <Border CornerRadius="10" Opacity="0.25" Background="{DynamicResource AccentFillColorDefaultBrush}" />
+                    <TextBlock x:Name="EditingKind" Margin="10,2" FontSize="12"
+                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                </Grid>
+                <TextBlock x:Name="EditingName" FontWeight="Bold" VerticalAlignment="Center"
+                           FontFamily="{x:Static ui:Palette.Mono}"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+            </StackPanel>
+            <TextBlock x:Name="Identity" Margin="0,8,0,0" FontSize="12"
+                       TextTrimming="CharacterEllipsis" FontFamily="{x:Static ui:Palette.Mono}"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            <TextBlock x:Name="KeyNote" Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+
+            <!-- DD333: the preview is a panel, captioned on its left, so it reads as a sample of the
+                 row and not as one more field. -->
+            <Border Margin="0,14,0,0" Padding="16,12" CornerRadius="8" BorderThickness="1"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
             <DockPanel LastChildFill="True">
+                <TextBlock DockPanel.Dock="Left" Text="PREVIEW" FontSize="11" Margin="0,0,24,0"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 <Border x:Name="Tile" DockPanel.Dock="Left" Width="40" Height="40" CornerRadius="10"
                         Margin="0,0,10,0">
                     <Grid>
@@ -182,6 +207,7 @@
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </DockPanel>
+            </Border>
 
             <!-- Each field says where its value comes from, and Reset goes back to that. -->
             <DockPanel>
@@ -309,6 +335,13 @@
                      standalone container has nowhere but FreeHarbor, so it has no choice to make. -->
                 <ComboBox x:Name="SaveTo" DockPanel.Dock="Right" Margin="0,0,8,0"
                           VerticalAlignment="Center" SelectionChanged="FieldChanged" />
+                <!-- DD333: named, so the dropdown reads as where and not as what. -->
+                <TextBlock x:Name="SaveToLabel" DockPanel.Dock="Right" Text="Save to" Margin="0,0,10,0"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <TextBlock DockPanel.Dock="Left" Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                           Margin="0,0,12,0" VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock x:Name="Lands" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                     <TextBlock x:Name="LandsDetail" FontSize="12" TextWrapping="Wrap"
