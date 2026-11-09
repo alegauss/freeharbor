@@ -58,17 +58,18 @@ tests fail together in one run only: a burst's shape.
 ### §DD326 The project card's anatomy, as the board draws it
 
 Against `docs/specs/DD294-containers-redesign/cards.png` and `--capture-window
-containers --fixture --cards`.
+containers --fixture --cards`. The card itself landed (spec section 5, as built DD326);
+what is left is the page head both views share.
 
-1. Header: tile, title, project chip beside the title, and `⋯` at the top right with the same menu as the list header. Today the card has no `⋯`.
-2. A meta line under the description in tertiary text: `compose · <project> · n services`.
-3. Link row: Open as the accent button with the host after the name (`Open site  localhost:8080`), the pinned links as outlined buttons with glyph and host, and non-HTTP ports as dashed copy chips (`db :5432`) on the next line. Uses the chip from DD325.
-4. A divider, then one row per service: state shape, name, image in tertiary, and at the right the port in mono and the state word in its state colour. Today the services are bullets with name and image only, in alphabetical order with the failure first.
-5. Footer: the uptime on the left, the verbs on the right. The single primary verb stays (as built DD300: no Restart beside it), so the board's Logs and Restart are not added.
-6. Page head: the board puts a `Containers` title before the counts line, draws the state chips as pills with the count dimmed, and the Cards/List switch as one segmented control. Today they are separate square buttons, the chosen one accent-filled.
+1. A `Containers` title before the counts line, in the page's heading size.
+2. The state chips as pills (full radius), the word then the count in tertiary text, the
+   chosen one filled. Today they are square buttons with the count in the word.
+3. The Cards/List switch as one segmented control, the chosen half filled. Today they are
+   two separate buttons, the chosen one accent-filled.
 
-Kept: a stopped project dims its links, never the card; the failure line under the
-header.
+The board puts the filter box in the window's top strip; that is the shell's (DD35) and
+not this task. Kept: the chips narrow both views (DD300), and the choice is remembered
+with the window (DD39).
 
 ### §DD327 Standalone cards, as the board draws them
 

@@ -181,6 +181,19 @@ public sealed record ContainerRow(
     /// </summary>
     public bool HasStateShape => IsContainer && Project is not null;
 
+    /// <summary>
+    /// The first port's chip text, for a card's service row (DD326), or empty where it has none.
+    /// </summary>
+    public string FirstPort => Ports.Count > 0 ? Ports[0].Text : "";
+
+    /// <summary>
+    /// Where Open goes, without the scheme, which a card writes after the button's name (DD326):
+    /// <c>localhost:8080</c>. Empty where there is no Open.
+    /// </summary>
+    public string OpenHost => OpenLink?.Url is { } url && Uri.TryCreate(url, UriKind.Absolute, out var uri)
+        ? uri.Authority + uri.PathAndQuery.TrimEnd('/')
+        : "";
+
     /// <summary>What the state shape is drawn in: its tone's colour, not the chip's text colour.</summary>
     public System.Windows.Media.Brush? ShapeInk => HasStateShape ? Palette.ToneInk(Tone) : null;
 
@@ -816,6 +829,9 @@ public sealed record ContainerRow(
                 // carried by the container that opens it.
                 nameof(HasStateShape), nameof(ShapeInk), nameof(StandaloneCount),
 
+                // DD326: a card's service row reads its first port.
+                nameof(FirstPort),
+
                 // DD295: a header draws its project's details from its own Details, so the copy each
                 // container carries for it is a container's alone.
                 nameof(ProjectDetails),
@@ -865,7 +881,7 @@ public sealed record ContainerRow(
                 // a header and a standalone container each have an Open of their own.
                 nameof(ChipFill), nameof(ChipText), nameof(ChipWord), nameof(ChipShape),
                 nameof(ChipEvidence), nameof(OpenLink), nameof(ShowsOpen), nameof(CanOpen),
-                nameof(OpenLabel),
+                nameof(OpenLabel), nameof(OpenHost),
 
                 // DD298: a tier header's own name, and the tier a container is drawn under.
                 nameof(Tier),

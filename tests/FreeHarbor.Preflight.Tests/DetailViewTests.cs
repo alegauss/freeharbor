@@ -194,6 +194,36 @@ public sealed class DetailViewTests
         Assert.True(link.CopiesOnly);
     }
 
+    [Fact]
+    public void A_card_carries_the_boards_anatomy()
+    {
+        // DD326, cards.png: the meta line, Open with its host, the copy-only addresses on a line of
+        // their own, each service's port, and the uptime in the footer.
+        var rows = Rows(
+            Summary("shop-web-1", project: "shop", privatePort: 80, published: 8080),
+            Summary("shop-db-1", project: "shop", privatePort: 5432, published: 5432),
+            Summary("shop-worker-1", "exited", "shop"));
+
+        var card = Assert.Single(DetailView.Cards(rows, ByState).Projects);
+
+        Assert.Equal("compose · shop · 3 services", card.CardMeta);
+        Assert.Equal("localhost:8080", card.Head.OpenHost);
+        Assert.Empty(card.CardOpenLinks);
+        Assert.Equal(["localhost:5432"], card.CardCopyLinks.Select(link => link.Address));
+        Assert.Equal(":5432", card.Services.Single(service => service.Name == "shop-db-1").FirstPort);
+        Assert.Equal("", card.Services.Single(service => service.Name == "shop-worker-1").FirstPort);
+        Assert.Equal("Up 4 minutes", card.Uptime);
+    }
+
+    [Fact]
+    public void A_stopped_cards_footer_says_how_long_it_has_been_down()
+    {
+        var card = Assert.Single(DetailView.Cards(Rows(Summary("wiki-web-1", "exited", "wiki")), ByState).Projects);
+
+        Assert.Equal("Exited (1) 3 minutes ago", card.Uptime);
+        Assert.Equal("compose · wiki · 1 service", card.CardMeta);
+    }
+
     [Theory]
     [InlineData(StateChip.All, new[] { "up-id", "done-id", "crashed-id" })]
     [InlineData(StateChip.Running, new[] { "up-id" })]

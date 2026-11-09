@@ -123,6 +123,29 @@ public sealed record DetailView(
     /// </summary>
     public IReadOnlyList<Endpoint> CardLinks => Head.HasLinkMenu ? Head.PinnedLinks : SecondaryLinks;
 
+    /// <summary>The card's links a browser can open, drawn as buttons beside Open (DD326).</summary>
+    public IReadOnlyList<Endpoint> CardOpenLinks => [.. CardLinks.Where(link => link.CanOpen)];
+
+    /// <summary>The card's addresses that only copy, drawn as dashed chips on a line of their own (DD326).</summary>
+    public IReadOnlyList<Endpoint> CardCopyLinks => [.. CardLinks.Where(link => link.CopiesOnly)];
+
+    /// <summary>The card's meta line under the description (DD326): what kind of thing, which one, how big.</summary>
+    public string CardMeta
+    {
+        get
+        {
+            var count = Services.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            return $"compose · {Head.Project} · {count} {(Services.Count == 1 ? "service" : "services")}";
+        }
+    }
+
+    /// <summary>
+    /// What the card's footer says on its left (DD326): the first running service's status, which
+    /// says how long the project has been up, or the first service's where none runs.
+    /// </summary>
+    public string Uptime =>
+        (Services.FirstOrDefault(service => service.IsRunning) ?? Services.FirstOrDefault())?.Status ?? "";
+
     /// <summary>
     /// The cards view (DD300): one page's worth of content per project, in the list's order, and the
     /// standalone containers after them.

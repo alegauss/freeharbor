@@ -266,6 +266,20 @@ As built (DD300):
 - `--capture-window <png> containers --fixture --cards` photographs the cards. A capture
   always draws All, whatever this account chose.
 
+As built (DD326, the card):
+
+- The header has the list header's `⋯` at its top right. Both open one menu,
+  `RowOverflow`, so they cannot offer different verbs.
+- A meta line, `compose · <project> · n services`, sits under the description.
+- Open writes where it goes after its name (`Site  localhost:8080`). Links a browser can
+  open are outlined buttons with the glyph, name and host. Copy-only addresses are dashed
+  chips, `service :port`, on a line of their own. On a project with a link menu only the
+  pinned links are drawn and the rest stay behind the menu (DD298).
+- Under a rule, each service is a row: its shape and state word in its state's colour, its
+  title and image, and its first port in mono.
+- The footer has the first running service's status on the left, or the first service's
+  where none runs, and the one verb on the right.
+
 ## 6. The edit details dialog (DD296)
 
 A dialog owned by the main window, about 980 px wide.

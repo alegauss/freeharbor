@@ -125,7 +125,9 @@ public sealed class ContainerChipTests
         // nothing to skip past.
         Assert.Contains("Content=\"Logs\"", markup, StringComparison.Ordinal);
         Assert.Contains("Content=\"{Binding PrimaryVerb}\"", markup, StringComparison.Ordinal);
-        Assert.Contains("<ContextMenu>", markup, StringComparison.Ordinal);
+        // One menu, shared with a project card's ⋯ since DD326, and the row's ⋯ opens it.
+        Assert.Contains("<ContextMenu x:Key=\"RowOverflow\"", markup, StringComparison.Ordinal);
+        Assert.Contains("ContextMenu=\"{StaticResource RowOverflow}\"", markup, StringComparison.Ordinal);
 
         foreach (var moved in new[] { "Content=\"Shell\"", "Content=\"Restart\"", "Content=\"Remove\"" })
         {

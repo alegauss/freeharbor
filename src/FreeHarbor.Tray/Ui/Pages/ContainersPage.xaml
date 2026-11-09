@@ -86,6 +86,85 @@
             </Setter>
         </Style>
 
+        <!-- The ⋯ menu, one per button that shows it (x:Shared), and one definition so the list's row
+             and a project card cannot offer different things (DD326). OpenOverflow hands it the
+             button's Tag as its DataContext. -->
+        <ContextMenu x:Key="RowOverflow" x:Shared="False">
+            <!-- DD299. First, because it is the one item that only reads: the page that says what
+                 this project serves and why a service stopped. -->
+            <MenuItem Header="Details" Click="ShowDetails" Tag="{Binding}" />
+            <Separator />
+            <!-- Disabled rather than absent, because "you cannot do this yet" and "this does not
+                 exist" are different answers and only the tooltip tells them apart. It has more room
+                 here than on a cramped button. -->
+            <MenuItem Header="Shell" Click="OpenShell" Tag="{Binding}"
+                      IsEnabled="{Binding CanShell}"
+                      ToolTip="{Binding ShellReason}" />
+            <MenuItem Header="Restart" Click="RestartContainer" Tag="{Binding}"
+                      IsEnabled="{Binding CanRestart}" />
+            <!-- DD296. Enabled in every state: what a container is called does not depend on whether
+                 it is running. -->
+            <MenuItem Header="Edit details…" Click="EditDetails" Tag="{Binding}" />
+            <Separator />
+            <MenuItem Header="Remove…" Click="RemoveContainer" Tag="{Binding}"
+                      IsEnabled="{Binding CanRemove}" />
+        </ContextMenu>
+
+        <!-- DD326: a card's Open, which writes where it goes after its name. -->
+        <DataTemplate x:Key="OpenWithHost">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                           Margin="0,0,6,0" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding OpenLabel}" VerticalAlignment="Center" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding OpenHost}" Margin="8,0,0,0" VerticalAlignment="Center" Opacity="0.75" />
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- DD326: a card's other links, outlined, each with the glyph, its name and where it goes. -->
+        <DataTemplate x:Key="CardLink">
+            <Button Tag="{Binding Url}" Click="OpenPort" ToolTip="{Binding Url}"
+                    Margin="0,0,6,6" Padding="10,3" FontSize="12" MinWidth="0">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                               Margin="0,0,6,0" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Label}" VerticalAlignment="Center" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Address}" Margin="8,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                </StackPanel>
+            </Button>
+        </DataTemplate>
+
+        <!-- DD326: a card's address that only copies: the service, then the port in mono, dashed. -->
+        <DataTemplate x:Key="CardCopy">
+            <Button Tag="{Binding CopyText}" Click="CopyAddress" ToolTip="{Binding CopyText}"
+                    Margin="0,0,6,6" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Rectangle x:Name="Hit" RadiusX="4" RadiusY="4" StrokeThickness="1"
+                                       StrokeDashArray="3 2" Fill="Transparent"
+                                       Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                            <StackPanel Orientation="Horizontal" Margin="8,3">
+                                <TextBlock Text="⧉" Margin="0,0,6,0" FontSize="12"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding Service}" FontSize="12"
+                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <TextBlock Text="{Binding Label}" Margin="6,0,0,0" FontSize="12"
+                                           FontFamily="{x:Static ui:Palette.Mono}"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Hit" Property="Fill"
+                                        Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </DataTemplate>
+
         <!-- DD325: what every Open button holds, the external-link glyph and the link's name, so the
              list, the cards and the detail page cannot draw it three ways. -->
         <DataTemplate x:Key="OpenContent">
@@ -526,30 +605,8 @@
                 <Button Content="⋯" Click="OpenOverflow" Tag="{Binding}"
                         Style="{DynamicResource RowAction}"
                         ToolTip="Shell, restart, edit details and remove"
-                        Visibility="{Binding CanRemove, Converter={StaticResource Shown}}">
-                    <Button.ContextMenu>
-                        <ContextMenu>
-                            <!-- DD299. First, because it is the one item that only reads: the page
-                                 that says what this project serves and why a service stopped. -->
-                            <MenuItem Header="Details" Click="ShowDetails" Tag="{Binding}" />
-                            <Separator />
-                            <!-- Disabled rather than absent, because "you cannot do this yet" and
-                                 "this does not exist" are different answers and only the tooltip
-                                 tells them apart. It has more room here than on a cramped button. -->
-                            <MenuItem Header="Shell" Click="OpenShell" Tag="{Binding}"
-                                      IsEnabled="{Binding CanShell}"
-                                      ToolTip="{Binding ShellReason}" />
-                            <MenuItem Header="Restart" Click="RestartContainer" Tag="{Binding}"
-                                      IsEnabled="{Binding CanRestart}" />
-                            <!-- DD296. Enabled in every state: what a container is called does not
-                                 depend on whether it is running. -->
-                            <MenuItem Header="Edit details…" Click="EditDetails" Tag="{Binding}" />
-                            <Separator />
-                            <MenuItem Header="Remove…" Click="RemoveContainer" Tag="{Binding}"
-                                      IsEnabled="{Binding CanRemove}" />
-                        </ContextMenu>
-                    </Button.ContextMenu>
-                </Button>
+                        ContextMenu="{StaticResource RowOverflow}"
+                        Visibility="{Binding CanRemove, Converter={StaticResource Shown}}" />
                 <TextBlock Text="{Binding Pending}" VerticalAlignment="Center"
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                            Visibility="{Binding IsPending, Converter={StaticResource Shown}}" />
@@ -634,6 +691,11 @@
                     Tag="{Binding}" MouseLeftButtonUp="CardClicked" Cursor="Hand">
               <StackPanel>
                 <DockPanel>
+                  <!-- DD326: the header's ⋯, the list header's menu, at the top right. -->
+                  <Button DockPanel.Dock="Right" Content="⋯" Click="OpenOverflow" Tag="{Binding Head}"
+                          Style="{DynamicResource RowAction}" VerticalAlignment="Top"
+                          ToolTip="Details, shell, restart, edit details and remove"
+                          ContextMenu="{StaticResource RowOverflow}" />
                   <Border DockPanel.Dock="Left" Width="44" Height="44" CornerRadius="11" Margin="0,0,12,0"
                           VerticalAlignment="Top" Background="{Binding Head.TileFill}">
                     <Grid>
@@ -662,6 +724,10 @@
                                TextTrimming="CharacterEllipsis"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                Visibility="{Binding Head.HasDescription, Converter={StaticResource Shown}}" />
+                    <!-- DD326: what kind of thing, which one and how big, in tertiary text. -->
+                    <TextBlock Text="{Binding CardMeta}" FontSize="12" Margin="0,2,0,0"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                   </StackPanel>
                 </DockPanel>
 
@@ -677,31 +743,45 @@
 
                 <!-- The links: Open filled in the accent, the rest as the list's chips. A stopped
                      project dims these and never the card, so its Start stays readable. -->
-                <WrapPanel Margin="0,12,0,0">
-                  <WrapPanel.Style>
-                    <Style TargetType="WrapPanel">
+                <!-- DD326: Open with where it goes, the other links outlined beside it, and on the
+                     next line the addresses that only copy, each named by its service. -->
+                <StackPanel Margin="0,12,0,0">
+                  <StackPanel.Style>
+                    <Style TargetType="StackPanel">
                       <Style.Triggers>
                         <DataTrigger Binding="{Binding Head.AnyUp}" Value="False">
                           <Setter Property="Opacity" Value="0.5" />
                         </DataTrigger>
                       </Style.Triggers>
                     </Style>
-                  </WrapPanel.Style>
-                  <Button Content="{Binding Head.OpenLabel}" ContentTemplate="{StaticResource OpenContent}" Tag="{Binding Head.OpenLink.Url}" Click="OpenPort"
-                          ToolTip="{Binding Head.OpenLink.Url}" IsEnabled="{Binding Head.CanOpen}"
-                          Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
-                          Margin="0,0,6,6" MinWidth="0"
-                          Visibility="{Binding Head.ShowsOpen, Converter={StaticResource Shown}}" />
-                  <ItemsControl ItemsSource="{Binding CardLinks}" ItemTemplate="{StaticResource EndpointChip}">
+                  </StackPanel.Style>
+                  <WrapPanel>
+                    <Button Content="{Binding Head}" ContentTemplate="{StaticResource OpenWithHost}"
+                            Tag="{Binding Head.OpenLink.Url}" Click="OpenPort"
+                            ToolTip="{Binding Head.OpenLink.Url}" IsEnabled="{Binding Head.CanOpen}"
+                            Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
+                            Margin="0,0,6,6" MinWidth="0"
+                            Visibility="{Binding Head.ShowsOpen, Converter={StaticResource Shown}}" />
+                    <ItemsControl ItemsSource="{Binding CardOpenLinks}" ItemTemplate="{StaticResource CardLink}">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                    <!-- DD298: past three links, the rest are behind this menu. -->
+                    <Button Content="{Binding Head.LinkMenuLabel}" Tag="{Binding Head}" Click="OpenLinkMenu"
+                            Style="{DynamicResource RowAction}" Margin="0,0,6,6" ToolTip="Every link"
+                            Visibility="{Binding Head.HasLinkMenu, Converter={StaticResource Shown}}" />
+                  </WrapPanel>
+                  <ItemsControl ItemsSource="{Binding CardCopyLinks}" ItemTemplate="{StaticResource CardCopy}">
                     <ItemsControl.ItemsPanel>
                       <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                   </ItemsControl>
-                  <!-- DD298: past three links, the rest are behind this menu. -->
-                  <Button Content="{Binding Head.LinkMenuLabel}" Tag="{Binding Head}" Click="OpenLinkMenu"
-                          Style="{DynamicResource RowAction}" Margin="0,0,6,6" ToolTip="Every link"
-                          Visibility="{Binding Head.HasLinkMenu, Converter={StaticResource Shown}}" />
-                </WrapPanel>
+                </StackPanel>
+
+                <!-- DD326: the services under a rule. -->
+                <Border Margin="0,6,0,0" BorderThickness="0,1,0,0"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" />
 
                 <!-- DD298: a large project's health bar, one shape per container and the problems
                      last, then only the services that need attention, and Show all. -->
@@ -721,24 +801,38 @@
                     </ItemsControl.ItemTemplate>
                   </ItemsControl>
                 </DockPanel>
+                <!-- DD326: one row per service: its state's shape and colour, its title and image,
+                     and at the right its port in mono and its state word in that same colour. -->
                 <ItemsControl ItemsSource="{Binding CardServices}" Margin="0,8,0,0">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                      <TextBlock FontSize="12" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
-                                 ToolTip="{Binding ChipEvidence}"><Run Text="{Binding ChipShape, Mode=OneWay}"
-                                 FontSize="10" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />  <Run
-                                 Text="{Binding Title, Mode=OneWay}"
-                                 Foreground="{DynamicResource TextFillColorPrimaryBrush}" />  <Run
-                                 Text="{Binding Image, Mode=OneWay}"
-                                 Foreground="{DynamicResource TextFillColorTertiaryBrush}" /></TextBlock>
+                      <DockPanel Margin="0,3,0,3" ToolTip="{Binding ChipEvidence}">
+                        <TextBlock DockPanel.Dock="Left" Text="{Binding ChipShape}" FontSize="12" Width="14"
+                                   Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{Binding ShapeInk}" />
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding State}" FontSize="12" MinWidth="56"
+                                   Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{Binding ShapeInk}" />
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding FirstPort}" FontSize="12"
+                                   FontFamily="{x:Static ui:Palette.Mono}" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"><Run
+                                   Text="{Binding Title, Mode=OneWay}"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />  <Run
+                                   Text="{Binding Image, Mode=OneWay}"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}" /></TextBlock>
+                      </DockPanel>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
                 <!-- The one verb, which is the accent button only when it is Start (spec section 5,
                      fixed), because starting is what a stopped card is opened for. No Restart beside
-                     it: DD36 keeps a row to its one verb, and the project's page is a click away. -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                     it: DD36 keeps a row to its one verb, and the project's page is a click away.
+                     DD326: the project's uptime on the left of the footer. -->
+                <DockPanel Margin="0,12,0,0">
+                <TextBlock Text="{Binding Uptime}" FontSize="12" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
                   <TextBlock Text="{Binding Head.Pending}" VerticalAlignment="Center" Margin="0,0,8,0"
                              Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                              Visibility="{Binding Head.IsPending, Converter={StaticResource Shown}}" />
@@ -750,6 +844,7 @@
                           MinWidth="0"
                           Visibility="{Binding Head.CanStart, Converter={StaticResource Shown}}" />
                 </StackPanel>
+                </DockPanel>
               </StackPanel>
             </Border>
           </DataTemplate>
