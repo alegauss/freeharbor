@@ -8,7 +8,6 @@
 
 ## Block C — The window (claude-tray's elements)
 
-- 🛠 **DD333** (deps: DD330 ✅) **The edit dialog is narrower than spec, picks an icon from a dropdown, and lacks the board's rail tiles and Editing strip** — The dialog's header, Editing strip, preview panel and footer still differ from the board, and the colour swatches await a decision. → §DD333
 - 📋 **DD334** (deps: —) **A database's published port resolves to an http:// link, so the edit dialog offers http://localhost:5432** — The resolver makes every published TCP port a web link, though PortLink already knows which ports do not speak HTTP. → §DD334
 
 ## Block D — Container operations (what a user came to do)

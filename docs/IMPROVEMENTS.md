@@ -70,23 +70,6 @@ than a task because adopting it reverses a recorded decision:
 If adopted, the spec's section 7 "As built" paragraph is rewritten in the same commit,
 since it would no longer be true.
 
-### §DD333 The edit dialog, as the board draws it
-
-Held against `edit-project.png` with `--capture-window <png> containers --fixture
---edit=sample`, and `--edit=sample/db` for `edit-container.png`. The width, the rail,
-the icon row and the labels landed (spec section 6, as built DD333). What is left:
-
-1. **Header.** The compose path in mono, `+ compose.override.yaml` per further file, then Copy path and Open folder on that line, not at the far right.
-2. **Editing strip.** In the form column, not the header: `EDITING`, a kind chip (`Compose project`, `Service`, `Container`), the name in bold mono, then `files … working dir … services n` in mono.
-3. **Preview.** A bordered panel captioned `PREVIEW` on its left.
-4. **Footer.** A save glyph before the sentence, and `Save to` with its dropdown beside Cancel and Save where more than one place can be written.
-
-Open choice: the board's colour swatches set a tile hue, which no details source carries
-(the hue is hashed from the name). Adding it is a new field in all three sources;
-leaving it out is a departure for spec section 9.
-
-Kept: the Links field (DD296), which the board does not draw.
-
 ### §DD334 Ports that are not web links
 
 `ContainerDetails.Links` turns every published TCP port into `http://localhost:<port>`,
