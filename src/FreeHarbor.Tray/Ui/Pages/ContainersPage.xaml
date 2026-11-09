@@ -240,22 +240,72 @@
       Background="Transparent"
       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
 <ListView.ItemContainerStyle>
+    <!-- DD324. No item chrome of its own: a project is one card drawn across its rows, and the Fluent
+         item's margin and rounded highlight would cut that card into strips. The row's own border
+         below is the card, and it carries the hover. Nothing reads the list's selection. -->
     <Style TargetType="ListViewItem">
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <ContentPresenter />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 </ListView.ItemContainerStyle>
 <ListView.ItemTemplate>
     <DataTemplate>
+      <!-- DD324. The group card (DD34 section 3: card fill, card stroke, 8 px radius), drawn a row at a
+           time: the first row of a card has its top corners, the last its bottom ones and the gap
+           under it, and every row's top edge is the hairline between it and the one above. A row
+           outside any card is the plain list it always was. -->
+      <Border Margin="{Binding CardGap}" CornerRadius="{Binding CardCorners}"
+              BorderThickness="{Binding CardEdges}" Padding="10,8"
+              BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Setter Property="Background" Value="Transparent" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding InCard}" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
       <StackPanel>
-        <!-- DD297. The Standalone containers block's heading, drawn above the first container started
-             without compose. On that row and not a row of its own, because a heading has no columns
+        <!-- DD297, DD324. The Standalone containers block's header strip, drawn above the first
+             container started without compose: a tile, the heading, its count and one line of what
+             the block is. On that row and not a row of its own, because a heading has no columns
              and no verbs, and a third kind of row is what DD111's member sets would have to answer
-             for. -->
-        <TextBlock Text="Standalone containers" Margin="0,10,0,10" FontSize="12"
-                   FontWeight="SemiBold"
-                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                   Visibility="{Binding StartsStandalone, Converter={StaticResource Shown}}" />
+             for. The rule under it reaches the card's edges through the row's padding. -->
+        <Border Margin="-10,-8,-10,8" Padding="10,8" BorderThickness="0,0,0,1"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                Visibility="{Binding StartsStandalone, Converter={StaticResource Shown}}">
+            <DockPanel>
+                <Border DockPanel.Dock="Left" Width="40" Height="40" CornerRadius="10"
+                        Margin="0,0,10,0" VerticalAlignment="Center"
+                        Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                    <TextBlock Text="&#xE7B8;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}"><Run
+                               Text="Standalone containers" FontWeight="SemiBold" />  <Run
+                               Text="{Binding StandaloneCount, Mode=OneWay}" FontSize="12"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" /></TextBlock>
+                    <TextBlock Text="Started with docker run, outside any compose project. Each row is its own unit."
+                               FontSize="12" TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
         <Grid>
             <Grid.ColumnDefinitions>
                 <!-- Character for character the same as HeaderRow's, and a test asserts
@@ -274,22 +324,33 @@
                  the STATE caption is the one thing L3 is about. A DockPanel rather than a nested
                  Grid — nesting one would add a third ColumnDefinitions block to this file and the
                  guard that pairs a header with its rows counts them. -->
-            <DockPanel Grid.Column="0" Margin="{Binding Indent}" LastChildFill="True" Panel.ZIndex="1">
+            <!-- DD324. On a header the cell spans NAME to STATUS, so its description runs under the
+                 title to where Open is: a header has no image or status of its own to share the row
+                 with. Everything on a header sits at the top, so the chip in STATE stays beside the
+                 title and clear of the description under it. -->
+            <DockPanel Grid.Column="0" Grid.ColumnSpan="{Binding NameSpan}" Margin="{Binding Indent}"
+                       LastChildFill="True" Panel.ZIndex="1">
                 <!-- The affordance: a row that opens into containers and one that does not must not
                      look the same. The glyph pair and the font are claude-tray's, because that
                      window is this project's reference and a second vocabulary reads as a second
                      application. -->
                 <TextBlock DockPanel.Dock="Left" Text="{Binding Chevron}" IsHitTestVisible="False"
-                           FontFamily="Segoe MDL2 Assets" FontSize="9" Margin="0,1,8,0"
-                           VerticalAlignment="Center"
+                           FontFamily="Segoe MDL2 Assets" FontSize="9" Margin="0,5,8,0"
+                           VerticalAlignment="{Binding TitleAlignment}"
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                            Visibility="{Binding IsProject, Converter={StaticResource Shown}}" />
+                <!-- DD324. A service inside a project leads with its state's shape, in its chip's
+                     colour: the tile belongs to the header above it. -->
+                <TextBlock DockPanel.Dock="Left" Text="{Binding ChipShape}" IsHitTestVisible="False"
+                           FontSize="14" Width="14" Margin="0,0,12,0" VerticalAlignment="Center"
+                           Foreground="{Binding ShapeInk}"
+                           Visibility="{Binding HasStateShape, Converter={StaticResource Shown}}" />
                 <!-- DD294. The icon tile: a glyph for what the image is, a picture from disk, or the
                      title's first letter, white on the hue hashed from the name. Opaque where the
                      chips are tints, because white on a tint vanishes on the light theme. 40 px is
                      the spec's size for the list (docs/specs/DD294-containers-redesign.md, §1). -->
                 <Border DockPanel.Dock="Left" Width="40" Height="40" CornerRadius="10"
-                        Margin="0,0,10,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                        Margin="0,0,10,0" VerticalAlignment="{Binding TitleAlignment}" IsHitTestVisible="False"
                         Background="{Binding TileFill}"
                         Visibility="{Binding HasTile, Converter={StaticResource Shown}}">
                     <Grid>
@@ -305,7 +366,7 @@
                 </Border>
                 <!-- The title over what it is for. The container's own name, which the title
                      replaced, is the tooltip, so nothing the daemon calls it is lost. -->
-                <StackPanel VerticalAlignment="Center" ToolTip="{Binding NameEvidence}">
+                <StackPanel VerticalAlignment="{Binding TitleAlignment}" ToolTip="{Binding NameEvidence}">
                     <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                                IsHitTestVisible="{Binding IsContainer}"
@@ -362,7 +423,7 @@
                  project's count, in the tone of what is under it. Of the containers under it and not
                  of the project as the daemon knows it: the filter can hide some, and a count a reader
                  cannot check against what is on screen is worse than none. -->
-            <Border Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Center"
+            <Border Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="{Binding TitleAlignment}"
                     CornerRadius="5" Padding="8,2" Background="{Binding ChipFill}"
                     ToolTip="{Binding ChipEvidence}">
                 <TextBlock FontSize="12" TextTrimming="CharacterEllipsis"
@@ -377,7 +438,7 @@
             <!-- DD297. The Open button, on a header and on a container outside compose, then the port
                  chips. Open is disabled rather than hidden while nothing is running, so the place it
                  sits does not move when a project stops. -->
-            <WrapPanel Grid.Column="4" VerticalAlignment="Center">
+            <WrapPanel Grid.Column="4" VerticalAlignment="{Binding TitleAlignment}">
                 <Button Content="{Binding OpenLabel}" Tag="{Binding OpenLink.Url}" Click="OpenPort"
                         ToolTip="{Binding OpenLink.Url}" IsEnabled="{Binding CanOpen}"
                         Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
@@ -423,7 +484,7 @@
             <!-- The four verbs, or the one word that says the click landed. Optimistic:
                  the row goes pending on press and the event stream is what takes it
                  back out, because a stop can take the daemon's full ten seconds. -->
-            <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="{Binding TitleAlignment}">
                 <!-- First, and offered in every state including pending: the log is the
                      one artefact a container that exited two seconds in leaves, and
                      reading it changes nothing that could be in flight. -->
@@ -503,6 +564,7 @@
                    FontSize="12" Foreground="{x:Static ui:Palette.DangerBrush}"
                    Visibility="{Binding HasFailure, Converter={StaticResource Shown}}" />
       </StackPanel>
+      </Border>
     </DataTemplate>
 </ListView.ItemTemplate>
         </ListView>

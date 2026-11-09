@@ -188,6 +188,20 @@ internal static class Palette
         _ => StoppedBrush,
     };
 
+    /// <summary>
+    /// A row's state shape in its tone (DD324): the engine dot's green, amber and grey, and Danger for
+    /// a failure, so the shape and the dot are one vocabulary.
+    /// </summary>
+    /// <param name="tone">What the row's chip asserts.</param>
+    /// <returns>The brush.</returns>
+    public static Brush ToneInk(RowTone tone) => tone switch
+    {
+        RowTone.Good => RunningBrush,
+        RowTone.Warn => StartingBrush,
+        RowTone.Bad => DangerBrush,
+        _ => StoppedBrush,
+    };
+
     private static readonly Brush RunningBrush = Frozen(new SolidColorBrush(Running));
     private static readonly Brush StartingBrush = Frozen(new SolidColorBrush(Starting));
     private static readonly Brush StoppedBrush = Frozen(new SolidColorBrush(Stopped));

@@ -154,8 +154,74 @@ public sealed record ContainerRow(
         ? Name
         : $"{Name} ({Image})";
 
-    /// <summary>Whether the row has an icon tile: every container and every project header.</summary>
-    public bool HasTile => Details is not null && !IsTier;
+    /// <summary>Whether the row has an icon tile: every project header and every standalone container.</summary>
+    /// <remarks>
+    /// Not a service inside a project (DD324): its project's header carries the tile, and a 40 px
+    /// square on every row under it took the width the title and description needed.
+    /// </remarks>
+    public bool HasTile => Details is not null && !IsTier && !HasStateShape;
+
+    /// <summary>
+    /// Whether the row leads with its state's shape instead of a tile: a service inside a project
+    /// (DD324, spec section 2's "state shape, title over description").
+    /// </summary>
+    public bool HasStateShape => IsContainer && Project is not null;
+
+    /// <summary>What the state shape is drawn in: its tone's colour, not the chip's text colour.</summary>
+    public System.Windows.Media.Brush? ShapeInk => HasStateShape ? Palette.ToneInk(Tone) : null;
+
+    /// <summary>
+    /// Whether the row is drawn inside a group card (DD324): every row of a project, and every
+    /// standalone container once a project sits above them.
+    /// </summary>
+    public bool InCard { get; init; }
+
+    /// <summary>Whether the row opens its card: a project's header, or the first standalone container.</summary>
+    public bool CardStarts { get; init; }
+
+    /// <summary>Whether the row closes its card: the last row drawn for a project or the standalone block.</summary>
+    public bool CardEnds { get; init; }
+
+    /// <summary>The card's corners on this row: rounded where the card starts and where it ends.</summary>
+    public System.Windows.CornerRadius CardCorners => InCard
+        ? new System.Windows.CornerRadius(CardStarts ? 8 : 0, CardStarts ? 8 : 0, CardEnds ? 8 : 0, CardEnds ? 8 : 0)
+        : default;
+
+    /// <summary>
+    /// The card's stroke on this row. The top edge is drawn on every row, so on a row below the first
+    /// it is the hairline between the two; the bottom edge only where the card ends.
+    /// </summary>
+    public System.Windows.Thickness CardEdges => InCard
+        ? new System.Windows.Thickness(1, 1, 1, CardEnds ? 1 : 0)
+        : default;
+
+    /// <summary>The space under a card, so two cards read as two groups.</summary>
+    public System.Windows.Thickness CardGap => InCard && CardEnds
+        ? new System.Windows.Thickness(0, 0, 0, 12)
+        : default;
+
+    /// <summary>
+    /// The standalone block's count, <c>n of m running</c>, carried by the row that opens the block
+    /// (DD324), where its header strip is drawn.
+    /// </summary>
+    public string StandaloneCount { get; init; } = "";
+
+    /// <summary>
+    /// Whether the description runs under the title across NAME to STATUS instead of stopping at NAME
+    /// (DD324): a header's, which has no image or status of its own to share the width with.
+    /// </summary>
+    public bool SpansDescription => IsProject && HasDescription;
+
+    /// <summary>How many columns the name cell covers: four on a header with a description, else one.</summary>
+    public int NameSpan => SpansDescription ? 4 : 1;
+
+    /// <summary>
+    /// Where the row's cells sit: at the top on a header with a description, so the chip stays beside
+    /// the title and clear of the description under it, and centred on every other row.
+    /// </summary>
+    public System.Windows.VerticalAlignment TitleAlignment => SpansDescription
+        ? System.Windows.VerticalAlignment.Top
+        : System.Windows.VerticalAlignment.Center;
 
     /// <summary>The tile's hue.</summary>
     public System.Windows.Media.Brush? TileFill =>
@@ -732,6 +798,10 @@ public sealed record ContainerRow(
                 // its project file rather than invited to be.
                 nameof(PortChips), nameof(StartsStandalone), nameof(InvitesDetails),
 
+                // DD324: a service leads with its state's shape, and the standalone block's count is
+                // carried by the container that opens it.
+                nameof(HasStateShape), nameof(ShapeInk), nameof(StandaloneCount),
+
                 // DD295: a header draws its project's details from its own Details, so the copy each
                 // container carries for it is a container's alone.
                 nameof(ProjectDetails),
@@ -788,6 +858,11 @@ public sealed record ContainerRow(
 
                 // DD299: a header's title opens its project's page, and a standalone container's its own.
                 nameof(OpensDetail), nameof(TitleIsText),
+
+                // DD324: both are drawn inside a group card, and where a description goes differs.
+                nameof(InCard), nameof(CardStarts), nameof(CardEnds), nameof(CardCorners),
+                nameof(CardEdges), nameof(CardGap), nameof(SpansDescription), nameof(NameSpan),
+                nameof(TitleAlignment),
             };
     }
 
@@ -912,15 +987,37 @@ public sealed record ContainerRow(
         // own, each half in the sort's order. The block has a heading only where there is a project
         // above it to be told apart from; a machine running no compose project is the flat list it
         // always was.
-        var projects = sorted.Where(unit => unit.Leads.Project is not null).SelectMany(unit => unit.Draws).ToList();
+        //
+        // DD324: and each of those is one card, a project's header with every row drawn under it, so
+        // the group reads as one thing rather than loose rows under a strip. The standalone block is
+        // a card only where it has a heading, for the same reason it has one.
+        var projects = sorted.Where(unit => unit.Leads.Project is not null)
+            .SelectMany(unit => Carded(unit.Draws))
+            .ToList();
         var standalone = sorted.Where(unit => unit.Leads.Project is null).Select(unit => unit.Leads).ToList();
         if (projects.Count > 0 && standalone.Count > 0)
         {
-            standalone[0] = standalone[0] with { StartsStandalone = true };
+            var running = standalone.Count(row => row.IsRunning).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var total = standalone.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            standalone = [.. Carded(standalone)];
+            standalone[0] = standalone[0] with
+            {
+                StartsStandalone = true,
+                StandaloneCount = $"{running} of {total} running",
+            };
         }
 
         return [.. projects, .. standalone];
     }
+
+    /// <summary>Rows drawn as one card: the first opens it and the last closes it (DD324).</summary>
+    private static IEnumerable<ContainerRow> Carded(IReadOnlyList<ContainerRow> rows) =>
+        rows.Select((row, index) => row with
+        {
+            InCard = true,
+            CardStarts = index == 0,
+            CardEnds = index == rows.Count - 1,
+        });
 
     /// <summary>The key a tier's fold is remembered by: its project and its name.</summary>
     /// <param name="project">The project.</param>

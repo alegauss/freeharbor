@@ -91,6 +91,21 @@ As built (DD297):
 - The Standalone heading appears only when a project sits above it. A machine with no
   compose project is the flat list it always was.
 
+As built (DD324):
+
+- Each project, and the standalone block, is one card drawn a row at a time: the first
+  row has the top corners, the last the bottom ones and a 12 px gap, and each row's top
+  stroke is the divider above it. The list's items lose the Fluent item chrome so the rows
+  touch, and the card carries the hover. No project, no card.
+- A header's name cell spans NAME to STATUS and its cells sit at the top, so the
+  description runs under the title and the chip in STATE stays beside the title.
+- A service inside a project leads with its state shape in the engine dot's colours; the
+  tile belongs to the header and to standalone rows.
+- The standalone block opens with a strip: a box glyph tile, the heading, `n of m
+  running` and one line saying what the block is.
+- The card's right edge meets the page edge and is lost there with the filter box's; the
+  page's right inset is DD328's.
+
 ## 3. A large project (DD298)
 
 What changes when a project has many services or many links. Under five services and

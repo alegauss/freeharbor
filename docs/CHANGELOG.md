@@ -183,6 +183,7 @@
 - ✅ **DD320** **At the window's default width the containers toolbar clips the filter box and a header chip trims its count** — At the default width the counts and chips sit left, the switch and filter right, and a header chip says its count whole.
 - ✅ **DD323** **--capture-window --detail= photographs the list, so the detail page cannot be compared with its board** — The page keeps a key asked for before the first refresh, and a capture whose --detail opens nothing exits 2 naming the project, writing no file.
 - ✅ **DD329** **The fixture has one three-service project with no icons, named links or tiers, so most boards cannot be captured** — --fixture captures four iconed projects, named Open links, and a 20-service Platform in four tiers with two failures (design recorded in `docs/specs/DD294-containers-redesign.md`).
+- ✅ **DD324** **In the list a project is loose rows under a header, not one bordered group, and its description is cut at NAME** — Each project and the standalone block is one card with dividers, and a header's description runs under its title to PORTS (design recorded in `docs/specs/DD294-containers-redesign.md`).
 
 ## Block D — Container operations (what a user came to do)
 

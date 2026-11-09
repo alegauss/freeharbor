@@ -1,5 +1,6 @@
 using FreeHarbor.Core.Agent;
 using FreeHarbor.Core.Api;
+using FreeHarbor.Core.Details;
 using FreeHarbor.Tray.Ui;
 using Xunit;
 
@@ -367,6 +368,83 @@ public sealed class ContainerGroupTests
 
         Assert.Equal(["compose:shop", "shop-api-1-id", "a-loose-id", "b-loose-id"], shown.Select(row => row.Id));
         Assert.Equal(["a-loose-id"], shown.Where(row => row.StartsStandalone).Select(row => row.Id));
+    }
+
+    [Fact]
+    public void Each_project_and_the_standalone_block_is_one_card()
+    {
+        // DD324. A card opens on a project's header, closes on the last row drawn for it, and the
+        // standalone block is a card of its own, so the list reads as groups and not loose rows.
+        var shown = Grouped(Rows(
+            Summary("shop-api-1", project: "shop"),
+            Summary("shop-db-1", project: "shop"),
+            Summary("wiki-web-1", "exited", "wiki"),
+            Summary("a-loose"),
+            Summary("b-loose", "exited")));
+
+        Assert.All(shown, row => Assert.True(row.InCard));
+        Assert.Equal(
+            ["compose:shop", "compose:wiki", "a-loose-id"],
+            shown.Where(row => row.CardStarts).Select(row => row.Id));
+        Assert.Equal(
+            ["shop-db-1-id", "wiki-web-1-id", "b-loose-id"],
+            shown.Where(row => row.CardEnds).Select(row => row.Id));
+
+        // Rounded only where a card opens and closes, and a gap only under the last row.
+        Assert.Equal(new System.Windows.CornerRadius(8, 8, 0, 0), shown[0].CardCorners);
+        Assert.Equal(default, shown[1].CardCorners);
+        Assert.Equal(new System.Windows.CornerRadius(0, 0, 8, 8), shown[2].CardCorners);
+        Assert.Equal(default, shown[1].CardGap);
+        Assert.Equal(12, shown[2].CardGap.Bottom);
+
+        // The standalone block's strip counts what it holds.
+        Assert.Equal("1 of 2 running", shown.Single(row => row.StartsStandalone).StandaloneCount);
+    }
+
+    [Fact]
+    public void A_machine_with_no_project_draws_no_card()
+    {
+        // Only where there is a project to be told apart from, for the reason the Standalone heading
+        // appears only then: a machine running no compose project is the flat list it always was.
+        var shown = Grouped(Rows(Summary("a-loose"), Summary("b-loose")));
+
+        Assert.All(shown, row => Assert.False(row.InCard));
+        Assert.All(shown, row => Assert.Equal(default, row.CardEdges));
+    }
+
+    [Fact]
+    public void A_service_leads_with_its_state_shape_and_its_header_with_the_tile()
+    {
+        // DD324, spec section 2. A tile on every row under a project took the width the title and
+        // description needed; the header carries it, and a standalone container keeps its own.
+        var shown = Grouped(Rows(Summary("shop-api-1", project: "shop"), Summary("a-loose")));
+        var header = shown[0];
+        var service = shown[1];
+        var loose = shown[2];
+
+        Assert.True(header.HasTile);
+        Assert.False(header.HasStateShape);
+        Assert.True(service.HasStateShape);
+        Assert.False(service.HasTile);
+        Assert.True(loose.HasTile);
+        Assert.False(loose.HasStateShape);
+    }
+
+    [Fact]
+    public void A_header_description_spans_to_the_ports_and_a_row_description_stays_in_its_cell()
+    {
+        // DD324. A header has no image or status cells, so its description runs NAME to STATUS
+        // instead of being cut at NAME, and its cells sit at the top beside the title.
+        var described = new ResolvedDetails(
+            "Storefront", "Shop API, admin panel and the Postgres behind them",
+            new DetailIcon(IconKind.Monogram, "S"), 0, [], null, null);
+        var header = ContainerRow.ProjectHeader("shop", [], collapsed: false) with { Details = described };
+        var service = Grouped(Rows(Summary("shop-api-1", project: "shop")))[1] with { Details = described };
+
+        Assert.Equal(4, header.NameSpan);
+        Assert.Equal(System.Windows.VerticalAlignment.Top, header.TitleAlignment);
+        Assert.Equal(1, service.NameSpan);
+        Assert.Equal(System.Windows.VerticalAlignment.Center, service.TitleAlignment);
     }
 
     [Fact]

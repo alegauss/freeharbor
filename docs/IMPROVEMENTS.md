@@ -74,20 +74,6 @@ tests fail together in one run only: a burst's shape.
 
 ## Block C — The window (claude-tray's elements)
 
-### §DD324 The list's group, as the board draws it
-
-Compared at the same scale, `--capture-window containers --fixture` against
-`docs/specs/DD294-containers-redesign/list.png`. Tile sizes already match the spec (40
-px), so what differs is composition.
-
-1. Each project, and the Standalone block, is one GroupCard (DD34 section 3: card fill, card stroke, 8 px radius) holding the header and its rows, with a hairline divider between rows. Today the header and rows sit loose on the page background.
-2. The header's description spans from the title to the verbs, because a header has no image, state or port cells to share the row with. Today it is clipped to the NAME column ("Shop API, the wor...").
-3. A service row inside a project leads with its state shape (spec section 2: "State shape, title over description, image..."), not a 40 px tile. The tile belongs to the header and to standalone rows. Dropping it gives the title and description back the width they lose now ("Orders, carts and..."), and stops the title running into the IMAGE column with no gap.
-4. The Standalone block gets the same header strip as a project: tile, heading, `n of m running`, one line of description.
-
-Fixed by the spec and kept: the project chip in the STATE column (as built, DD297),
-verbs always drawn (section 9.1), the header strip folding (9.2).
-
 ### §DD325 Link chips and Open, as the board draws them
 
 Seen in the list, the cards and the detail page, so done once in the shared vocabulary
