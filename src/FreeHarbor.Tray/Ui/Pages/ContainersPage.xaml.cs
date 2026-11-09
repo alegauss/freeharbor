@@ -145,8 +145,12 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
         }
 
         _rows = rows;
+        _answered = true;
         Show();
     }
+
+    /// <summary>Whether a refresh has run, so an empty <see cref="_rows"/> means empty rather than not yet read.</summary>
+    private bool _answered;
 
     /// <summary>What the daemon last returned, before the sort and the filter are applied.</summary>
     /// <remarks>
@@ -354,10 +358,16 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
         var view = _detailKey is null ? null : DetailView.For(_detailKey, _rows);
 
         // What it was opened on went away (removed, or the engine stopped): back to the list, which
-        // says what is there now, rather than a page about nothing.
+        // says what is there now, rather than a page about nothing. Only once the engine has
+        // answered, though: a page asked for before the first refresh (a capture's --detail) has no
+        // rows to find it in yet, and forgetting it then drew the list where the page was asked for.
         if (view is null)
         {
-            _detailKey = null;
+            if (_answered)
+            {
+                _detailKey = null;
+            }
+
             _outputFor = null;
             Detail.Visibility = Visibility.Collapsed;
             Detail.DataContext = null;
@@ -457,6 +467,9 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     /// <summary>Open the detail page on a compose project by name, drawn on the next redraw.</summary>
     /// <param name="project">The project's compose name.</param>
     internal void OpenDetail(string project) => _detailKey = ContainerRow.ProjectId(project);
+
+    /// <summary>Whether the detail page is showing, so a capture can tell a name that opened nothing.</summary>
+    internal bool DetailShowing => Detail.Visibility == Visibility.Visible;
 
     /// <summary>Back to the list, at the scroll position it was left at: it was never torn down.</summary>
     private void CloseDetails(object sender, RoutedEventArgs e)

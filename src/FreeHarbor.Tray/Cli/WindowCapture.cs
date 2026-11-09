@@ -189,6 +189,20 @@ internal static class WindowCapture
         settle.Tick += (_, _) =>
         {
             settle.Stop();
+
+            // A --detail that named no project draws the list, and a picture of the list filed as the
+            // detail page is how a capture of the wrong screen went unnoticed: the compose name is
+            // asked for, and the title (which is what the page shows) silently matched nothing.
+            if (detail is { Length: > 0 } && !window.Containers.DetailShowing)
+            {
+                Console.Error.WriteLine(
+                    $"{CommandLine.ExecutableName}: no compose project is named {detail}, so there is no "
+                    + "detail page to capture. Name the project as compose does, not by its title");
+                code = Usage;
+                app.Shutdown();
+                return;
+            }
+
             try
             {
                 var (width, height) = Ui.WindowSnapshot.Save(window, outPath);

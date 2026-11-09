@@ -190,7 +190,8 @@ As built (DD299):
 - Recent output is read once, not followed (`tail` 200, newest 14 lines kept). Open log
   is the followed view.
 - `FreeHarbor.exe --capture-window <png> containers --fixture --detail=<project>`
-  photographs the page from the fixture.
+  photographs the page from the fixture. `<project>` is the compose name (`sample` in the
+  fixture), not the title, and a name that opens no page is refused (DD323).
 
 ## 5. The cards view and the switch (DD300)
 

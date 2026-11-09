@@ -181,6 +181,7 @@
 - ✅ **DD319** **A save of edited details fails now and then when Windows briefly holds the file just written** — The details store and the project file replace their file through a helper that waits out a brief lock before reporting failure (design recorded in `src/FreeHarbor.Core/Details/AtomicFile.cs`).
 - ✅ **DD301** **Nothing the user prefers can be set in the window, so where an edit is saved cannot be chosen at all** — A Settings destination chooses where edits are saved, lists the projects that differ, and the edit dialog opens on that choice (design recorded in `docs/specs/DD294-containers-redesign.md`).
 - ✅ **DD320** **At the window's default width the containers toolbar clips the filter box and a header chip trims its count** — At the default width the counts and chips sit left, the switch and filter right, and a header chip says its count whole.
+- ✅ **DD323** **--capture-window --detail= photographs the list, so the detail page cannot be compared with its board** — The page keeps a key asked for before the first refresh, and a capture whose --detail opens nothing exits 2 naming the project, writing no file.
 
 ## Block D — Container operations (what a user came to do)
 
