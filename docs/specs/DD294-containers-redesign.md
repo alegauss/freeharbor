@@ -220,6 +220,26 @@ As built (DD299):
   photographs the page from the fixture. `<project>` is the compose name (`sample` in the
   fixture), not the title, and a name that opens no page is refused (DD323).
 
+As built (DD328, header, banner and endpoints):
+
+- The header's verbs are Open, Restart, the one verb and the shared `⋯`. Edit details
+  moved into `⋯`, as it is everywhere else.
+- Each failure is a banner: Danger at low opacity under it, Danger as its stroke, the
+  triangle, the service in bold, the daemon's status, and its Start inside at the right.
+- An endpoint card reads `Label · service` in secondary text, then the URL (or the address
+  where it only copies) in accent mono, so what Copy takes is what is read. Open is the
+  accent button with its glyph.
+- Services and Recent output sit side by side. They use a two-column `UniformGrid`, not a
+  Grid, because a guard counts this file's `ColumnDefinitions`. Services is one bordered
+  list: each service's shape and state word in its tone's colour, its title over its
+  image, and Logs, which the board leaves out and the page keeps so every service's log
+  is one click away.
+- The rail marks the item the page is open on with the card's fill and stroke, writes a
+  project's count or a container's status under each title, colours each shape by its
+  tone, and shows `Filter` in its empty box.
+- The right edge the board review saw cut off was the capture's doing (`WindowSnapshot`
+  shifted every picture by the content's margin), fixed at the source.
+
 ## 5. The cards view and the switch (DD300)
 
 Board: [cards.png](DD294-containers-redesign/cards.png), exported with the Running filter

@@ -389,8 +389,13 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
         // the theme's chip, its refusals by id, and the wait its containers are under.
         Detail.DataContext = view with { Head = Dressed(view.Head) };
 
-        RailProjects.ItemsSource = DetailView.RailProjects(_rows, _railFilter);
-        RailStandalone.ItemsSource = DetailView.RailStandalone(_rows, _railFilter);
+        // DD328: the item the page is open on is marked, so the rail says where the reader is.
+        ContainerRow Marked(ContainerRow row) =>
+            string.Equals(DetailView.KeyFor(row), _detailKey, StringComparison.Ordinal)
+                ? row with { IsRailSelected = true }
+                : row;
+        RailProjects.ItemsSource = DetailView.RailProjects(_rows, _railFilter).Select(Marked).ToList();
+        RailStandalone.ItemsSource = DetailView.RailStandalone(_rows, _railFilter).Select(Marked).ToList();
 
         var output = view.OutputService;
         OutputOpenLog.Tag = output;

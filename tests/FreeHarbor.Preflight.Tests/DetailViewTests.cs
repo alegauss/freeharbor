@@ -227,6 +227,24 @@ public sealed class DetailViewTests
     }
 
     [Fact]
+    public void The_rail_writes_a_projects_count_and_a_containers_status_under_its_title()
+    {
+        // DD328, detail.png: under each rail title, how much of a project is up or what a container
+        // is doing, so the rail answers "which one is wrong" without opening anything.
+        var rows = Rows(
+            Summary("shop-web-1", project: "shop"),
+            Summary("shop-worker-1", "exited", "shop"),
+            Summary("loose"));
+
+        var project = Assert.Single(DetailView.RailProjects(rows, null));
+        var loose = Assert.Single(DetailView.RailStandalone(rows, null));
+
+        Assert.Equal(project.ChipWord, project.RailNote);
+        Assert.Contains("of", project.RailNote, StringComparison.Ordinal);
+        Assert.Equal("Up 4 minutes", loose.RailNote);
+    }
+
+    [Fact]
     public void A_stopped_cards_footer_says_how_long_it_has_been_down()
     {
         var card = Assert.Single(DetailView.Cards(Rows(Summary("wiki-web-1", "exited", "wiki")), ByState).Projects);

@@ -55,22 +55,6 @@ tests fail together in one run only: a burst's shape.
 
 ## Block C — The window (claude-tray's elements)
 
-### §DD328 The detail page, as the board draws it
-
-Against `docs/specs/DD294-containers-redesign/detail.png` and `--capture-window
-containers --fixture --detail=sample` (which DD323 made work).
-
-The right edge landed first, and it was the capture: `WindowSnapshot` drew every picture
-shifted right by the content's margin, so the page never lacked an inset. What is left:
-
-1. **Header verbs.** Open (accent, glyph, link name), Restart, the primary verb and `⋯` (the shared `RowOverflow` menu). Edit details moves into `⋯`, as everywhere else.
-2. **Failure banner.** A panel on a Danger-tinted fill with a Danger stroke: triangle, the service name in bold, the daemon's sentence, and the Start button inside it at the right. Today it is red text and a loose button.
-3. **Endpoints.** Each card leads with `Label · service` in secondary text, then the URL in accent mono (`http://localhost:2700/console`), then Open as the accent button and Copy. Today the second line is the bare address.
-4. **Services and Recent output** sit in two columns. Services is one bordered list of every service: state shape, title over image, the state word at the right.
-5. **Rail.** The open project's item is selected (card fill and stroke), each item has its count or status under the title, and its state shape takes its state colour. The filter box shows `Filter` as its placeholder.
-
-Kept: Back stays (as built DD299); memory and CPU stay out.
-
 ### §DD330 A capture for the edit dialog
 
 `--capture-window` photographs the main window and its destinations. Edit details

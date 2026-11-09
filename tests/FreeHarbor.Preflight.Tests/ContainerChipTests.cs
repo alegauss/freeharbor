@@ -129,9 +129,16 @@ public sealed class ContainerChipTests
         Assert.Contains("<ContextMenu x:Key=\"RowOverflow\"", markup, StringComparison.Ordinal);
         Assert.Contains("ContextMenu=\"{StaticResource RowOverflow}\"", markup, StringComparison.Ordinal);
 
+        // The row's own template, which is what this guards: the detail page's header draws Restart
+        // beside its one verb since DD328, as the board does, and that is a page and not a row.
+        var start = markup.IndexOf("<ListView.ItemTemplate>", StringComparison.Ordinal);
+        var end = markup.IndexOf("</ListView.ItemTemplate>", start, StringComparison.Ordinal);
+        Assert.True(start > 0 && end > start, "the list's row template is gone");
+        var row = markup[start..end];
+
         foreach (var moved in new[] { "Content=\"Shell\"", "Content=\"Restart\"", "Content=\"Remove\"" })
         {
-            Assert.DoesNotContain(moved, markup, StringComparison.Ordinal);
+            Assert.DoesNotContain(moved, row, StringComparison.Ordinal);
         }
     }
 

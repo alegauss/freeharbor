@@ -202,6 +202,20 @@ public sealed record ContainerRow(
         ? uri.Authority + uri.PathAndQuery.TrimEnd('/')
         : "";
 
+    /// <summary>
+    /// The row's tone as a colour, for a header and a container alike (DD328): what the detail page's
+    /// rail draws its shape in.
+    /// </summary>
+    public System.Windows.Media.Brush ToneInk => Palette.ToneInk(Tone);
+
+    /// <summary>
+    /// What the rail writes under a title (DD328): a project's count, a container's status.
+    /// </summary>
+    public string RailNote => IsProject ? ChipWord : Status;
+
+    /// <summary>Whether this is the item the detail page is open on, which the rail marks (DD328).</summary>
+    public bool IsRailSelected { get; init; }
+
     /// <summary>What the state shape is drawn in: its tone's colour, not the chip's text colour.</summary>
     public System.Windows.Media.Brush? ShapeInk => HasStateShape ? Palette.ToneInk(Tone) : null;
 
@@ -901,6 +915,9 @@ public sealed record ContainerRow(
                 nameof(InCard), nameof(CardStarts), nameof(CardEnds), nameof(CardCorners),
                 nameof(CardEdges), nameof(CardGap), nameof(SpansDescription), nameof(NameSpan),
                 nameof(TitleAlignment),
+
+                // DD328: the rail draws a project and a standalone container alike.
+                nameof(ToneInk), nameof(RailNote), nameof(IsRailSelected),
             };
     }
 

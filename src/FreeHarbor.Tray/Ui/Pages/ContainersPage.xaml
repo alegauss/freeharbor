@@ -271,9 +271,10 @@
                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                     Background="Transparent">
                 <Button.Template>
+                    <!-- DD328: the item the page is open on carries the card's fill and stroke. -->
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Hit" Background="{TemplateBinding Background}" CornerRadius="4"
-                                Padding="6,4">
+                                Padding="6,4" BorderThickness="1" BorderBrush="Transparent">
                             <ContentPresenter />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -281,12 +282,18 @@
                                 <Setter TargetName="Hit" Property="Background"
                                         Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
                             </Trigger>
+                            <DataTrigger Binding="{Binding IsRailSelected}" Value="True">
+                                <Setter TargetName="Hit" Property="Background"
+                                        Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+                                <Setter TargetName="Hit" Property="BorderBrush"
+                                        Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+                            </DataTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Button.Template>
                 <DockPanel>
                     <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="6" Margin="0,0,8,0"
-                            Background="{Binding TileFill}">
+                            VerticalAlignment="Center" Background="{Binding TileFill}">
                         <Grid>
                             <TextBlock Text="{Binding TileGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="11"
                                        Foreground="{x:Static ui:Palette.TileInk}"
@@ -297,12 +304,16 @@
                             <Image Source="{Binding TilePicture}" Width="16" Height="16" Stretch="Uniform" />
                         </Grid>
                     </Border>
-                    <TextBlock DockPanel.Dock="Right" Text="{Binding ChipShape}" FontSize="10"
+                    <!-- DD328: the shape in its state's colour, and under the title the count or status. -->
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding ChipShape}" FontSize="11"
                                VerticalAlignment="Center" ToolTip="{Binding ChipEvidence}"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"
-                               VerticalAlignment="Center"
-                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                               Foreground="{Binding ToneInk}" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                        <TextBlock Text="{Binding RailNote}" TextTrimming="CharacterEllipsis" FontSize="11"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    </StackPanel>
                 </DockPanel>
             </Button>
         </DataTemplate>
@@ -1041,9 +1052,26 @@
     <!-- The rail: compose projects, then standalone containers, so moving between pages does not go
          back through the list. Filled from code, from the rows in hand, on every redraw. -->
     <DockPanel DockPanel.Dock="Left" Width="230" Margin="10,0,10,10">
-      <TextBox x:Name="RailFilter" DockPanel.Dock="Top" Margin="0,0,0,12"
-               Style="{DynamicResource FilterBox}" HorizontalAlignment="Stretch" Width="Auto"
-               TextChanged="RailFilterChanged" ToolTip="Narrow the rail by name" />
+      <!-- DD328: the box says what it is for while it is empty, laid over it and never in it, so
+           nothing has to be cleared before typing. -->
+      <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+        <TextBox x:Name="RailFilter"
+                 Style="{DynamicResource FilterBox}" HorizontalAlignment="Stretch" Width="Auto"
+                 TextChanged="RailFilterChanged" ToolTip="Narrow the rail by name" />
+        <TextBlock Text="Filter" Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                   Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+          <TextBlock.Style>
+            <Style TargetType="TextBlock">
+              <Setter Property="Visibility" Value="Collapsed" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding Text, ElementName=RailFilter}" Value="">
+                  <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
+      </Grid>
       <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
           <TextBlock Text="COMPOSE PROJECTS" Margin="0,0,0,6" FontSize="11" FontWeight="SemiBold"
@@ -1075,19 +1103,24 @@
             <Image Source="{Binding Head.TilePicture}" Width="40" Height="40" Stretch="Uniform" />
           </Grid>
         </Border>
-        <!-- The verbs: Open, the one primary verb, and Edit details. The same handlers the list's
-             header uses, addressed to the same row, so the two places cannot do different things. -->
+        <!-- The verbs: Open, Restart, the one primary verb, and ⋯ (DD328), which holds Edit details as
+             it does everywhere else. The same handlers and the same menu the list's header uses,
+             addressed to the same row, so the two places cannot do different things. -->
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
           <Button Content="{Binding Head.OpenLabel}" ContentTemplate="{StaticResource OpenContent}" Tag="{Binding Head.OpenLink.Url}" Click="OpenPort"
                   ToolTip="{Binding Head.OpenLink.Url}" IsEnabled="{Binding Head.CanOpen}"
                   Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
                   Margin="0,0,6,0" MinWidth="0"
                   Visibility="{Binding Head.ShowsOpen, Converter={StaticResource Shown}}" />
+          <Button Content="Restart" Tag="{Binding Head}" Click="RestartContainer"
+                  Style="{DynamicResource RowAction}" IsEnabled="{Binding Head.CanRestart}" />
           <Button Content="{Binding Head.PrimaryVerb}" Tag="{Binding Head}" Click="PrimaryAction"
                   Style="{DynamicResource RowAction}"
                   Visibility="{Binding Head.HasPrimary, Converter={StaticResource Shown}}" />
-          <Button Content="Edit details…" Tag="{Binding Head}" Click="EditDetails"
-                  Style="{DynamicResource RowAction}" />
+          <Button Content="⋯" Click="OpenOverflow" Tag="{Binding Head}"
+                  Style="{DynamicResource RowAction}"
+                  ToolTip="Details, shell, restart, edit details and remove"
+                  ContextMenu="{StaticResource RowOverflow}" />
           <TextBlock Text="{Binding Head.Pending}" VerticalAlignment="Center"
                      Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                      Visibility="{Binding Head.IsPending, Converter={StaticResource Shown}}" />
@@ -1112,20 +1145,30 @@
         </StackPanel>
       </DockPanel>
 
-      <!-- One line per service that stopped and did not mean to: the daemon's own sentence, then the
-           one verb that answers it. -->
+      <!-- One banner per service that stopped and did not mean to (DD328): the service in bold, the
+           daemon's own sentence, and the one verb that answers it inside the banner. Danger at low
+           opacity under it and Danger as its stroke, so it reads as a failure on either theme with
+           no colour of its own. -->
       <ItemsControl ItemsSource="{Binding Problems}" Margin="0,16,0,0"
                     Visibility="{Binding HasProblems, Converter={StaticResource Shown}}">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
-            <DockPanel Margin="0,0,0,6">
-              <Button DockPanel.Dock="Right" Content="{Binding StartLabel}" Tag="{Binding Row}"
-                      Click="PrimaryAction" Style="{DynamicResource RowAction}"
-                      Visibility="{Binding Row.CanStart, Converter={StaticResource Shown}}" />
-              <TextBlock VerticalAlignment="Center" TextWrapping="Wrap"
-                         Foreground="{x:Static ui:Palette.DangerBrush}"><Run Text="▲" FontSize="10" /> <Run
-                         Text="{Binding Sentence, Mode=OneWay}" /></TextBlock>
-            </DockPanel>
+            <Grid Margin="0,0,0,8">
+              <Border CornerRadius="6" Opacity="0.12" Background="{x:Static ui:Palette.DangerBrush}" />
+              <Border CornerRadius="6" BorderThickness="1" Padding="12,8"
+                      BorderBrush="{x:Static ui:Palette.DangerBrush}">
+                <DockPanel>
+                  <Button DockPanel.Dock="Right" Content="{Binding StartLabel}" Tag="{Binding Row}"
+                          Click="PrimaryAction" Style="{DynamicResource RowAction}"
+                          Visibility="{Binding Row.CanStart, Converter={StaticResource Shown}}" />
+                  <TextBlock VerticalAlignment="Center" TextWrapping="Wrap"
+                             Foreground="{DynamicResource TextFillColorPrimaryBrush}"><Run Text="▲" FontSize="11"
+                             Foreground="{x:Static ui:Palette.DangerBrush}" />  <Run
+                             Text="{Binding Row.Title, Mode=OneWay}" FontWeight="SemiBold" />: <Run
+                             Text="{Binding Row.Status, Mode=OneWay}" /></TextBlock>
+                </DockPanel>
+              </Border>
+            </Grid>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
@@ -1143,18 +1186,20 @@
                     BorderThickness="1" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
               <StackPanel>
-                <TextBlock TextTrimming="CharacterEllipsis"
-                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"><Run
-                           Text="{Binding Label, Mode=OneWay}" /> <Run Text="·"
-                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" /> <Run
-                           Text="{Binding Service, Mode=OneWay}"
-                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" /></TextBlock>
-                <TextBlock Text="{Binding Address}" Margin="0,2,0,8" FontSize="12"
+                <!-- DD328: what it is and who serves it in secondary text, then the address itself in
+                     accent mono, the URL where there is one, so what Copy takes is what is read. -->
+                <TextBlock TextTrimming="CharacterEllipsis" FontSize="12"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"><Run
+                           Text="{Binding Label, Mode=OneWay}" /> · <Run
+                           Text="{Binding Service, Mode=OneWay}" /></TextBlock>
+                <TextBlock Text="{Binding CopyText}" Margin="0,4,0,8" FontSize="12"
+                           FontFamily="{x:Static ui:Palette.Mono}"
                            TextTrimming="CharacterEllipsis" ToolTip="{Binding CopyText}"
-                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                           Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
                 <StackPanel Orientation="Horizontal">
-                  <Button Content="Open" Tag="{Binding Url}" Click="OpenPort"
-                          Style="{DynamicResource RowAction}"
+                  <Button Content="Open" ContentTemplate="{StaticResource OpenContent}" Tag="{Binding Url}"
+                          Click="OpenPort" Style="{DynamicResource AccentButtonStyle}" FontSize="12"
+                          Padding="10,3" Margin="0,0,6,0" MinWidth="0"
                           Visibility="{Binding CanOpen, Converter={StaticResource Shown}}" />
                   <Button Content="Copy" Tag="{Binding CopyText}" Click="CopyAddress"
                           Style="{DynamicResource RowAction}" />
@@ -1165,36 +1210,46 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <TextBlock Text="SERVICES" Margin="0,14,0,8" FontSize="12" FontWeight="SemiBold"
+      <!-- DD328: Services and Recent output side by side, so the failing service's lines are in
+           view beside the list that says which one failed. A UniformGrid and not a Grid with
+           columns: the guard that pairs the list's header with its rows counts this file's
+           ColumnDefinitions blocks. -->
+      <UniformGrid Columns="2" Margin="0,14,0,0">
+      <StackPanel Margin="0,0,12,0">
+      <TextBlock Text="SERVICES" Margin="0,0,0,8" FontSize="12" FontWeight="SemiBold"
                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+      <!-- One bordered list: each service's shape in its colour, its title over its image, its state
+           word at the right in the same colour, and Logs. -->
+      <Border CornerRadius="6" BorderThickness="1" Padding="12,4"
+              BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+              Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
       <ItemsControl ItemsSource="{Binding Services}">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
-            <DockPanel Margin="0,0,0,8">
+            <DockPanel Margin="0,6" ToolTip="{Binding ChipEvidence}">
+              <TextBlock DockPanel.Dock="Left" Text="{Binding ChipShape}" Width="14" Margin="0,0,10,0"
+                         FontSize="12" VerticalAlignment="Center" Foreground="{Binding ToneInk}" />
               <Button DockPanel.Dock="Right" Content="Logs" Tag="{Binding}" Click="OpenLogs"
                       Style="{DynamicResource RowAction}" />
-              <Border DockPanel.Dock="Right" Margin="0,0,12,0" CornerRadius="5" Padding="8,2"
-                      VerticalAlignment="Center" Background="{Binding ChipFill}"
-                      ToolTip="{Binding ChipEvidence}">
-                <TextBlock FontSize="12" Foreground="{Binding ChipText}"><Run
-                           Text="{Binding ChipShape, Mode=OneWay}" FontSize="10" /> <Run
-                           Text="{Binding ChipWord, Mode=OneWay}" /></TextBlock>
-              </Border>
-              <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                         ToolTip="{Binding NameEvidence}"><Run Text="{Binding Title, Mode=OneWay}"
-                         Foreground="{DynamicResource TextFillColorPrimaryBrush}" />   <Run
-                         Text="{Binding Image, Mode=OneWay}"
-                         Foreground="{DynamicResource TextFillColorTertiaryBrush}" />   <Run
-                         Text="{Binding Status, Mode=OneWay}"
-                         Foreground="{DynamicResource TextFillColorSecondaryBrush}" /></TextBlock>
+              <TextBlock DockPanel.Dock="Right" Text="{Binding State}" Margin="12,0,10,0" FontSize="12"
+                         VerticalAlignment="Center" Foreground="{Binding ToneInk}" />
+              <StackPanel VerticalAlignment="Center" ToolTip="{Binding NameEvidence}">
+                <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                <TextBlock Text="{Binding Image}" TextTrimming="CharacterEllipsis" FontSize="12"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+              </StackPanel>
             </DockPanel>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
+      </Border>
+      </StackPanel>
 
+      <StackPanel>
       <!-- The last lines of the failing service, or of the first one when none failed, read once
            when the page opens on it. Open log is the live, followed view of the same stream. -->
-      <StackPanel Orientation="Horizontal" Margin="0,14,0,8">
+      <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
         <TextBlock x:Name="OutputCaption" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
         <Button x:Name="OutputOpenLog" Content="Open log" Click="OpenLogs" Margin="12,0,0,0"
@@ -1223,6 +1278,8 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </Border>
+      </StackPanel>
+      </UniformGrid>
     </StackPanel>
   </ScrollViewer>
   </DockPanel>
