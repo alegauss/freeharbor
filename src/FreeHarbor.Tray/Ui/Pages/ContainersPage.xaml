@@ -29,20 +29,23 @@
             <Setter Property="Margin" Value="0,0,6,0" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}" />
-            <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Template">
                 <Setter.Value>
+                    <!-- DD325: on the accent, tinted, as spec section 1's link chip is. The tint is the
+                         accent at low opacity under the text rather than a colour of its own, so it
+                         follows the system accent and both themes with no new token. -->
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Hit" Background="{TemplateBinding Background}"
-                                CornerRadius="4" Padding="{TemplateBinding Padding}">
-                            <TextBlock Text="{TemplateBinding Content}"
+                        <Grid>
+                            <Border x:Name="Hit" Background="{TemplateBinding Background}"
+                                    CornerRadius="4" Opacity="0.18" />
+                            <TextBlock Text="{TemplateBinding Content}" Margin="{TemplateBinding Padding}"
                                        Foreground="{TemplateBinding Foreground}" />
-                        </Border>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Hit" Property="Background"
-                                        Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+                                <Setter TargetName="Hit" Property="Opacity" Value="0.3" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -82,6 +85,16 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- DD325: what every Open button holds, the external-link glyph and the link's name, so the
+             list, the cards and the detail page cannot draw it three ways. -->
+        <DataTemplate x:Key="OpenContent">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                           Margin="0,0,6,0" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+            </StackPanel>
+        </DataTemplate>
 
         <!-- DD298, DD300: one endpoint as a chip, a link to open or an address to copy. Shared by a
              card's links and a large project's pinned ones, so the two cannot draw it differently. -->
@@ -439,7 +452,7 @@
                  chips. Open is disabled rather than hidden while nothing is running, so the place it
                  sits does not move when a project stops. -->
             <WrapPanel Grid.Column="4" VerticalAlignment="{Binding TitleAlignment}">
-                <Button Content="{Binding OpenLabel}" Tag="{Binding OpenLink.Url}" Click="OpenPort"
+                <Button Content="{Binding OpenLabel}" ContentTemplate="{StaticResource OpenContent}" Tag="{Binding OpenLink.Url}" Click="OpenPort"
                         ToolTip="{Binding OpenLink.Url}" IsEnabled="{Binding CanOpen}"
                         Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
                         Margin="0,0,6,0" MinWidth="0"
@@ -454,7 +467,18 @@
                 <Button Content="{Binding LinkMenuLabel}" Tag="{Binding}" Click="OpenLinkMenu"
                         Style="{DynamicResource RowAction}" ToolTip="Every link"
                         Visibility="{Binding HasLinkMenu, Converter={StaticResource Shown}}" />
+            <!-- DD325: a stopped container's chips are dimmed, not hidden, so the place they sit does
+                 not move and what it would serve is still read. -->
             <ItemsControl ItemsSource="{Binding PortChips}" VerticalAlignment="Center">
+                <ItemsControl.Style>
+                    <Style TargetType="ItemsControl">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsLive}" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ItemsControl.Style>
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
@@ -466,12 +490,12 @@
                              trigger per element and no converter. -->
                         <Grid>
                             <Button Content="{Binding Text}" Tag="{Binding Url}"
-                                    Click="OpenPort" ToolTip="{Binding Url}"
-                                    Style="{StaticResource PortLink}"
+                                    Click="OpenPort" ToolTip="{Binding LinkHint}"
+                                    Style="{StaticResource PortLink}" FontFamily="{x:Static ui:Palette.Mono}"
                                     Visibility="{Binding IsLink, Converter={StaticResource Shown}}" />
                             <Button Content="{Binding Text}" Tag="{Binding Address}"
                                     Click="CopyAddress" ToolTip="{Binding CopyHint}"
-                                    Style="{StaticResource PortCopy}"
+                                    Style="{StaticResource PortCopy}" FontFamily="{x:Static ui:Palette.Mono}"
                                     Visibility="{Binding IsCopy, Converter={StaticResource Shown}}" />
                             <TextBlock Text="{Binding Text}" Style="{StaticResource PortText}"
                                        Visibility="{Binding IsText, Converter={StaticResource Shown}}" />
@@ -663,7 +687,7 @@
                       </Style.Triggers>
                     </Style>
                   </WrapPanel.Style>
-                  <Button Content="{Binding Head.OpenLabel}" Tag="{Binding Head.OpenLink.Url}" Click="OpenPort"
+                  <Button Content="{Binding Head.OpenLabel}" ContentTemplate="{StaticResource OpenContent}" Tag="{Binding Head.OpenLink.Url}" Click="OpenPort"
                           ToolTip="{Binding Head.OpenLink.Url}" IsEnabled="{Binding Head.CanOpen}"
                           Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
                           Margin="0,0,6,6" MinWidth="0"
@@ -754,7 +778,7 @@
                   </Grid>
                 </Border>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                  <Button Content="{Binding OpenLabel}" Tag="{Binding OpenLink.Url}" Click="OpenPort"
+                  <Button Content="{Binding OpenLabel}" ContentTemplate="{StaticResource OpenContent}" Tag="{Binding OpenLink.Url}" Click="OpenPort"
                           ToolTip="{Binding OpenLink.Url}" IsEnabled="{Binding CanOpen}"
                           Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
                           Margin="0,0,6,0" MinWidth="0"
@@ -842,7 +866,7 @@
         <!-- The verbs: Open, the one primary verb, and Edit details. The same handlers the list's
              header uses, addressed to the same row, so the two places cannot do different things. -->
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
-          <Button Content="{Binding Head.OpenLabel}" Tag="{Binding Head.OpenLink.Url}" Click="OpenPort"
+          <Button Content="{Binding Head.OpenLabel}" ContentTemplate="{StaticResource OpenContent}" Tag="{Binding Head.OpenLink.Url}" Click="OpenPort"
                   ToolTip="{Binding Head.OpenLink.Url}" IsEnabled="{Binding Head.CanOpen}"
                   Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
                   Margin="0,0,6,0" MinWidth="0"

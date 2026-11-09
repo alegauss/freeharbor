@@ -158,6 +158,13 @@ internal static class Palette
     public static readonly System.Windows.Media.FontFamily Body =
         new("Segoe UI Variable Text, Segoe UI");
 
+    /// <summary>
+    /// The face an address is set in (DD325): a port chip reads as something to type, and a fixed
+    /// pitch keeps <c>:8080</c> and <c>:5432</c> the same width in a column.
+    /// </summary>
+    public static readonly System.Windows.Media.FontFamily Mono =
+        new("Cascadia Mono, Consolas, Courier New");
+
     /// <summary>Danger for anything that wants text.</summary>
     public static string DangerHex => $"#{DangerR:X2}{DangerG:X2}{DangerB:X2}";
 

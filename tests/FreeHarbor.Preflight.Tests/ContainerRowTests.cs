@@ -23,7 +23,9 @@ public sealed class ContainerRowTests
 
         Assert.True(link.IsLink);
         Assert.Equal("http://localhost:8080", link.Url);
-        Assert.Equal("8080->80/tcp", link.Text);
+        // DD325: the chip reads the host port, and the mapping is its tooltip.
+        Assert.Equal(":8080", link.Text);
+        Assert.Equal("8080->80/tcp", link.Mapping);
     }
 
     [Fact]
@@ -44,7 +46,8 @@ public sealed class ContainerRowTests
         var link = PortLink.From(Port(53, 5353, "udp"));
 
         Assert.False(link.IsLink);
-        Assert.Equal("5353->53/udp", link.Text);
+        Assert.Equal(":5353/udp", link.Text);
+        Assert.Equal("5353->53/udp", link.Mapping);
     }
 
     [Theory]
@@ -85,7 +88,7 @@ public sealed class ContainerRowTests
         var row = ContainerRow.From(container);
 
         Assert.Single(row.Ports);
-        Assert.Equal("8099->80/tcp", row.Ports[0].Text);
+        Assert.Equal("8099->80/tcp", row.Ports[0].Mapping);
     }
 
     // ---- the row ------------------------------------------------------------------------------

@@ -5,7 +5,10 @@ using FreeHarbor.Core.Engine;
 namespace FreeHarbor.Tray.Ui;
 
 /// <summary>One published port, and where clicking it goes.</summary>
-/// <param name="Text">What the cell reads, e.g. <c>8080-&gt;80/tcp</c>.</param>
+/// <param name="Text">
+/// What the chip reads: the host port, <c>:8080</c>, with its protocol where that is not TCP
+/// (DD325); or, for a port only exposed, the daemon's own <c>6379/tcp</c>, since it has no host port.
+/// </param>
 /// <param name="Url">
 /// Where to open, or <see langword="null"/> when there is nowhere: a port the container exposes and
 /// nothing published has no address on this machine, so it is text and not a link.
@@ -18,6 +21,12 @@ public sealed record PortLink(string Text, string? Url)
     /// </summary>
     public string? Address { get; init; }
 
+    /// <summary>
+    /// What is bound to what, <c>8080-&gt;80/tcp</c>: the chip's text before DD325, which moved to its
+    /// tooltip so the chip reads as the address somebody types and still says what it maps to.
+    /// </summary>
+    public string Mapping { get; init; } = "";
+
     /// <summary>Whether this one can be clicked to open a browser.</summary>
     public bool IsLink => Url is not null;
 
@@ -25,7 +34,10 @@ public sealed record PortLink(string Text, string? Url)
     public bool IsCopy => Address is not null;
 
     /// <summary>What the copy chip's tooltip says, or empty where it does not copy.</summary>
-    public string CopyHint => Address is null ? "" : $"Copy {Address}";
+    public string CopyHint => Address is null ? "" : $"Copy {Address} · {Mapping}";
+
+    /// <summary>What the link chip's tooltip says: where it goes, and what is bound to what.</summary>
+    public string LinkHint => Url is null ? Mapping : $"{Url} · {Mapping}";
 
     /// <summary>Whether this one is plain text: exposed only, so there is nowhere to go.</summary>
     public bool IsText => !IsLink && !IsCopy;
@@ -52,21 +64,23 @@ public sealed record PortLink(string Text, string? Url)
     {
         ArgumentNullException.ThrowIfNull(port);
 
+        var mapping = port.ToString();
         if (port.PublicPort is not { } published)
         {
-            return new PortLink(port.ToString(), null);
+            return new PortLink(mapping, null) { Mapping = mapping };
         }
 
         // Only HTTP gets a link. A published UDP port, or a database's, is real and
         // http://localhost:x is not where it is: a link that opens a browser onto nothing is worse
         // than an address somebody can paste into the client that does speak it.
-        var http = port.Type.Equals("tcp", StringComparison.OrdinalIgnoreCase)
-            && !NotHttp.Contains(port.PrivatePort);
+        var tcp = port.Type.Equals("tcp", StringComparison.OrdinalIgnoreCase);
+        var http = tcp && !NotHttp.Contains(port.PrivatePort);
         var number = published.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var text = tcp ? $":{number}" : $":{number}/{port.Type}";
 
         return http
-            ? new PortLink(port.ToString(), $"http://localhost:{number}")
-            : new PortLink(port.ToString(), null) { Address = $"localhost:{number}" };
+            ? new PortLink(text, $"http://localhost:{number}") { Mapping = mapping }
+            : new PortLink(text, null) { Address = $"localhost:{number}", Mapping = mapping };
     }
 }
 
@@ -1244,7 +1258,8 @@ public sealed record ContainerRow(
     private static IEnumerable<ContainerRow> Kept(IEnumerable<ContainerRow> rows, ListShape shape) =>
         rows.Where(row => shape.Keeps(
             row.Name, row.Image, row.State, row.Status,
-            string.Join(" ", row.Ports.Select(port => port.Text)),
+            // The chip's :8080 and the 8080->80/tcp it maps (DD325), so what used to match still does.
+            string.Join(" ", row.Ports.Select(port => port.Text + " " + port.Mapping)),
 
             // DD106: typing a project's name keeps the project. Without it the one word a reader
             // knows the group by is the one word that empties the list.
@@ -1321,7 +1336,7 @@ public sealed record ContainerRow(
         foreach (var port in container.Ports)
         {
             var link = PortLink.From(port);
-            if (seen.Add(link.Text))
+            if (seen.Add(link.Mapping))
             {
                 ports.Add(link);
             }

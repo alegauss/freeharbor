@@ -39,6 +39,17 @@ Where a title is missing it falls back to the service or container name, so a ti
 never blank. Where a description is missing nothing is drawn, except on a standalone
 container, which shows `No details yet · Add icon and description`.
 
+As built (DD325):
+
+- A port chip reads the host port, `:8080`, with its protocol only where it is not TCP
+  (`:5353/udp`), in `Palette.Mono` on the accent at low opacity. The mapping,
+  `8080->80/tcp`, is the tooltip, and the text filter still matches it.
+- A port only exposed keeps the daemon's `6379/tcp`: it has no host port to show.
+- Every Open holds the external-link glyph and the link's name verbatim (`Site`,
+  `Console`, `Inbox`), or `Open` where the link is a port. One template, `OpenContent`,
+  draws it in the list, the cards and the detail page.
+- A stopped container's chips are drawn at half opacity.
+
 ---
 
 ## 2. The list (DD297)

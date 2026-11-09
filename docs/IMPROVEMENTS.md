@@ -55,20 +55,6 @@ tests fail together in one run only: a burst's shape.
 
 ## Block C — The window (claude-tray's elements)
 
-### §DD325 Link chips and Open, as the board draws them
-
-Seen in the list, the cards and the detail page, so done once in the shared vocabulary
-(spec section 1) and picked up by all three.
-
-1. A link chip reads `:8080` or `:8081/admin` (the host port, then the path when the link has one) in the mono face from `Palette`, on the accent-tinted fill. The `8080->8080/tcp` mapping moves to the tooltip, where it still says what is bound to what.
-2. A non-HTTP port keeps its dashed chip and copy glyph, in the same `:5432` form.
-3. A stopped container's chips are dimmed, not hidden (list.png, Team wiki).
-4. The Open button carries the external-link glyph and the link's name (`Open site`, `Console`, `Inbox`), falling back to `Open` when the link has no name. Today every Open reads `Open` with no glyph.
-5. The fixture's project has no named primary link, so the capture shows the fallback only. The fixture task (spec section 10) gives it one.
-
-Kept: Open stays the Fluent accent (section 9.4), and is disabled rather than hidden
-when nothing runs.
-
 ### §DD326 The project card's anatomy, as the board draws it
 
 Against `docs/specs/DD294-containers-redesign/cards.png` and `--capture-window
