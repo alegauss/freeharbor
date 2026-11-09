@@ -8,7 +8,6 @@
 
 ## Block C — The window (claude-tray's elements)
 
-- 📋 **DD332** (deps: —) **A project tile can only draw an image's glyph, so Storefront shows a globe where the boards show a bag** — Every bundled icon names an image, so no name a project file can give says what the project is for. → §DD332
 - 📋 **DD333** (deps: DD330 ✅) **The edit dialog is narrower than spec, picks an icon from a dropdown, and lacks the board's rail tiles and Editing strip** — DD330's capture held against edit-project.png shows eight differences, and only the colour swatches need a decision first. → §DD333
 
 ## Block D — Container operations (what a user came to do)

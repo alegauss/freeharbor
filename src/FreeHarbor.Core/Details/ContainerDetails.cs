@@ -111,6 +111,9 @@ public static class ContainerDetails
     {
         "elasticsearch", "grafana", "mailpit", "mariadb", "minio", "mongo", "mysql", "nginx",
         "node", "postgres", "prometheus", "python", "rabbitmq", "redis", "traefik", "wordpress",
+
+        // DD332: what a project is for rather than what it runs, so a project file can say it.
+        "analytics", "chat", "docs", "search", "shop",
     };
 
     // Image names that are one of the bundled icons under another spelling.

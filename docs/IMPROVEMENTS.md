@@ -70,27 +70,6 @@ than a task because adopting it reverses a recorded decision:
 If adopted, the spec's section 7 "As built" paragraph is rewritten in the same commit,
 since it would no longer be true.
 
-### §DD332 Bundled glyphs for what a project is
-
-`ContainerDetails.Bundled` names images (postgres, nginx, redis...), and
-`IconTile.Glyphs` maps each to a Segoe MDL2 Assets glyph for that kind of service. A
-project is not an image, so no bundled name says what a project is for. DD329's fixture
-had to give Storefront `nginx` (a globe) and Search lab `elasticsearch` (a cylinder),
-where list.png, cards.png and detail.png draw a shopping bag and a magnifier.
-
-Add a handful of bundled names for what a project is, not what it runs: `shop` (bag),
-`search` (magnifier), `docs` (book), `chat` (speech bubble), `analytics` (chart, sharing
-grafana's). Each goes in both sets, which the existing test holds equal, and each glyph
-is picked from a rendered sheet of the font, not from a table of code points, for the
-reason IconTile's remarks give. The edit dialog's icon picker lists `Bundled`, so it
-offers them with no change.
-
-Then point the fixture's Storefront at `shop` and Search lab at `search`, and amend spec
-section 10's last bullet, which records the stand-ins.
-
-Not a logo set: these are glyphs of a kind of thing, which is the rule the bundled icons
-already follow.
-
 ### §DD333 The edit dialog, as the board draws it
 
 Held against `edit-project.png` with `--capture-window <png> containers --fixture

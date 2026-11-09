@@ -308,7 +308,7 @@ public sealed class SampleMachine : IEngineClient
                   "x-freeharbor": {
                     "title": "Storefront",
                     "description": "Shop API, admin panel and the Postgres behind them",
-                    "icon": "nginx",
+                    "icon": "shop",
                     "services": {
                       "admin": { "title": "Back office", "description": "Refunds, stock and staff accounts" }
                     }
@@ -319,7 +319,7 @@ public sealed class SampleMachine : IEngineClient
                 """
                 title: Search lab
                 description: Search engine with a sample index and its indexer
-                icon: elasticsearch
+                icon: search
                 """,
                 null),
             [TeamWiki.Folder] = (

@@ -48,6 +48,14 @@ internal static class IconTile
             ["prometheus"] = Report,
             ["rabbitmq"] = Send,
             ["minio"] = Drive,
+
+            // DD332: what a project is for. Picked from a rendered sheet of the font: E719 is the
+            // shopping bag, E721 the magnifier, E82D the closed book and E8BD the speech bubble.
+            ["shop"] = "",
+            ["search"] = "",
+            ["docs"] = "",
+            ["chat"] = "",
+            ["analytics"] = Chart,
         };
 
     // Pictures already read, by path. The list is rebuilt on every event, and reading a file once per

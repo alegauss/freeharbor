@@ -477,6 +477,7 @@ As built (DD329):
 - Storefront reads both project files: its `x-freeharbor` block names the project and the
   back office, and its `.freeharbor` file renames only the worker. The other three carry
   the `.freeharbor` file alone.
-- Tiles are bundled glyphs, chosen from the names the build carries, so Storefront draws a
-  globe and Search lab a cylinder where the board draws a bag and a magnifier.
+- Tiles are bundled glyphs. Storefront is `shop` (a bag) and Search lab `search` (a
+  magnifier), two of the names DD332 added for what a project is for: `shop`, `search`,
+  `docs`, `chat` and `analytics`.
 - Storefront keeps the compose name `sample`, so `--detail=sample` still opens it.
