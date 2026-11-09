@@ -142,25 +142,6 @@ containers --fixture --detail=sample` (which DD323 made work).
 
 Kept: Back stays (as built DD299); memory and CPU stay out.
 
-### §DD329 The fixture the boards need
-
-`SampleMachine` today holds one compose project, `sample` (Storefront, three services),
-and three standalone containers. Spec section 10 asks for more, and every board
-comparison runs into the gap:
-
-1. No project or service has an icon, so every tile is a monogram where the boards show the bundled glyphs (Storefront's bag, Search lab's magnifier). The tile code is right; the fixture never exercises it.
-2. No link has a name or a `freeharbor.primary`, so Open always reads `Open` (DD325).
-3. No project has twenty services in four `freeharbor.group` tiers with two failures, so `large-project.png` has nothing to compare against.
-4. There is one project, so the rail, the chips' counts and the cards grid cannot look like the boards' three.
-
-Add the board's projects as fixture data: Storefront (four services, all running,
-`x-freeharbor` details and icons), Search lab (three services, one exited 143), Team
-wiki (stopped), and Platform (twenty services in four tiers). Keep `sample` or rename
-it, but the capture command in the spec and the tests that name it move together.
-
-Done first: every other open task in this group is verified by capture, and a capture is
-only as good as what the fixture puts in front of it.
-
 ### §DD330 A capture for the edit dialog
 
 `--capture-window` photographs the main window and its destinations. Edit details
@@ -194,6 +175,27 @@ than a task because adopting it reverses a recorded decision:
 
 If adopted, the spec's section 7 "As built" paragraph is rewritten in the same commit,
 since it would no longer be true.
+
+### §DD332 Bundled glyphs for what a project is
+
+`ContainerDetails.Bundled` names images (postgres, nginx, redis...), and
+`IconTile.Glyphs` maps each to a Segoe MDL2 Assets glyph for that kind of service. A
+project is not an image, so no bundled name says what a project is for. DD329's fixture
+had to give Storefront `nginx` (a globe) and Search lab `elasticsearch` (a cylinder),
+where list.png, cards.png and detail.png draw a shopping bag and a magnifier.
+
+Add a handful of bundled names for what a project is, not what it runs: `shop` (bag),
+`search` (magnifier), `docs` (book), `chat` (speech bubble), `analytics` (chart, sharing
+grafana's). Each goes in both sets, which the existing test holds equal, and each glyph
+is picked from a rendered sheet of the font, not from a table of code points, for the
+reason IconTile's remarks give. The edit dialog's icon picker lists `Bundled`, so it
+offers them with no change.
+
+Then point the fixture's Storefront at `shop` and Search lab at `search`, and amend spec
+section 10's last bullet, which records the stand-ins.
+
+Not a logo set: these are glyphs of a kind of thing, which is the rule the bundled icons
+already follow.
 
 ## Block D — Container operations (what a user came to do)
 

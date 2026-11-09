@@ -375,3 +375,18 @@ grows with the work: a project with `x-freeharbor` details, a service with `free
 labels, one with only an image label, one with nothing, a standalone container with a
 docker-made name, and a project of twenty services in four `freeharbor.group` tiers with
 two failures. Each task adds the part its screen needs.
+
+As built (DD329):
+
+- Four projects. Storefront (`sample`, four services, all running), Search lab
+  (`sample-search`, its indexer exited 143), Team wiki (`sample-wiki`, stopped, every exit
+  clean) and Platform (`sample-platform`, twenty services in Edge, APIs, Workers and Data
+  and tools, two failed, ten named links with Admin and Grafana pinned). Standalone: Mail
+  catcher with its own Inbox link, `sample-nervous_tesla` with nothing to resolve, and the
+  DD167 container on a gone image.
+- Storefront reads both project files: its `x-freeharbor` block names the project and the
+  back office, and its `.freeharbor` file renames only the worker. The other three carry
+  the `.freeharbor` file alone.
+- Tiles are bundled glyphs, chosen from the names the build carries, so Storefront draws a
+  globe and Search lab a cylinder where the board draws a bag and a magnifier.
+- Storefront keeps the compose name `sample`, so `--detail=sample` still opens it.

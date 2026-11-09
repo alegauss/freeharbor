@@ -1,4 +1,5 @@
 using FreeHarbor.Core.Api;
+using FreeHarbor.Core.Details;
 using FreeHarbor.Core.Fixtures;
 using FreeHarbor.Tray.Ui;
 using FreeHarbor.Tray.Ui.Pages;
@@ -207,9 +208,10 @@ public sealed class SampleMachineTests
         // Asserted as a difference and not as a literal order: the claim is that the fixture
         // exercises the ordering, and a hard-coded sequence would still pass on the day the labels
         // were removed and the fallback happened to agree.
+        // One project, since DD329 gave the fixture four and an order is a project's own.
         var rows = (await new SampleMachine().ContainersAsync())
             .Select(ContainerRow.From)
-            .Where(row => row.Project is not null)
+            .Where(row => row.Project == "sample")
             .ToList();
 
         Assert.NotEmpty(rows);
@@ -224,6 +226,86 @@ public sealed class SampleMachineTests
         // And it is the right difference: what is depended on comes up first and goes down last.
         Assert.Equal("db", starting[0]);
         Assert.Equal("db", stopping[^1]);
+    }
+
+    // ---- what the redesign's boards need in front of a capture (DD329) --------------------------
+
+    private static async Task<List<ContainerRow>> Resolved() =>
+        [.. (await new SampleMachine().ContainersAsync())
+            .Select(container => ContainerRow.From(container, SampleMachine.ProjectFiles))];
+
+    private static ContainerRow Header(IReadOnlyList<ContainerRow> rows, string project) =>
+        ContainerRow.ProjectHeader(project, [.. rows.Where(row => row.Project == project)], collapsed: false);
+
+    [Fact]
+    public async Task The_four_projects_of_the_boards_are_here_and_none_is_a_monogram()
+    {
+        var rows = await Resolved();
+        var projects = rows.Select(row => row.Project).OfType<string>().Distinct().ToList();
+
+        // Storefront, Search lab, Team wiki and Platform, so the rail, the chips' counts and the cards
+        // grid have the boards' shape.
+        Assert.Equal(4, projects.Count);
+        Assert.Contains("sample", projects);
+
+        // Every project tile is a bundled glyph: a capture of monograms cannot be compared with a
+        // board that draws icons.
+        Assert.All(projects, project =>
+            Assert.Equal(IconKind.Bundled, Header(rows, project).Details!.Icon.Kind));
+    }
+
+    [Fact]
+    public async Task Every_source_the_resolver_reads_answers_for_some_row()
+    {
+        var rows = await Resolved();
+
+        // Spec section 10, one clause per assertion. The project file and the compose block both
+        // name something, and the labels in all three of their dialects do too.
+        Assert.Contains(rows, row => row.ProjectDetails?.TitleSource == ComposeExtension.Key);
+        Assert.Contains(rows, row => row.ProjectDetails?.TitleSource == ProjectFile.Folder);
+        Assert.Contains(rows, row => row.Details!.TitleSource == ProjectFile.Folder);
+        Assert.Contains(rows, row => row.Details!.TitleSource == "label freeharbor.title");
+        Assert.Contains(rows, row => row.Details!.TitleSource == "label homepage.name");
+        Assert.Contains(rows, row => row.Details!.TitleSource == "label org.opencontainers.image.title");
+
+        // A service with nothing at all, which is the monogram on a service row.
+        Assert.Contains(rows, row => row.Project is not null
+            && row.Details!.TitleSource == "service name"
+            && row.Details.Icon.Kind == IconKind.Monogram);
+
+        // And a standalone container under the name docker made up for it.
+        Assert.Contains(rows, row => row.Project is null
+            && row.Details!.TitleSource == "container name"
+            && row.Name.Contains('_', StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Open_carries_a_link_name_and_not_only_a_port()
+    {
+        var rows = await Resolved();
+
+        // DD325's button reads the primary link's name, so the fixture has to name one, on a project
+        // and on a standalone container.
+        Assert.Equal("Site", Header(rows, "sample").OpenLink?.Name);
+        Assert.Contains(rows, row => row.Project is null && row.OpenLink is { Name: "Inbox" });
+    }
+
+    [Fact]
+    public async Task One_project_is_large_enough_for_tiers_and_a_link_menu()
+    {
+        var rows = await Resolved();
+        var large = rows.GroupBy(row => row.Project)
+            .Single(group => group.Key is not null && group.Count() == 20);
+        var header = Header(rows, large.Key!);
+
+        // large-project.png: four tiers, two failures, ten links behind Open with two pinned.
+        Assert.Equal(4, large.Select(row => row.Details!.Group).Distinct().Count());
+        Assert.Equal(2, large.Count(row => row.Tone == RowTone.Bad));
+        Assert.Equal(18, header.Running);
+        Assert.True(header.HasLinkMenu);
+        Assert.Equal(10, header.ProjectLinks.Count);
+        Assert.Equal("Gateway", header.OpenLink?.Name);
+        Assert.Equal(["Admin", "Grafana"], header.PinnedLinks.Select(link => link.Label));
     }
 
     [Fact]

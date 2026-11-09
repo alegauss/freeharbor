@@ -8,14 +8,14 @@
 
 ## Block C — The window (claude-tray's elements)
 
-- 📋 **DD324** (deps: DD329) **In the list a project is loose rows under a header, not one bordered group, and its description is cut at NAME** — The board (list.png) draws each project as a GroupCard with dividers and lets the header's description run the full width. → §DD324
-- 📋 **DD325** (deps: DD329) **A port reads 8080->8080/tcp and Open has no glyph or name, where the board shows a :8080 chip and Open site** — Spec section 1's link chip is label then host in monospace, and the Open button carries the link's name and an external-link glyph. → §DD325
+- 📋 **DD324** (deps: DD329 ✅) **In the list a project is loose rows under a header, not one bordered group, and its description is cut at NAME** — The board (list.png) draws each project as a GroupCard with dividers and lets the header's description run the full width. → §DD324
+- 📋 **DD325** (deps: DD329 ✅) **A port reads 8080->8080/tcp and Open has no glyph or name, where the board shows a :8080 chip and Open site** — Spec section 1's link chip is label then host in monospace, and the Open button carries the link's name and an external-link glyph. → §DD325
 - 📋 **DD326** (deps: DD325) **A project card lacks the board's meta line, ⋯, link row, service ports and states, and the uptime in its footer** — cards.png gives a card a fixed anatomy, and today's card is a header, a bullet list of names and one button. → §DD326
 - 📋 **DD327** (deps: DD325) **Standalone containers in the cards view are one full-width strip each, not cards in the grid** — cards.png lays standalone containers out as cards at the project cards' width, each with tile, chip, description, details line and its own verbs. → §DD327
 - 📋 **DD328** (deps: DD325) **The detail page clips its header verbs at the right edge and stacks Services and Recent output, unlike detail.png** — The board puts the failure in a tinted banner, the endpoints' URLs in accent mono, and Services beside Recent output, with the rail marking the open project. → §DD328
-- 📋 **DD329** (deps: —) **The fixture has one three-service project with no icons, named links or tiers, so most boards cannot be captured** — Spec section 10 lists what SampleMachine must carry, and without it a capture shows monograms, a bare Open, and no large project at all. → §DD329
 - 📋 **DD330** (deps: —) **The edit details dialog has no capture, so it has never been compared with edit-project.png or edit-container.png** — --capture-window renders the main window only, and the dialog is its own window, so its layout is checked by nobody. → §DD330
 - 💭 **DD331** (deps: —) **Settings is plain radios in a 720 px column, where settings.png draws titled radio cards with tags and paths** — DD301 chose About's plain column on purpose; matching the board means reversing that choice, which is the owner's call. → §DD331
+- 📋 **DD332** (deps: —) **A project tile can only draw an image's glyph, so Storefront shows a globe where the boards show a bag** — Every bundled icon names an image, so no name a project file can give says what the project is for. → §DD332
 
 ## Block D — Container operations (what a user came to do)
 

@@ -14,6 +14,15 @@ namespace FreeHarbor.Core.Fixtures;
 /// renders differently for it; a row that changed no pixel would be a row nobody could justify keeping
 /// correct.
 ///
+/// <para><b>And the four projects the redesign's boards draw (DD329).</b> Storefront, all running,
+/// with an <c>x-freeharbor</c> block under its <c>.freeharbor</c> file; Search lab, one service killed
+/// with 143; Team wiki, stopped; and Platform, twenty services in four <c>freeharbor.group</c> tiers
+/// with two failures and ten named links. Between them they carry every source the resolver reads (a
+/// service with <c>freeharbor.*</c> labels, one with Homepage's, one with only an image label, one
+/// with nothing) and a standalone container with a name docker made up, which are the rows spec
+/// section 10 lists. Icons are bundled names only, because a file icon would name a path no
+/// capturing machine has.</para>
+///
 /// <para><b>Every name begins with <see cref="Prefix"/>.</b> A screenshot of this in a README should be
 /// obviously a fixture. The alternative — plausible names — is how somebody's real project ends up in
 /// documentation, which is half of why this exists.</para>
@@ -60,21 +69,14 @@ public sealed class SampleMachine : IEngineClient
     /// <param name="image">What it runs.</param>
     /// <param name="state">One word.</param>
     /// <param name="status">The daemon's own sentence.</param>
-    /// <param name="service">The compose service it is, or nothing for a container outside one.</param>
     /// <param name="ports">What it publishes or exposes.</param>
-    /// <param name="dependsOn">
-    /// The services it waits for (DD113). Spelled the way compose spells it — <c>&lt;service&gt;:
-    /// &lt;condition&gt;:&lt;restart&gt;</c> — because a fixture that simplified the format would
-    /// exercise a parser this project does not ship.
-    /// </param>
     /// <param name="details">
     /// Labels a screen reads its title, description and icon from (DD294), or nothing.
     /// </param>
-    /// <returns>The container.</returns>
+    /// <returns>The container, outside any compose project.</returns>
     private static ContainerSummary Container(
         string id, string name, string image, string state, string status,
-        string? service = null, IReadOnlyList<PortBinding>? ports = null,
-        string? dependsOn = null, Dictionary<string, string>? details = null) => new()
+        IReadOnlyList<PortBinding>? ports = null, Dictionary<string, string>? details = null) => new()
     {
         Id = id,
         Names = ["/" + name],
@@ -83,8 +85,36 @@ public sealed class SampleMachine : IEngineClient
         State = state,
         Status = status,
         Ports = ports ?? [],
-        Labels = Merged(service is null ? null : ComposeLabels(service, dependsOn), details),
+        Labels = details,
     };
+
+    /// <summary>One service of a compose project, named the way compose names its container.</summary>
+    /// <param name="id">Its id.</param>
+    /// <param name="project">The project it belongs to.</param>
+    /// <param name="service">The service, which with the project makes the container's name.</param>
+    /// <param name="image">What it runs.</param>
+    /// <param name="state">One word.</param>
+    /// <param name="status">The daemon's own sentence.</param>
+    /// <param name="ports">What it publishes or exposes.</param>
+    /// <param name="dependsOn">
+    /// The services it waits for (DD113). Spelled the way compose spells it — <c>&lt;service&gt;:
+    /// &lt;condition&gt;:&lt;restart&gt;</c> — because a fixture that simplified the format would
+    /// exercise a parser this project does not ship.
+    /// </param>
+    /// <param name="details">Labels a screen reads its details from (DD294), or nothing.</param>
+    /// <returns>The container.</returns>
+    private static ContainerSummary Service(
+        string id, ComposeProject project, string service, string image, string state, string status,
+        IReadOnlyList<PortBinding>? ports = null, string? dependsOn = null,
+        Dictionary<string, string>? details = null) =>
+        Container(id, $"{project.Name}-{service}-1", image, state, status, ports) with
+        {
+            Labels = Merged(ComposeLabels(project, service, dependsOn), details),
+        };
+
+    /// <summary>Labels, written as pairs so a row reads as what it carries.</summary>
+    private static Dictionary<string, string> Labels(params (string Key, string Value)[] pairs) =>
+        pairs.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
 
     private static Dictionary<string, string>? Merged(
         Dictionary<string, string>? compose, Dictionary<string, string>? details)
@@ -129,6 +159,24 @@ public sealed class SampleMachine : IEngineClient
     /// <summary>The cache's image.</summary>
     private const string CacheImage = "redis:7-alpine";
 
+    // DD329: the images the other projects run. Upstream names where the bundled icon is the point,
+    // because the resolver reads the icon off the image's name, and sample/ where it is not.
+    private const string NodeImage = "node:22-alpine";
+    private const string SearchImage = "elasticsearch:8.15.0";
+    private const string IndexerImage = "sample/indexer:0.9";
+    private const string WikiImage = "wordpress:6.6";
+    private const string WikiDbImage = "mariadb:11";
+    private const string AlpineImage = "alpine:3.20";
+    private const string GatewayImage = "traefik:3.1";
+    private const string PlatformImage = "sample/platform:2.0";
+    private const string QueueImage = "rabbitmq:3.13-management";
+    private const string GrafanaImage = "grafana/grafana:11.2.0";
+    private const string MailImage = "axllent/mailpit:v1.20";
+    private const string BusyboxImage = "busybox:1.36";
+
+    private const string Running = "running";
+    private const string Exited = "exited";
+
     /// <summary>
     /// The digest of an image this machine no longer has (DD167).
     /// </summary>
@@ -145,20 +193,56 @@ public sealed class SampleMachine : IEngineClient
         [ApiImage] = "sha256:1111111111111111",
         [DbImage] = "sha256:2222222222222222",
         [CacheImage] = "sha256:3333333333333333",
+        [NodeImage] = "sha256:7777777777777777",
+        [SearchImage] = "sha256:8888888888888888",
+        [IndexerImage] = "sha256:9999999999999999",
+        [WikiImage] = "sha256:aaaaaaaaaaaaaaaa",
+        [WikiDbImage] = "sha256:bbbbbbbbbbbbbbbb",
+        [AlpineImage] = "sha256:cccccccccccccccc",
+        [GatewayImage] = "sha256:dddddddddddddddd",
+        [PlatformImage] = "sha256:eeeeeeeeeeeeeeee",
+        [QueueImage] = "sha256:ffffffffffffffff",
+        [GrafanaImage] = "sha256:1212121212121212",
+        [MailImage] = "sha256:1313131313131313",
+        [BusyboxImage] = "sha256:1414141414141414",
     };
 
+    /// <summary>A compose project of the sample machine: its name and the folder it came up from.</summary>
+    /// <param name="Name">The compose name, which begins every container's name.</param>
+    /// <param name="Folder">The folder compose ran in, which exists on no machine.</param>
+    /// <param name="ConfigFiles">The compose files it read, or nothing where none is named.</param>
+    private sealed record ComposeProject(string Name, string Folder, string? ConfigFiles = null);
+
+    /// <summary>
+    /// Storefront. Still called <c>sample</c>, because that is the name the spec's capture command
+    /// and every test before DD329 open it by.
+    /// </summary>
+    private static readonly ComposeProject Storefront =
+        new("sample", ProjectFolder, ProjectFolder + @"\compose.yaml");
+
+    private static readonly ComposeProject SearchLab = new(Prefix + "search", @"C:\Users\example\search-lab");
+    private static readonly ComposeProject TeamWiki = new(Prefix + "wiki", @"C:\Users\example\wiki");
+    private static readonly ComposeProject Platform = new(Prefix + "platform", @"C:\Users\example\platform");
+
     /// <summary>The compose labels a service's container carries.</summary>
+    /// <param name="project">Its project.</param>
     /// <param name="service">The service.</param>
     /// <param name="dependsOn">What it waits for, or nothing.</param>
     /// <returns>The labels.</returns>
-    private static Dictionary<string, string> ComposeLabels(string service, string? dependsOn)
+    private static Dictionary<string, string> ComposeLabels(
+        ComposeProject project, string service, string? dependsOn)
     {
         var labels = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["com.docker.compose.project"] = "sample",
+            ["com.docker.compose.project"] = project.Name,
             ["com.docker.compose.service"] = service,
-            [Details.ProjectFile.WorkingDirLabel] = ProjectFolder,
+            [Details.ProjectFile.WorkingDirLabel] = project.Folder,
         };
+
+        if (project.ConfigFiles is not null)
+        {
+            labels[Details.ComposeExtension.ConfigFilesLabel] = project.ConfigFiles;
+        }
 
         // Absent rather than empty where a service waits for nothing, because that is what compose
         // writes — a fixture carrying an empty label would exercise a case no machine produces.
@@ -174,29 +258,88 @@ public sealed class SampleMachine : IEngineClient
     public const string ProjectFolder = @"C:\Users\example\shop";
 
     /// <summary>
-    /// What the sample project's own <c>.freeharbor/project.yaml</c> says (DD295), by folder.
+    /// What each sample project's own files say (DD295), by folder, in the order the window reads
+    /// them: <c>.freeharbor/project.yaml</c> first, then the compose file's <c>x-freeharbor</c> block.
     /// </summary>
     /// <param name="folder">The folder a container names as its working directory.</param>
-    /// <param name="configFiles">Its compose files, which the sample has none of.</param>
-    /// <returns>The sample's details for its own folder, and nothing for any other.</returns>
+    /// <param name="configFiles">Its compose files, which only Storefront names.</param>
+    /// <returns>A project's details for its own folder, and nothing for any other.</returns>
     /// <remarks>
     /// Parsed from the text a user would write rather than built as records, so a capture exercises
-    /// the reader as well as the screen. The worker is renamed and the rest left to their labels,
-    /// which is the override the file exists for.
+    /// the readers as well as the screen. Storefront carries both files: its block names the project
+    /// and the back office, and its <c>.freeharbor</c> file only renames the worker, which is the
+    /// field-by-field override the two exist for. The other three carry the file alone.
     /// </remarks>
-    public static IReadOnlyList<Details.ProjectFileDetails> ProjectFiles(string? folder, string? configFiles) =>
-        string.Equals(folder, ProjectFolder, StringComparison.OrdinalIgnoreCase)
-            ? [Details.ProjectFile.Parse(
+    public static IReadOnlyList<Details.ProjectFileDetails> ProjectFiles(string? folder, string? configFiles)
+    {
+        if (folder is null || !Files.TryGetValue(folder, out var files))
+        {
+            return [];
+        }
+
+        var read = new List<Details.ProjectFileDetails>
+        {
+            Details.ProjectFile.Parse(files.Yaml, Path.Combine(folder, Details.ProjectFile.Folder)),
+        };
+
+        if (files.Compose is not null && Details.ComposeExtension.Parse(files.Compose, folder) is { } block)
+        {
+            read.Add(block);
+        }
+
+        return read;
+    }
+
+    /// <summary>Each project folder's <c>project.yaml</c>, and what <c>compose config</c> answers for it.</summary>
+    private static readonly Dictionary<string, (string Yaml, string? Compose)> Files =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            [ProjectFolder] = (
                 """
-                title: Storefront
-                description: Shop API, the worker behind it and the Postgres they share
                 services:
                   worker:
                     title: Order worker
                     description: Charges cards and sends receipts
                 """,
-                Path.Combine(ProjectFolder, Details.ProjectFile.Folder))]
-            : [];
+                """
+                {
+                  "name": "sample",
+                  "services": {},
+                  "x-freeharbor": {
+                    "title": "Storefront",
+                    "description": "Shop API, admin panel and the Postgres behind them",
+                    "icon": "nginx",
+                    "services": {
+                      "admin": { "title": "Back office", "description": "Refunds, stock and staff accounts" }
+                    }
+                  }
+                }
+                """),
+            [SearchLab.Folder] = (
+                """
+                title: Search lab
+                description: Search engine with a sample index and its indexer
+                icon: elasticsearch
+                """,
+                null),
+            [TeamWiki.Folder] = (
+                """
+                title: Team wiki
+                description: WordPress with its database and a nightly backup
+                icon: wordpress
+                """,
+                null),
+            [Platform.Folder] = (
+                """
+                title: Platform
+                description: Twenty services behind one gateway, in four tiers
+                icon: traefik
+                services:
+                  api-gateway:
+                    title: Gateway
+                """,
+                null),
+        };
 
     private static PortBinding Published(int host, int inside) => new()
     {
@@ -210,71 +353,194 @@ public sealed class SampleMachine : IEngineClient
 
     private readonly List<ContainerSummary> _containers =
     [
-        // Running with a published port: the row whose port is a link.
+        // ---- Storefront: four services, all running, details from both project files ----------
+
+        // Running with a published port and two named links (DD294), the primary one first, so Open
+        // carries a name rather than reading a port.
         //
         // It also waits for db, and that is DD113: without a depends_on anywhere in this fixture,
         // `ComposeOrder` saw a project with no edges every time the fixture was used, took its
-        // fallback and looked exactly as it would if it did not exist. api and worker both waiting
+        // fallback and looked exactly as it would if it did not exist. Every other service waiting
         // on db is the smallest shape that orders differently from the list — stopping this project
-        // reaches api and worker before db rather than db first.
-        Container("c1aaaaaaaaaa0000", Prefix + "api-1", ApiImage, "running",
-            "Up 6 minutes", "api", [Published(8080, 8080)],
+        // reaches the rest before db rather than db first.
+        Service("c1aaaaaaaaaa0000", Storefront, "api", ApiImage, Running,
+            "Up 2 hours", [Published(8080, 8080)],
             dependsOn: "db:service_healthy:true",
 
             // DD294: this product's own labels, the first source the resolver reads.
-            details: new(StringComparer.Ordinal)
-            {
-                ["freeharbor.title"] = "Shop API",
-                ["freeharbor.description"] = "Orders, carts and checkout",
-            }),
+            details: Labels(
+                ("freeharbor.title", "Shop API"),
+                ("freeharbor.description", "Orders, carts and checkout"),
+                ("freeharbor.url.Site", "http://localhost:8080"),
+                ("freeharbor.url.Admin", "http://localhost:8080/admin"),
+                ("freeharbor.primary", "Site"))),
 
         // Running and healthy, so the status column carries something other than a duration. The
         // condition above is why it is healthy rather than merely up: a fixture whose db said
         // nothing about health would be one where the label it is depended on by made no sense.
-        Container("c2bbbbbbbbbb0000", Prefix + "db-1", DbImage, "running",
-            "Up 6 minutes (healthy)", "db", [Published(5432, 5432)],
+        // 5432 does not answer HTTP, so its port is the chip that copies rather than opens.
+        Service("c2bbbbbbbbbb0000", Storefront, "db", DbImage, Running,
+            "Up 2 hours (healthy)", [Published(5432, 5432)],
 
             // DD294: Homepage's labels, the second source, so a machine labelled for that dashboard
             // reads the same here.
-            details: new(StringComparer.Ordinal)
-            {
-                ["homepage.name"] = "PostgreSQL",
-                ["homepage.description"] = "Orders and customers",
-            }),
+            details: Labels(
+                ("homepage.name", "PostgreSQL"),
+                ("homepage.description", "Orders and customers"))),
 
-        // Killed. 137 is the exit code the whole diagnostic half of this product is about.
-        Container("c3cccccccccc0000", Prefix + "worker-1", ApiImage, "exited",
-            "Exited (137) 12 seconds ago", "worker", dependsOn: "db:service_started:false"),
+        // Titled by the compose file's x-freeharbor block and nothing else; its icon is node's.
+        Service("c7aaaaaaaaaa0000", Storefront, "admin", NodeImage, Running,
+            "Up 2 hours", dependsOn: "db:service_started:false"),
+
+        // Renamed by the .freeharbor file, over a block that says nothing about it.
+        Service("c3cccccccccc0000", Storefront, "worker", ApiImage, Running,
+            "Up 2 hours", dependsOn: "db:service_started:false"),
+
+        // ---- Search lab: one service killed, one with nothing, one with only an image label ----
+
+        Service("c8aaaaaaaaaa0000", SearchLab, "engine", SearchImage, Running,
+            "Up 40 minutes", [Published(2700, 9200)],
+            details: Labels(
+                ("freeharbor.title", "Search engine"),
+                ("freeharbor.url.Console", "http://localhost:2700"),
+                ("freeharbor.primary", "Console"))),
+
+        // No label of any kind and an image with no bundled icon: the monogram and the bare name.
+        // 143 is a SIGTERM that was not caught, the failure the detail page's banner is for.
+        Service("c9aaaaaaaaaa0000", SearchLab, "indexer", IndexerImage, Exited,
+            "Exited (143) 3 minutes ago", dependsOn: "engine:service_started:false"),
 
         // Exposed but not published: the port that is text rather than a link.
-        Container("c4dddddddddd0000", Prefix + "cache-1", CacheImage, "running",
-            "Up 2 hours", ports: [Exposed(6379)],
+        Service("c4dddddddddd0000", SearchLab, "cache", CacheImage, Running,
+            "Up 40 minutes", [Exposed(6379)],
 
             // DD294: only the image's own OCI label, the third source, which docker copies onto
             // every container made from the image.
-            details: new(StringComparer.Ordinal)
-            {
-                ["org.opencontainers.image.title"] = "Session cache",
-            }),
+            details: Labels(("org.opencontainers.image.title", "Session cache"))),
 
-        // A clean exit, which reads differently from a kill and shares a row shape with it.
-        Container("c5eeeeeeeeee0000", Prefix + "migrate-1", ApiImage, "exited",
-            "Exited (0) 3 minutes ago"),
+        // ---- Team wiki: stopped, every service a clean exit -----------------------------------
+
+        // A clean exit, which reads differently from a kill and shares a row shape with it. The
+        // named link stays when the container stops, so the project's Open is drawn and disabled.
+        Service("c5eeeeeeeeee0000", TeamWiki, "wordpress", WikiImage, Exited,
+            "Exited (0) 20 hours ago", dependsOn: "db:service_started:false",
+            details: Labels(("freeharbor.url.Site", "http://localhost:8090"))),
+        Service("caaaaaaaaaaa0000", TeamWiki, "db", WikiDbImage, Exited, "Exited (0) 20 hours ago"),
+        Service("cbaaaaaaaaaa0000", TeamWiki, "backup", AlpineImage, Exited, "Exited (0) 20 hours ago"),
+
+        // ---- Platform: twenty services in four tiers, two failures, ten links -----------------
+
+        .. PlatformServices(),
+
+        // ---- standalone -----------------------------------------------------------------------
 
         // Running on an image this machine no longer has (DD167). The only row whose image column
         // is a digest and the only one carrying a note, which is the whole state: the images page
-        // holds nothing for it, and without the note the two pages read as disagreeing. Outside the
+        // holds nothing for it, and without the note the two pages read as disagreeing. Outside a
         // project, because a rebuilt tag is not a compose problem and grouping it under one would
         // suggest it is.
-        Container("c6ffffffffff0000", Prefix + "legacy-1", GoneImage, "running",
+        Container("c6ffffffffff0000", Prefix + "legacy-1", GoneImage, Running,
             "Up 3 days", ports: [Exposed(9000)]),
+
+        // A standalone container with details and its own Open, which the board draws as a row
+        // with a tile and an Inbox button.
+        Container("ccaaaaaaaaaa0000", Prefix + "mailpit", MailImage, Running,
+            "Up 3 days", [Published(8025, 8025), Published(1025, 1025)],
+            Labels(
+                ("freeharbor.title", "Mail catcher"),
+                ("freeharbor.description", "Catches outgoing mail"),
+                ("freeharbor.url.Inbox", "http://localhost:8025"))),
+
+        // `docker run` with no --name: the adjective_scientist docker made up, behind the prefix, with
+        // nothing to resolve, which is the row that says "No details yet".
+        Container("cdaaaaaaaaaa0000", Prefix + "nervous_tesla", BusyboxImage, Running, "Up 5 minutes"),
     ];
+
+    /// <summary>
+    /// The large project (DD298): twenty services in four <c>freeharbor.group</c> tiers, eighteen
+    /// running and two failed, with ten named links of which two are pinned.
+    /// </summary>
+    /// <returns>Its containers.</returns>
+    /// <remarks>
+    /// The gateway is the first linked service by name, which is what makes Gateway the project's
+    /// Open. Admin and Grafana are pinned by their own services, so the header has a split Open, two
+    /// buttons beside it and a menu of ten.
+    /// </remarks>
+    private static IEnumerable<ContainerSummary> PlatformServices()
+    {
+        var services = new (string Service, string Tier, string Image, string? Failed, (string Name, int Port)[] Links, bool Pinned)[]
+        {
+            ("api-gateway", "Edge", GatewayImage, null, [("Gateway", 8000), ("Docs", 8000), ("Health", 8000)], false),
+            ("backoffice", "Edge", NodeImage, null, [("Admin", 8001)], true),
+            ("catalog", "APIs", PlatformImage, null, [("Catalog", 8010)], false),
+            ("cart", "APIs", PlatformImage, null, [], false),
+            ("orders", "APIs", PlatformImage, null, [("Orders", 8012)], false),
+            ("payments", "APIs", PlatformImage, null, [], false),
+            ("users", "APIs", PlatformImage, null, [("Users", 8014)], false),
+            ("inventory", "APIs", PlatformImage, null, [], false),
+            ("pricing", "APIs", PlatformImage, null, [], false),
+            ("reviews", "APIs", PlatformImage, null, [], false),
+            ("shipping", "APIs", PlatformImage, null, [], false),
+            ("search", "APIs", PlatformImage, null, [("Search", 8019)], false),
+            ("payments-worker", "Workers", PlatformImage, "Exited (1) 2 minutes ago", [], false),
+            ("notifications", "Workers", PlatformImage, "Exited (137) 40 seconds ago", [], false),
+            ("search-indexer", "Workers", PlatformImage, null, [], false),
+            ("mailer", "Workers", PlatformImage, null, [], false),
+            ("postgres", "Data and tools", DbImage, null, [], false),
+            ("redis", "Data and tools", CacheImage, null, [], false),
+            ("queue", "Data and tools", QueueImage, null, [("Queue", 15672)], false),
+            ("grafana", "Data and tools", GrafanaImage, null, [("Grafana", 3000)], true),
+        };
+
+        var paths = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["Docs"] = "/docs",
+            ["Health"] = "/healthz",
+        };
+
+        for (var i = 0; i < services.Length; i++)
+        {
+            var (service, tier, image, failed, links, pinned) = services[i];
+            var labels = Labels(("freeharbor.group", tier));
+            foreach (var (name, port) in links)
+            {
+                labels["freeharbor.url." + name] = string.Create(
+                    CultureInfo.InvariantCulture, $"http://localhost:{port}{paths.GetValueOrDefault(name)}");
+            }
+
+            if (links.Length > 0)
+            {
+                labels["freeharbor.primary"] = links[0].Name;
+            }
+
+            if (pinned)
+            {
+                labels["freeharbor.pinned"] = links[0].Name;
+            }
+
+            yield return Service(
+                string.Create(CultureInfo.InvariantCulture, $"d{i:x2}aaaaaaaaa0000"), Platform, service, image,
+                failed is null ? Running : Exited, failed ?? "Up 2 hours", details: labels);
+        }
+    }
 
     private readonly List<ImageSummary> _images =
     [
         new() { Id = Tagged[ApiImage], RepoTags = [ApiImage], Size = 184320000 },
         new() { Id = Tagged[DbImage], RepoTags = [DbImage], Size = 247000000 },
         new() { Id = Tagged[CacheImage], RepoTags = [CacheImage], Size = 41200000 },
+        new() { Id = Tagged[NodeImage], RepoTags = [NodeImage], Size = 158000000 },
+        new() { Id = Tagged[SearchImage], RepoTags = [SearchImage], Size = 1290000000 },
+        new() { Id = Tagged[IndexerImage], RepoTags = [IndexerImage], Size = 96000000 },
+        new() { Id = Tagged[WikiImage], RepoTags = [WikiImage], Size = 702000000 },
+        new() { Id = Tagged[WikiDbImage], RepoTags = [WikiDbImage], Size = 406000000 },
+        new() { Id = Tagged[AlpineImage], RepoTags = [AlpineImage], Size = 7800000 },
+        new() { Id = Tagged[GatewayImage], RepoTags = [GatewayImage], Size = 178000000 },
+        new() { Id = Tagged[PlatformImage], RepoTags = [PlatformImage], Size = 221000000 },
+        new() { Id = Tagged[QueueImage], RepoTags = [QueueImage], Size = 251000000 },
+        new() { Id = Tagged[GrafanaImage], RepoTags = [GrafanaImage], Size = 453000000 },
+        new() { Id = Tagged[MailImage], RepoTags = [MailImage], Size = 26000000 },
+        new() { Id = Tagged[BusyboxImage], RepoTags = [BusyboxImage], Size = 4300000 },
 
         // Dangling, twice: enough for the prune button to have a number worth confirming.
         new() { Id = "sha256:4444444444444444", RepoTags = ["<none>:<none>"], Size = 183900000 },
