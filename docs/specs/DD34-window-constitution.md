@@ -127,6 +127,13 @@ the mark's own mean luminance is 102 of 255 and there is no room under it — at
 enough to read, the stopped icon vanished into a dark taskbar. **A law is amended by
 showing the replacement holds, not by showing the old one is inconvenient.**
 
+DD338 amended it for the window and not for the tray. In the window, every state dot sits
+beside a word that says the same thing: a service row ends in its state (running, exited),
+a project chip reads "0 of 22", and a card's warning is a sentence. Four shapes there
+(dot, square, triangle, half circle) read as four kinds of information when there is one,
+so the window draws one dot in the tone's colour and lets the word carry the state. The
+tray badge has no word beside it, so it keeps its shapes.
+
 ---
 
 ## 3. The elements this implies

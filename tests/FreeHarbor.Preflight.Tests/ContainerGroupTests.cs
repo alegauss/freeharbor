@@ -451,7 +451,7 @@ public sealed class ContainerGroupTests
     public void A_header_chip_takes_the_tone_of_what_is_under_it()
     {
         // Running when all run, stopped when none do, failure when any exited non-zero, and in
-        // between otherwise. Shape first (L8), so the tone is never carried by colour alone.
+        // between otherwise. One dot for all of them (DD338): the colour and the word say which.
         var all = Grouped(Rows(Summary("a-1", project: "all"), Summary("a-2", project: "all")))[0];
         var none = Grouped(Rows(Summary("n-1", "exited", "none")))[0];
         var half = Grouped(Rows(Summary("h-1", project: "half"), Summary("h-2", "exited", "half")))[0];
@@ -460,9 +460,9 @@ public sealed class ContainerGroupTests
             Summary("c-2", "exited", "crash") with { Status = "Exited (137) 3 seconds ago" }))[0];
 
         Assert.Equal((RowTone.Good, "●"), (all.Tone, all.ChipShape));
-        Assert.Equal((RowTone.Muted, "□"), (none.Tone, none.ChipShape));
-        Assert.Equal(RowTone.Warn, half.Tone);
-        Assert.Equal((RowTone.Bad, "▲"), (crashed.Tone, crashed.ChipShape));
+        Assert.Equal((RowTone.Muted, "●"), (none.Tone, none.ChipShape));
+        Assert.Equal((RowTone.Warn, "●"), (half.Tone, half.ChipShape));
+        Assert.Equal((RowTone.Bad, "●"), (crashed.Tone, crashed.ChipShape));
         // The chip says the count and its tooltip the sentence (DD320): "running" was what the
         // STATE column trimmed at the window's default width.
         Assert.Equal("1 of 2", crashed.ChipWord);

@@ -839,7 +839,7 @@
                     <DataTemplate>
                       <TextBlock FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,0,0,2"
                                  ToolTip="{Binding Evidence}"
-                                 Foreground="{x:Static ui:Palette.DangerBrush}"><Run Text="▲" FontSize="10" /> <Run
+                                 Foreground="{x:Static ui:Palette.DangerBrush}"><Run Text="●" FontSize="10" /> <Run
                                  Text="{Binding Sentence, Mode=OneWay}" /></TextBlock>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
@@ -1152,7 +1152,7 @@
                           Click="PrimaryAction" Style="{DynamicResource RowAction}"
                           Visibility="{Binding Row.CanStart, Converter={StaticResource Shown}}" />
                   <TextBlock VerticalAlignment="Center" TextWrapping="Wrap"
-                             Foreground="{DynamicResource TextFillColorPrimaryBrush}"><Run Text="▲" FontSize="11"
+                             Foreground="{DynamicResource TextFillColorPrimaryBrush}"><Run Text="●" FontSize="11"
                              Foreground="{x:Static ui:Palette.DangerBrush}" />  <Run
                              Text="{Binding Row.Title, Mode=OneWay}" FontWeight="SemiBold" />: <Run
                              Text="{Binding Row.Status, Mode=OneWay}" /></TextBlock>

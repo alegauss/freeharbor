@@ -388,21 +388,14 @@ public sealed record ContainerRow(
         _ => State,
     };
 
-    /// <summary>
-    /// The shape before the chip's word (L8): shape carries the state, and colour only reinforces it.
-    /// </summary>
+    /// <summary>The dot before the chip's word, which the tone's colour paints.</summary>
     /// <remarks>
-    /// A filled circle for running, a hollow square for stopped, a triangle for a failure, as the
-    /// spec's shared vocabulary names them; and a half circle for the in-between tone the spec has no
-    /// word for, so a paused container or a half-up project is not drawn as either end.
+    /// DD338: one dot for every state. Four shapes (dot, square, triangle, half circle) read as four
+    /// kinds of information when there is only one, the state. The word beside the dot (running,
+    /// exited, "0 of 22") is what carries the state for anyone who cannot tell the colours apart,
+    /// and the chip's tooltip says it in a sentence.
     /// </remarks>
-    public string ChipShape => Tone switch
-    {
-        RowTone.Good => "●",
-        RowTone.Bad => "▲",
-        RowTone.Warn => "◐",
-        _ => "□",
-    };
+    public string ChipShape => "●";
 
     /// <summary>Why the chip says what it says: a container's evidence, or a sentence about the project's.</summary>
     public string ChipEvidence => IsContainer ? StateEvidence : $"{ProjectCount}. {HeaderEvidence}";
