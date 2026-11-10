@@ -249,7 +249,7 @@ public sealed class DetailViewTests
     {
         var card = Assert.Single(DetailView.Cards(Rows(Summary("wiki-web-1", "exited", "wiki")), ByState).Projects);
 
-        Assert.Equal("Exited (1) 3 minutes ago", card.Uptime);
+        Assert.Equal("Stopped 3 minutes ago", card.Uptime);
         Assert.Equal("compose · wiki · 1 service", card.CardMeta);
     }
 
@@ -348,7 +348,7 @@ public sealed class DetailViewTests
     }
 
     [Fact]
-    public void A_large_cards_health_bar_puts_problems_last_and_lists_only_them()
+    public void A_large_card_lists_only_the_services_needing_attention()
     {
         var rows = Rows(
             Summary("a", project: "big"),
@@ -360,9 +360,37 @@ public sealed class DetailViewTests
         var card = Assert.Single(DetailView.Cards(rows, ByState).Projects);
 
         Assert.True(card.IsLarge);
-        Assert.Equal("b-id", card.HealthBlocks[^1].Id);
         Assert.Equal(["b-id"], card.CardServices.Select(row => row.Id));
-        Assert.Equal("Show all 5", card.ShowAllLabel);
+        Assert.True(card.HasMoreServices);
+        Assert.Equal("Show all 5 services", card.ShowAllLabel);
+    }
+
+    [Fact]
+    public void A_card_groups_its_failures_by_kind_in_plain_words_and_keeps_the_codes_in_the_tooltip()
+    {
+        // DD337: twenty-two red lines of "Exited (255)" become one, and 137 and 143 read as words.
+        var failed = Enumerable.Range(1, 22)
+            .Select(i => Summary($"svc{i:00}", "exited", "wp") with { Status = "Exited (255) 3 days ago" });
+        var rows = Rows(
+        [
+            .. failed,
+            Summary("backend", "exited", "wp") with { Status = "Exited (137) 18 hours ago" },
+            Summary("turing", "exited", "wp") with { Status = "Exited (143) 5 days ago" },
+        ]);
+
+        var card = Assert.Single(DetailView.Cards(rows, ByState).Projects);
+
+        Assert.Equal(
+            ["22 services failed", "backend was killed 18 hours ago", "turing was shut down 5 days ago"],
+            card.CardAlerts.Select(alert => alert.Sentence));
+        Assert.Contains("svc01: Exited (255) 3 days ago", card.CardAlerts[0].Evidence, StringComparison.Ordinal);
+        Assert.Contains("and 12 more", card.CardAlerts[0].Evidence, StringComparison.Ordinal);
+        Assert.Contains("137", card.CardAlerts[1].Evidence, StringComparison.Ordinal);
+        Assert.Equal(DetailView.CardServiceLimit, card.CardServices.Count);
+        Assert.Equal("Show all 24 services", card.ShowAllLabel);
+
+        // The detail page keeps the daemon's own words, one line per service.
+        Assert.Equal(24, card.Problems.Count);
     }
 
     [Fact]

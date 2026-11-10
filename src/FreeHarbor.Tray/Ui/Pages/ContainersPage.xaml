@@ -832,10 +832,13 @@
                   </StackPanel>
                 </DockPanel>
 
-                <ItemsControl ItemsSource="{Binding Problems}" Margin="0,10,0,0">
+                <!-- DD337: one line per kind of failure, in plain words; the exit codes are in the
+                     tooltip and on the project's page. -->
+                <ItemsControl ItemsSource="{Binding CardAlerts}" Margin="0,10,0,0">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                      <TextBlock FontSize="12" TextTrimming="CharacterEllipsis"
+                      <TextBlock FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,0,0,2"
+                                 ToolTip="{Binding Evidence}"
                                  Foreground="{x:Static ui:Palette.DangerBrush}"><Run Text="▲" FontSize="10" /> <Run
                                  Text="{Binding Sentence, Mode=OneWay}" /></TextBlock>
                     </DataTemplate>
@@ -884,24 +887,6 @@
                 <Border Margin="0,6,0,0" BorderThickness="0,1,0,0"
                         BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" />
 
-                <!-- DD298: a large project's health bar, one shape per container and the problems
-                     last, then only the services that need attention, and Show all. -->
-                <DockPanel Margin="0,8,0,0" Visibility="{Binding IsLarge, Converter={StaticResource Shown}}">
-                  <Button DockPanel.Dock="Right" Content="{Binding ShowAllLabel}" Tag="{Binding}"
-                          Click="ShowAllServices" Style="{StaticResource TextLink}" VerticalAlignment="Center" />
-                  <ItemsControl ItemsSource="{Binding HealthBlocks}" VerticalAlignment="Center">
-                    <ItemsControl.ItemsPanel>
-                      <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate>
-                        <TextBlock Text="{Binding ChipShape}" FontSize="12" Margin="0,0,3,0"
-                                   ToolTip="{Binding Title}"
-                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </DockPanel>
                 <!-- DD326: one row per service: its state's shape and colour, its title and image,
                      and at the right its port in mono and its state word in that same colour. -->
                 <ItemsControl ItemsSource="{Binding CardServices}" Margin="0,8,0,0">
@@ -924,6 +909,11 @@
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                <!-- DD337: a card that left services out says so under them, in place of DD298's
+                     row of shapes. -->
+                <Button Content="{Binding ShowAllLabel}" Tag="{Binding}" Click="ShowAllServices"
+                        Style="{StaticResource TextLink}" HorizontalAlignment="Left" Margin="0,4,0,0"
+                        Visibility="{Binding HasMoreServices, Converter={StaticResource Shown}}" />
 
                 <!-- The one verb, which is the accent button only when it is Start (spec section 5,
                      fixed), because starting is what a stopped card is opened for. No Restart beside

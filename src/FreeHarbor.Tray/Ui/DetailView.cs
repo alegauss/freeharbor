@@ -36,6 +36,36 @@ public sealed record DetailProblem(ContainerRow Row, string Sentence)
     public string StartLabel => $"Start {Row.Title}";
 }
 
+/// <summary>One warning on a project card: one kind of failure, however many services it hit (DD337).</summary>
+/// <param name="Sentence">What the card says, in plain words: <c>22 services failed</c>.</param>
+/// <param name="Evidence">The tooltip: what the kind means, and each service with the daemon's own words.</param>
+public sealed record CardAlert(string Sentence, string Evidence);
+
+/// <summary>
+/// What a non-zero exit means to someone watching, rather than to someone who knows signal numbers
+/// (DD337).
+/// </summary>
+/// <param name="Singular">The verb after one service's name: <c>was killed</c>.</param>
+/// <param name="Plural">The verb after several: <c>were killed</c>.</param>
+/// <param name="Explains">The tooltip's first line, which keeps the code for whoever wants it.</param>
+public sealed record StopReason(string Singular, string Plural, string Explains)
+{
+    /// <summary>Read an exit code.</summary>
+    /// <param name="code">The code from the status line, or nothing where it had none.</param>
+    /// <returns>The reason.</returns>
+    public static StopReason Of(int? code) => code switch
+    {
+        137 => new("was killed", "were killed",
+            "Killed (exit 137): usually out of memory, sometimes a stop that ran out of its grace period."),
+        143 => new("was shut down", "were shut down",
+            "Shut down (exit 143): it was asked to stop, by docker stop or by the engine stopping."),
+        130 => new("was interrupted", "were interrupted", "Interrupted (exit 130): Ctrl+C or SIGINT."),
+        null => new("stopped unexpectedly", "stopped unexpectedly", "Stopped without an exit code."),
+        _ => new("failed", "failed",
+            "Failed (non-zero exit): it stopped with an error. Its log is the next thing to read."),
+    };
+}
+
 /// <summary>
 /// Everything the detail page shows about one project or one standalone container (DD299).
 /// </summary>
@@ -72,26 +102,84 @@ public sealed record DetailView(
     /// <summary>How many services make a project large, the spec's threshold for its card (DD298).</summary>
     public const int LargeFrom = 5;
 
-    /// <summary>Whether the card draws a health bar instead of every service.</summary>
+    /// <summary>Whether the card lists only the services needing attention instead of every one.</summary>
     public bool IsLarge => Services.Count >= LargeFrom;
 
-    /// <summary>
-    /// The health bar: one shape per container, the problems last, so the eye finds them at the end
-    /// of the row rather than among eighteen healthy ones.
-    /// </summary>
-    public IReadOnlyList<ContainerRow> HealthBlocks =>
-        [.. Services.OrderBy(service => service.Tone is RowTone.Bad or RowTone.Warn ? 1 : 0)];
+    /// <summary>How many service rows a card draws at most (DD337); the rest are on the project's page.</summary>
+    public const int CardServiceLimit = 6;
 
     /// <summary>
     /// The services a card lists: every one on a small project, only those needing attention on a
-    /// large one.
+    /// large one, and never more than <see cref="CardServiceLimit"/>, so a project of twenty-two
+    /// failed services does not draw a card taller than the window (DD337).
     /// </summary>
-    public IReadOnlyList<ContainerRow> CardServices => IsLarge
-        ? [.. Services.Where(service => service.Tone is RowTone.Bad or RowTone.Warn)]
-        : Services;
+    public IReadOnlyList<ContainerRow> CardServices =>
+    [
+        .. (IsLarge ? Services.Where(service => service.Tone is RowTone.Bad or RowTone.Warn) : Services)
+            .Take(CardServiceLimit),
+    ];
 
-    /// <summary>What the button that opens the project's page from a large card says.</summary>
-    public string ShowAllLabel => $"Show all {Services.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+    /// <summary>Whether the card leaves services out, and so offers Show all.</summary>
+    public bool HasMoreServices => CardServices.Count < Services.Count;
+
+    /// <summary>What the button that opens the project's page from a card that leaves services out says.</summary>
+    public string ShowAllLabel =>
+        $"Show all {Services.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} services";
+
+    /// <summary>
+    /// The card's warnings (DD337): the failures grouped by what happened, in plain words, one line
+    /// per kind rather than one per service. The exit codes stay in each line's tooltip and on the
+    /// project's page, where someone who wants them goes looking.
+    /// </summary>
+    public IReadOnlyList<CardAlert> CardAlerts
+    {
+        get
+        {
+            // A refused click is its own sentence and says something no grouping can.
+            var refused = Problems
+                .Where(problem => problem.Row.HasFailure)
+                .Select(problem => new CardAlert(problem.Sentence, problem.Sentence));
+
+            var stopped = Problems
+                .Where(problem => !problem.Row.HasFailure)
+                .Select(problem => problem.Row)
+                .GroupBy(row => StopReason.Of(row.ExitCode).Plural, StringComparer.Ordinal)
+                .OrderByDescending(group => group.Count())
+                .Select(group => Alert([.. group]));
+
+            return [.. refused, .. stopped];
+        }
+    }
+
+    private static CardAlert Alert(IReadOnlyList<ContainerRow> rows)
+    {
+        var reason = StopReason.Of(rows[0].ExitCode);
+        var sentence = rows.Count switch
+        {
+            1 => Ago(rows[0].Status) is { Length: > 0 } ago
+                ? $"{rows[0].Title} {reason.Singular} {ago}"
+                : $"{rows[0].Title} {reason.Singular}",
+            <= 3 => $"{string.Join(", ", rows.Take(rows.Count - 1).Select(row => row.Title))} and {rows[^1].Title} {reason.Plural}",
+            _ => $"{rows.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} services {reason.Plural}",
+        };
+
+        const int Named = 10;
+        var lines = new List<string> { reason.Explains, "" };
+        lines.AddRange(rows.Take(Named).Select(row => $"{row.Title}: {row.Status}"));
+        if (rows.Count > Named)
+        {
+            lines.Add($"and {(rows.Count - Named).ToString(System.Globalization.CultureInfo.InvariantCulture)} more");
+        }
+
+        return new CardAlert(sentence, string.Join("\n", lines));
+    }
+
+    /// <summary>The "5 days ago" end of a status line such as <c>Exited (143) 5 days ago</c>, or nothing.</summary>
+    internal static string Ago(string status)
+    {
+        var close = status.IndexOf(')', StringComparison.Ordinal);
+        return close >= 0 ? status[(close + 1)..].Trim() : "";
+    }
 
     /// <summary>How many links a menu holds before it offers a filter box (DD298).</summary>
     public const int LinkFilterFrom = 6;
@@ -143,8 +231,18 @@ public sealed record DetailView(
     /// What the card's footer says on its left (DD326): the first running service's status, which
     /// says how long the project has been up, or the first service's where none runs.
     /// </summary>
+    /// <remarks>
+    /// DD337: a stopped service's line loses its exit code here (<c>Stopped 18 hours ago</c>); the
+    /// code is in the warning's tooltip and on the project's page.
+    /// </remarks>
     public string Uptime =>
-        (Services.FirstOrDefault(service => service.IsRunning) ?? Services.FirstOrDefault())?.Status ?? "";
+        (Services.FirstOrDefault(service => service.IsRunning) ?? Services.FirstOrDefault()) switch
+        {
+            null => "",
+            { IsRunning: false, ExitCode: not null } stopped =>
+                Ago(stopped.Status) is { Length: > 0 } ago ? $"Stopped {ago}" : "Stopped",
+            var service => service.Status,
+        };
 
     /// <summary>
     /// The cards view (DD300): one page's worth of content per project, in the list's order, and the
