@@ -895,7 +895,7 @@
                       <DockPanel Margin="0,3,0,3" ToolTip="{Binding ChipEvidence}">
                         <TextBlock DockPanel.Dock="Left" Text="{Binding ChipShape}" FontSize="12" Width="14"
                                    Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{Binding ShapeInk}" />
-                        <TextBlock DockPanel.Dock="Right" Text="{Binding State}" FontSize="12" MinWidth="56"
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding StateWord}" FontSize="12" MinWidth="56"
                                    Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{Binding ShapeInk}" />
                         <TextBlock DockPanel.Dock="Right" Text="{Binding FirstPort}" FontSize="12"
                                    FontFamily="{x:Static ui:Palette.Mono}" VerticalAlignment="Center"
@@ -1221,7 +1221,7 @@
                          FontSize="12" VerticalAlignment="Center" Foreground="{Binding ToneInk}" />
               <Button DockPanel.Dock="Right" Content="Logs" Tag="{Binding}" Click="OpenLogs"
                       Style="{DynamicResource RowAction}" />
-              <TextBlock DockPanel.Dock="Right" Text="{Binding State}" Margin="12,0,10,0" FontSize="12"
+              <TextBlock DockPanel.Dock="Right" Text="{Binding StateWord}" Margin="12,0,10,0" FontSize="12"
                          VerticalAlignment="Center" Foreground="{Binding ToneInk}" />
               <StackPanel VerticalAlignment="Center" ToolTip="{Binding NameEvidence}">
                 <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"

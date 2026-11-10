@@ -385,6 +385,22 @@ public sealed record ContainerRow(
         { IsProject: true } =>
             $"{Running.ToString(System.Globalization.CultureInfo.InvariantCulture)} of "
             + Total.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        _ => StateWord,
+    };
+
+    /// <summary>
+    /// The state as the window writes it (DD341): <c>failed</c> for a container that stopped and did
+    /// not mean to, <c>stopped</c> for one that finished cleanly, and the daemon's word otherwise.
+    /// </summary>
+    /// <remarks>
+    /// The daemon says <c>exited</c> for both, which left the colour alone to tell a crash from a
+    /// job that did its work. The daemon's word stays in <see cref="State"/>, which the filters and
+    /// the CLI read.
+    /// </remarks>
+    public string StateWord => this switch
+    {
+        { State: "exited" or "dead", Tone: RowTone.Bad } => "failed",
+        { State: "exited" } => "stopped",
         _ => State,
     };
 
@@ -846,6 +862,9 @@ public sealed record ContainerRow(
                 // container carries for it is a container's alone.
                 nameof(ProjectDetails),
                 nameof(ProjectDetailsBeneath),
+
+                // DD341: the state as the window writes it, failed or stopped where the daemon says exited.
+                nameof(StateWord),
             };
 
         /// <summary>What only a header answers. A container returns each of these empty.</summary>

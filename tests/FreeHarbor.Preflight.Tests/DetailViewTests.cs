@@ -394,6 +394,23 @@ public sealed class DetailViewTests
     }
 
     [Fact]
+    public void A_crash_reads_failed_and_a_clean_exit_reads_stopped()
+    {
+        // DD341: the daemon says exited for both, and colour alone told them apart.
+        var rows = Rows(
+            Summary("up"),
+            Summary("done", "exited") with { Status = "Exited (0) 1 minute ago" },
+            Summary("crashed", "exited"),
+            Summary("frozen", "paused"));
+
+        Assert.Equal(
+            ["running", "stopped", "failed", "paused"],
+            rows.Select(row => row.StateWord));
+        Assert.Equal(["failed"],rows.Where(row => row.Name == "crashed").Select(row => row.ChipWord));
+        Assert.Equal("exited", rows.Single(row => row.Name == "crashed").State);
+    }
+
+    [Fact]
     public void A_card_counts_rather_than_names_services_whose_titles_repeat()
     {
         // DD339: two services both titled DSpace read as "DSpace and DSpace were shut down".
