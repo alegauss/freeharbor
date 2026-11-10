@@ -197,6 +197,7 @@
 - ✅ **DD339** **A card warning names two services with the same title as "DSpace and DSpace were shut down"** — A card warning names its services only when their titles tell them apart; repeated titles read as a count, such as "2 services were shut down".
 - ✅ **DD340** **--capture-window cannot photograph this machine's own containers: without --fixture it always draws an empty page** — --capture-window --live asks the engine first and draws this machine's real containers; the read now resumes on the UI thread, and fixture captures stay byte-identical.
 - ✅ **DD341** **A crashed service and one that finished cleanly both read "exited", told apart only by colour** — The window writes failed for a non-zero exit and stopped for a clean one, keeping the daemon's state for filters, the CLI, and paused, restarting or created.
+- ✅ **DD342** **A card's state words are left-aligned in their column, so running, failed and stopped end at different points** — The state word on a card and on the detail page's service list is right-aligned in a fixed column, so running, failed and stopped end on one line.
 
 ## Block D — Container operations (what a user came to do)
 
