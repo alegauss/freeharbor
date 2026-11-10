@@ -394,6 +394,30 @@ public sealed class DetailViewTests
     }
 
     [Fact]
+    public void A_card_counts_rather_than_names_services_whose_titles_repeat()
+    {
+        // DD339: two services both titled DSpace read as "DSpace and DSpace were shut down".
+        ContainerSummary Titled(string name, string title) =>
+            Summary(name, "exited", "ds") with
+            {
+                Status = "Exited (143) 2 days ago",
+                Labels = new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    [ContextPack.ProjectLabel] = "ds",
+                    ["freeharbor.title"] = title,
+                },
+            };
+
+        var repeated = Assert.Single(
+            DetailView.Cards(Rows(Titled("ds-a", "DSpace"), Titled("ds-b", "DSpace")), ByState).Projects);
+        var apart = Assert.Single(
+            DetailView.Cards(Rows(Titled("ds-a", "DSpace"), Titled("ds-b", "Solr")), ByState).Projects);
+
+        Assert.Equal("2 services were shut down", Assert.Single(repeated.CardAlerts).Sentence);
+        Assert.Equal("DSpace and Solr were shut down", Assert.Single(apart.CardAlerts).Sentence);
+    }
+
+    [Fact]
     public void A_small_card_lists_every_service()
     {
         var rows = Rows(Summary("a", project: "small"), Summary("b", "exited", "small"));

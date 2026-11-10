@@ -194,6 +194,7 @@
 - ✅ **DD334** **A database's published port resolves to an http:// link, so the edit dialog offers http://localhost:5432** — A port that does not speak HTTP is no longer resolved to a web link; its chip still copies it, and the resolver and chip share one list.
 - ✅ **DD337** **A card with many failed services lists one red exit-code line each and a colourless row of triangles** — A card now groups its failures by kind in plain words (22 services failed, backend was killed), keeps exit codes in tooltips and the detail page, and caps its service list at six.
 - ✅ **DD338** **States use four shapes (dot, square, triangle, half circle) that read as different kinds of information** — Every state in the window is one dot in its tone's colour beside the state word; L8 is amended for the window and the tray badge keeps its shapes.
+- ✅ **DD339** **A card warning names two services with the same title as "DSpace and DSpace were shut down"** — A card warning names its services only when their titles tell them apart; repeated titles read as a count, such as "2 services were shut down".
 
 ## Block D — Container operations (what a user came to do)
 

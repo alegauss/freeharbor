@@ -154,12 +154,17 @@ public sealed record DetailView(
     private static CardAlert Alert(IReadOnlyList<ContainerRow> rows)
     {
         var reason = StopReason.Of(rows[0].ExitCode);
+
+        // DD339: names only where they tell the services apart. "DSpace and DSpace were shut down"
+        // says less than "2 services were shut down", and the tooltip lists them either way.
+        var distinct = rows.Select(row => row.Title).Distinct(StringComparer.OrdinalIgnoreCase).Count() == rows.Count;
         var sentence = rows.Count switch
         {
             1 => Ago(rows[0].Status) is { Length: > 0 } ago
                 ? $"{rows[0].Title} {reason.Singular} {ago}"
                 : $"{rows[0].Title} {reason.Singular}",
-            <= 3 => $"{string.Join(", ", rows.Take(rows.Count - 1).Select(row => row.Title))} and {rows[^1].Title} {reason.Plural}",
+            <= 3 when distinct =>
+                $"{string.Join(", ", rows.Take(rows.Count - 1).Select(row => row.Title))} and {rows[^1].Title} {reason.Plural}",
             _ => $"{rows.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} services {reason.Plural}",
         };
 
