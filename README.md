@@ -219,7 +219,9 @@ two into the `.ico`.
 
 `FreeHarbor.exe --capture-window <png> [page] --fixture` renders the window off-screen from a known
 sample machine, every name starting with `sample-`, so a change to the window is reviewable as a
-picture. The tray's menu is the one surface it cannot reach, and
+picture. `--live` in place of `--fixture` draws this machine's own engine and containers instead,
+and refuses when no engine answers; that picture carries your project names, so it is for checking
+a change against real data, not for committing. The tray's menu is the one surface it cannot reach, and
 [`tests/FreeHarbor.Cases/TrayMenuPicture.cs`](tests/FreeHarbor.Cases/TrayMenuPicture.cs), run by
 `run-cases.cmd`, photographs it instead.
 

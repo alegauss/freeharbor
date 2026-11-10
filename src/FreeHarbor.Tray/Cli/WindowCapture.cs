@@ -39,6 +39,12 @@ internal static class WindowCapture
     /// <summary>What opens the containers page's detail page on a project before the picture (DD299).</summary>
     public const string DetailFlag = "--detail=";
 
+    /// <summary>
+    /// What draws this machine's own engine as running and photographs its real containers (DD340),
+    /// where a capture with neither flag draws the stopped page.
+    /// </summary>
+    public const string LiveFlag = "--live";
+
     /// <summary>What draws the containers page as cards rather than as its list (DD300).</summary>
     public const string CardsFlag = "--cards";
 
@@ -49,7 +55,7 @@ internal static class WindowCapture
     public const string EditFlag = "--edit=";
 
     /// <summary>Render the window to a PNG.</summary>
-    /// <param name="args">The output path, a tab header, and <c>--fixture</c>, all optional but the path.</param>
+    /// <param name="args">The output path, a tab header, and <c>--fixture</c> or <c>--live</c>, all optional but the path.</param>
     /// <returns>The process exit code.</returns>
     internal static int Run(string[] args)
     {
@@ -62,6 +68,13 @@ internal static class WindowCapture
 
         var fixture = args.Contains(FixtureFlag, StringComparer.Ordinal);
         args = [.. args.Where(a => !string.Equals(a, FixtureFlag, StringComparison.Ordinal))];
+
+        var live = args.Contains(LiveFlag, StringComparer.Ordinal);
+        args = [.. args.Where(a => !string.Equals(a, LiveFlag, StringComparison.Ordinal))];
+        if (live && fixture)
+        {
+            return Complain($"{LiveFlag} and {FixtureFlag} name two different machines; pass one");
+        }
 
         // DD299: the detail page has no tab of its own, so a capture names the project it is open on.
         var detail = args.FirstOrDefault(a => a.StartsWith(DetailFlag, StringComparison.Ordinal))?[DetailFlag.Length..];
@@ -104,6 +117,21 @@ internal static class WindowCapture
         // machine and in CI. The window is handed one or the other and never learns which.
         IEngineClient api = fixture ? new SampleMachine() : new DockerApi();
 
+        // DD340: --live asks before drawing, so an engine that does not answer is refused by name
+        // rather than photographed as a running engine with nothing in it.
+        if (live)
+        {
+            try
+            {
+                _ = api.VersionAsync().GetAwaiter().GetResult();
+            }
+            catch (DockerApiException refused)
+            {
+                app.Shutdown();
+                return Complain($"{LiveFlag} found no engine answering: {refused.Message}");
+            }
+        }
+
         // The builds page reads its own history rather than the Engine API, so it needs its own
         // fixture or --fixture would photograph a page that shells out to the real Buildx and shows
         // whatever this machine happened to build (DD126, L6). Null is the live one.
@@ -138,7 +166,7 @@ internal static class WindowCapture
             : null;
 
         var window = new Ui.MainWindow(
-            api, () => fixture ? EngineState.Running : EngineState.Stopped, () => { },
+            api, () => fixture || live ? EngineState.Running : EngineState.Stopped, () => { },
             builds, engine, windowState)
         {
             WindowStartupLocation = System.Windows.WindowStartupLocation.Manual,
@@ -193,6 +221,12 @@ internal static class WindowCapture
         // gets rather than of one that was never asked to draw anything. With no engine this fails and
         // the window shows its own empty state, which is the honest thing to photograph — without it
         // the header row came back blank, seen by looking at the first capture.
+        // DD340: the dispatcher's context is installed by Application.Run, which has not run yet, so
+        // without this a read that really waits on the pipe resumes on a pool thread and the redraw
+        // throws there, unobserved, leaving the empty page. The fixture answers synchronously and
+        // never needed it, which is why this went unseen until a capture read a real engine.
+        SynchronizationContext.SetSynchronizationContext(
+            new System.Windows.Threading.DispatcherSynchronizationContext(window.Dispatcher));
         _ = window.RefreshAsync();
 
         var settle = new System.Windows.Threading.DispatcherTimer { Interval = Settle };
