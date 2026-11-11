@@ -4,7 +4,7 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
-- 💭 **DD345** (deps: —) **The tray balloon says there is nothing to click while WSL itself is not answering** — Found by DD344: the balloon fires at 15s, before the timeout is known, so it should follow up once the journal names it and open the Engine page on click. → §DD345
+- 📋 **DD346** (deps: —) **The live compose run test failed once in a full run and passed alone, and its assertion keeps none of compose's words** — A live-engine test that fails without saying why under load is a red gate nobody can act on. → §DD346
 
 ## Block B — The daemon client (talk to the engine)
 

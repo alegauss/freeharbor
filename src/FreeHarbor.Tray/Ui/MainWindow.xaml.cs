@@ -225,6 +225,10 @@ internal partial class MainWindow : Window
         _ = BuildsDestination.ShowBuildAsync(reference);
     }
 
+    /// <summary>Open the Engine destination, because the tray's balloon asked for it (DD345).</summary>
+    /// <remarks>Through the nav, for the reason <see cref="ShowBuild"/> gives.</remarks>
+    internal void ShowEnginePage() => NavEngine.IsChecked = true;
+
     /// <summary>Re-read the containers, and the engine line above them.</summary>
     /// <param name="settled">
     /// The container an event just arrived for, whose pending state that event confirms.

@@ -51,22 +51,27 @@ still accepting, with a fast `IOException`, is the client's, and the helper shou
 that error as it retries a timeout. A later ten-run loop saw five live-engine relay
 tests fail together in one run only: a burst's shape.
 
-### §DD345 Follow the balloon up once WSL is known to be stuck
+### §DD346 A flaky live compose test that says nothing
 
-DD183 holds the announcement for fifteen seconds and then says FreeHarbor is trying, and
-that there is nothing to click. That sentence is true for a blip and false for a hung
-WSL: the host's retry terminates the distribution and starts it again, which cannot
-reach a service that will not hand out a virtual machine. The timeout is only known once
-a start has spent its sixty-second budget, so the first balloon cannot carry it.
+Seen on 11 November 2026 while DD345 ran the full suite:
+`RelayExitCodeTests.A_compose_run_on_a_service_that_succeeds_is_reported_as_a_success`
+failed once (1 of 1835), then passed three times when its class ran alone, with nothing
+changed between the runs. It is a live-engine test: it serves the relay
+(`LiveEngine.Served`) and runs `docker compose -p <name> run --rm -T probe` through it,
+so its outcome depends on this machine's engine and on whatever else the suite has the
+engine doing at the same moment.
 
-The follow-up: when the journal first names HCS_E_CONNECTION_TIMEOUT after the engine
-went away, the tray says once that WSL itself has stopped answering, and a click on that
-balloon opens the window on the Engine page, where DD344's Restart WSL is already
-showing. The tray reads the journal for this the way the Engine page does, as a file
-length check, and never asks the engine on a timer.
+The filtered output kept only the verdict, so the exit code and what compose printed are
+not known yet. Start there: run the full suite with the class's `ran` output written to
+the assertion message (`Assert.Equal(0, ran.ExitCode)` names neither stdout nor stderr),
+and repeat until it fails again. The likely candidates are the ones DD305 and DD321
+found for their own flakes: a resource another live test holds (the image pull, the
+project network, the pipe's second connection) or a timeout that only bites under load.
 
-It never restarts WSL itself. The consent stays in the page's dialog, which names the
-other distributions that stop.
+Done when:
+
+- A failure of this test names compose's own words, and the cause it names is fixed or
+  the test waits for what it needs instead of racing it.
 
 ## Block B — The daemon client (talk to the engine)
 

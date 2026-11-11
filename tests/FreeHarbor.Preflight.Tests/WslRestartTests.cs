@@ -42,6 +42,55 @@ public sealed class WslRestartTests
     public void An_empty_journal_offers_nothing() =>
         Assert.False(WslFailure.WslIsNotAnsweringNow([]));
 
+    // ---- the tray's follow-up (DD345) --------------------------------------------------------
+
+    [Fact]
+    public void The_tray_says_it_once_when_the_journal_names_the_timeout()
+    {
+        var notice = new WslStuckNotice();
+        string[] journal = [Answered, "2026-11-11 19:39:00  tray      the engine stopped answering"];
+
+        Assert.False(notice.Due(100, () => journal));
+
+        journal = [.. journal, Timeout];
+        Assert.True(notice.Due(200, () => journal));
+
+        // Said once per outage, however much more the journal grows.
+        journal = [.. journal, Timeout];
+        Assert.False(notice.Due(300, () => journal));
+    }
+
+    [Fact]
+    public void The_tray_reads_the_journal_only_when_its_length_moved()
+    {
+        var notice = new WslStuckNotice();
+        var reads = 0;
+        IReadOnlyList<string> Read()
+        {
+            reads++;
+            return [Answered];
+        }
+
+        notice.Due(100, Read);
+        notice.Due(100, Read);
+        notice.Due(100, Read);
+        notice.Due(140, Read);
+
+        Assert.Equal(2, reads);
+    }
+
+    [Fact]
+    public void The_tray_says_nothing_for_a_timeout_the_engine_has_answered_since()
+    {
+        var notice = new WslStuckNotice();
+
+        Assert.False(notice.Due(100, () => [Timeout, Answered]));
+    }
+
+    [Fact]
+    public void The_follow_up_names_the_page_and_the_button_it_opens_on() =>
+        Assert.Contains("Restart WSL", WslStuckNotice.Text, StringComparison.Ordinal);
+
     // ---- the sequence ------------------------------------------------------------------------
 
     [Fact]

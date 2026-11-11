@@ -96,7 +96,7 @@ public sealed class ReleaseWatchTests
 
         Assert.Equal(
             1,
-            program.Split("offersUpdate: true", StringSplitOptions.None).Length - 1);
+            program.Split("click: InstallTheUpdate", StringSplitOptions.None).Length - 1);
     }
 
     private static string RepositoryFile(string relative)

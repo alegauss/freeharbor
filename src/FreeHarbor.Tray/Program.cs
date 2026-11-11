@@ -113,13 +113,9 @@ internal sealed class TrayApplication : ApplicationContext
         // the moment the news arrives — the menu item is an icon, a right-click and a read away.
         // Guarded on the balloon showing now rather than on a release existing: this surface also
         // carries failures, and a click on "the engine went away" must not start an install.
-        _icon.BalloonTipClicked += (_, _) =>
-        {
-            if (_balloonOffersUpdate)
-            {
-                InstallTheUpdate();
-            }
-        };
+        // DD345 gave the surface a second click, so the guard is now which action the balloon on
+        // screen carries rather than whether it carries the one.
+        _icon.BalloonTipClicked += (_, _) => _balloonClick?.Invoke();
 
         _scale = new TrayScale(() => _ui.Post(_ => Show(_shown), null));
 
@@ -237,7 +233,7 @@ internal sealed class TrayApplication : ApplicationContext
             Balloon(
                 $"FreeHarbor {release.Version.ToString(3)} has been released. "
                 + "Click here to install it, or use the tray menu.",
-                offersUpdate: true);
+                click: InstallTheUpdate);
         }
     }
 
@@ -525,10 +521,10 @@ internal sealed class TrayApplication : ApplicationContext
 
     /// <summary>Say something from the corner, without claiming anything went wrong.</summary>
     /// <param name="text">What to say.</param>
-    /// <param name="offersUpdate">
-    /// Whether clicking this balloon installs the release it is about (DD172). Default false, and
-    /// that default is the guard: every other caller says a failure, and a click on one of those
-    /// must not start an install.
+    /// <param name="click">
+    /// What clicking this balloon does: install the release it is about (DD172), or open the Engine
+    /// page on a WSL that stopped answering (DD345). Default nothing, and that default is the guard:
+    /// most callers say a failure, and a click on one of those must not start an install.
     /// </param>
     /// <remarks>
     /// <see cref="Complain"/>'s balloon, lifted out when DD154 needed the same surface for news that
@@ -536,19 +532,19 @@ internal sealed class TrayApplication : ApplicationContext
     /// Complain adds around this is the state repair — a start that failed is no longer pending — and
     /// that is exactly what an announcement must not do.
     /// </remarks>
-    private void Balloon(string text, bool offersUpdate = false)
+    private void Balloon(string text, Action? click = null)
     {
-        // Set on every balloon and not only on the one that offers, because what the click has to
+        // Set on every balloon and not only on the ones that act, because what the click has to
         // know is which balloon is on screen now — a release announced an hour ago must not make a
         // click on this afternoon's failure install anything.
-        _balloonOffersUpdate = offersUpdate;
+        _balloonClick = click;
         _icon.BalloonTipTitle = "FreeHarbor";
         _icon.BalloonTipText = text;
         _icon.ShowBalloonTip(8000);
     }
 
-    /// <summary>Whether the balloon currently on screen is the one announcing a release (DD172).</summary>
-    private bool _balloonOffersUpdate;
+    /// <summary>What a click on the balloon currently on screen does, if anything (DD172, DD345).</summary>
+    private Action? _balloonClick;
 
     /// <summary>
     /// The engine is going down because somebody asked, not because it failed (DD210, DD213).
@@ -748,6 +744,8 @@ internal sealed class TrayApplication : ApplicationContext
             CancellationToken.None,
             TaskContinuationOptions.OnlyOnRanToCompletion,
             TaskScheduler.Default);
+
+        WatchForAStuckWsl();
     }
 
     private void StopWaitingOutTheBlip()
@@ -755,6 +753,77 @@ internal sealed class TrayApplication : ApplicationContext
         _grace?.Cancel();
         _grace?.Dispose();
         _grace = null;
+        StopWatchingForAStuckWsl();
+    }
+
+    /// <summary>The journal, read for DD345's follow-up.</summary>
+    private readonly EngineJournalFile _journalRead = new();
+
+    /// <summary>Asks the journal's length while the engine is gone on its own (DD345).</summary>
+    private System.Windows.Forms.Timer? _wslWatch;
+
+    /// <summary>
+    /// Watch the journal for the code that says WSL itself is hung, for as long as this outage lasts
+    /// (DD345).
+    /// </summary>
+    /// <remarks>
+    /// The same lifetime as the blip's wait, so it ends where that does: the engine answering, a
+    /// stop somebody asked for, or a page or verb taking the engine down. A WinForms timer because
+    /// its tick is already on the UI thread, which is where the balloon has to be shown from. What
+    /// it asks is the file's length, and the file is read only when that moved; see
+    /// <see cref="WslStuckNotice"/> for why that and not a question to the engine.
+    /// </remarks>
+    private void WatchForAStuckWsl()
+    {
+        StopWatchingForAStuckWsl();
+
+        var notice = new WslStuckNotice();
+        var watch = new System.Windows.Forms.Timer { Interval = (int)WslStuckNotice.LookEvery.TotalMilliseconds };
+        watch.Tick += (_, _) =>
+        {
+            if (_shown is EngineState.Running || _stopAsked)
+            {
+                StopWatchingForAStuckWsl();
+                return;
+            }
+
+            if (notice.Due(JournalLength(), _journalRead.Read))
+            {
+                StopWatchingForAStuckWsl();
+                _journal.Say($"{"tray",-8}  WSL itself is not answering, and the tray said so");
+                Balloon(WslStuckNotice.Text, click: OpenTheEnginePage);
+            }
+        };
+        _wslWatch = watch;
+        watch.Start();
+    }
+
+    private void StopWatchingForAStuckWsl()
+    {
+        _wslWatch?.Stop();
+        _wslWatch?.Dispose();
+        _wslWatch = null;
+    }
+
+    /// <summary>How long the journal is now, or 0 where there is no file.</summary>
+    private long JournalLength()
+    {
+        try
+        {
+            var file = new System.IO.FileInfo(_journalRead.Path);
+            return file.Exists ? file.Length : 0;
+        }
+        catch (Exception exception) when (exception is System.IO.IOException or UnauthorizedAccessException)
+        {
+            return 0;
+        }
+    }
+
+    /// <summary>Open the window on the Engine page, where DD344's Restart WSL is showing (DD345).</summary>
+    private void OpenTheEnginePage()
+    {
+        OpenWindow();
+        _open?.ShowEnginePage();
     }
 
     private void SayTheEngineIsStillGone()
