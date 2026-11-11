@@ -93,7 +93,8 @@ public static class AgentSurface
         new(AgentNamespace.Do, "compose", "do compose up",
             "up [-f file]... bring the project up, stamped so `do reclaim` can take it back"),
         new(AgentNamespace.Do, "engine", "do engine",
-            "start | stop bring the engine up or take it down"),
+            "start | stop | restart-wsl bring the engine up or take it down;\n"
+            + "restart-wsl shuts all of WSL down first, for a WSL that stopped answering"),
         new(AgentNamespace.Do, "reclaim", "do reclaim",
             "--session [id] [--volumes] [--confirm k:..]\n"
             + "remove exactly what this session made"),
@@ -2171,25 +2172,31 @@ public static class AgentSurface
     {
         if (rest.Length != 1)
         {
-            return Refuse("do engine takes start or stop");
+            return Refuse("do engine takes start, stop or restart-wsl");
         }
 
         switch (rest[0])
         {
             case "start":
-            {
-                // The same detached launch the tray's menu item makes, for the same reason: the relay
-                // has to outlive the command that started it.
-                var failure = new EngineHolder(EngineHolder.ThisProcess(), new DetachedLauncher())
-                    .Start();
-                if (failure is not null)
-                {
-                    Console.Error.WriteLine($"{CommandLine.ExecutableName}: {failure}");
-                    return Failed;
-                }
+                return StartTheEngine();
 
-                Console.Out.WriteLine("engine  starting  serving \\\\.\\pipe\\" + DockerApi.DefaultPipeName);
-                return Ok;
+            case "restart-wsl":
+            {
+                // DD344. The page's sequence through the page's seam, so the two cannot disagree
+                // about what a restart does. Asked for by name, which is the consent: the summary
+                // says it stops all of WSL. One line either way, inside the verb's 40-token ceiling:
+                // who else went down on success, and the step that stopped it otherwise.
+                var work = FilesystemWork.OnThisMachine();
+                var others = work.OtherDistributionsRunning;
+                var outcome = work.RestartWsl(_ => { });
+                Console.Out.WriteLine(outcome.Succeeded
+                    ? "wsl     restarted  " + (others.Count > 0
+                        ? $"also stopped {string.Join(", ", others)}"
+                        : "nothing else was running")
+                    : $"wsl     failed     {outcome.Failure?.Detail}");
+
+                var started = outcome.EngineWentDown ? StartTheEngine() : Ok;
+                return outcome.Succeeded ? started : Failed;
             }
 
             case "stop":
@@ -2209,8 +2216,27 @@ public static class AgentSurface
             }
 
             default:
-                return Refuse($"do engine takes start or stop, not {rest[0]}");
+                return Refuse($"do engine takes start, stop or restart-wsl, not {rest[0]}");
         }
+    }
+
+    /// <summary>Launch the engine host the way the tray's menu item does.</summary>
+    /// <returns>The exit code.</returns>
+    /// <remarks>
+    /// Detached for the same reason the menu item is: the relay has to outlive the command that
+    /// started it.
+    /// </remarks>
+    private static int StartTheEngine()
+    {
+        var failure = new EngineHolder(EngineHolder.ThisProcess(), new DetachedLauncher()).Start();
+        if (failure is not null)
+        {
+            Console.Error.WriteLine($"{CommandLine.ExecutableName}: {failure}");
+            return Failed;
+        }
+
+        Console.Out.WriteLine("engine  starting  serving \\\\.\\pipe\\" + DockerApi.DefaultPipeName);
+        return Ok;
     }
 
     /// <summary>Every verb, for the console's own help.</summary>

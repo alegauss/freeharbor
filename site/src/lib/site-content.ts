@@ -850,7 +850,7 @@ export const claudeCode = {
   doHeading: "do: the mutating path (still asks)",
   do: [
     { k: "do compose up", v: "compose up", d: "brings the project here up, stamped so do reclaim can take it back" },
-    { k: "do engine", v: "engine", d: "start or stop the engine itself" },
+    { k: "do engine", v: "engine", d: "start or stop the engine, or restart a WSL that stopped answering" },
     { k: "do reclaim", v: "reclaim", d: "an undo scoped to this session's own labels" },
   ],
   pluginHeading: "The plugin that makes it discoverable",

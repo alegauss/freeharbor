@@ -115,6 +115,7 @@
 - ✅ **DD305** **The error-mode test fails now and then in a full run and passes alone, with nothing changed** — The error-mode test asserts its own flag and checks added-not-assigned over a value, and passed ten full runs in a row (design superseded: the race was a transient flag, not a collection).
 - ✅ **DD308** **On CI a tool's stderr line once came back after a stdout line it was written two seconds before** — CI run 42626319551 showed 83 pool items queued; each pipe is now read on its own thread, and the lock test releases off the pool.
 - ✅ **DD343** **A ping answered by wsl.exe's own UTF-16 error reads as the daemon replying, cut to one letter** — A ping that reads something other than HTTP now decodes it, so wsl.exe's UTF-16LE refusal is quoted whole as wsl.exe answering in the daemon's place.
+- ✅ **DD344** **A hung WSL (HCS_E_CONNECTION_TIMEOUT) leaves the host retrying every 5 minutes with nothing offered that would fix it** — While the journal's latest word is HCS_E_CONNECTION_TIMEOUT, the Engine page offers Restart WSL and do engine takes restart-wsl; both name who else stops.
 
 ## Block B — The daemon client (talk to the engine)
 

@@ -113,6 +113,17 @@ internal sealed class FilesystemWork : IFilesystemWork
             .Run(report, saying);
     }
 
+    /// <inheritdoc/>
+    /// <remarks>
+    /// No registered guard: a WSL that is not answering is exactly the machine on which asking
+    /// whether the distribution is registered may not get an answer, and nothing here touches it.
+    /// </remarks>
+    public RepairOutcome RestartWsl(Action<RepairStep> report)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        return new WslRestart(new Wsl(), StopTheEngine).Run(report);
+    }
+
     private static RepairOutcome Run(Action<RepairStep> report, bool write)
     {
         ArgumentNullException.ThrowIfNull(report);

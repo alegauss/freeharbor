@@ -52,6 +52,63 @@ public sealed record WslFailure(string Meaning, IReadOnlyList<string> Remedy)
         said is not null && said.Contains(DistroNotFound, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
+    /// The code <c>wsl.exe</c> writes when the virtual machine never answered the service (DD344).
+    /// </summary>
+    /// <remarks>
+    /// Measured on 11 November 2026: every start for hours ended in
+    /// <c>Wsl/Service/CreateInstance/HCS_E_CONNECTION_TIMEOUT</c>, <c>wsl --list --running</c> hung,
+    /// and one <c>wsl --shutdown</c> put it right. Only this code, because it is the one seen and
+    /// the one a shutdown is known to clear; other <c>HCS_E_</c> codes name a Hyper-V that is
+    /// missing or off, which no restart fixes.
+    /// </remarks>
+    public const string WslNotAnswering = "HCS_E_CONNECTION_TIMEOUT";
+
+    /// <summary>
+    /// Whether these words are <c>wsl.exe</c> saying WSL itself stopped answering (DD344).
+    /// </summary>
+    /// <param name="said">What it wrote, or a status detail carrying it.</param>
+    /// <returns><see langword="true"/> where they are.</returns>
+    /// <remarks>
+    /// The code and never the sentence, for the reason <see cref="SaysNoSuchDistribution"/> gives:
+    /// the prose is localised, and the capture this rests on is in Portuguese.
+    /// </remarks>
+    public static bool SaysWslIsNotAnswering(string? said) =>
+        said is not null && said.Contains(WslNotAnswering, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Whether the engine's journal says WSL is not answering now, rather than once (DD344).
+    /// </summary>
+    /// <param name="journal">The journal's lines, oldest first.</param>
+    /// <returns>
+    /// <see langword="true"/> where the latest of the two facts that decide it is the failure.
+    /// </returns>
+    /// <remarks>
+    /// Read backwards to whichever comes first: a line naming the code, or a line saying the engine
+    /// answered. An engine that has answered since the last timeout needs nothing restarted, and
+    /// offering a shutdown of every distribution on the strength of yesterday's line would be the
+    /// page reaching outside what it owns for no reason.
+    /// </remarks>
+    public static bool WslIsNotAnsweringNow(IReadOnlyList<string> journal)
+    {
+        ArgumentNullException.ThrowIfNull(journal);
+        for (var i = journal.Count - 1; i >= 0; i--)
+        {
+            var line = journal[i];
+            if (SaysWslIsNotAnswering(line))
+            {
+                return true;
+            }
+
+            if (line.Contains($"  {EngineState.Running}  ", StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Read a launcher's words, or a status detail carrying them, for a failure worth explaining.
     /// </summary>
     /// <param name="said">What was said, or <see langword="null"/>.</param>

@@ -51,6 +51,23 @@ still accepting, with a fast `IOException`, is the client's, and the helper shou
 that error as it retries a timeout. A later ten-run loop saw five live-engine relay
 tests fail together in one run only: a burst's shape.
 
+### §DD345 Follow the balloon up once WSL is known to be stuck
+
+DD183 holds the announcement for fifteen seconds and then says FreeHarbor is trying, and
+that there is nothing to click. That sentence is true for a blip and false for a hung
+WSL: the host's retry terminates the distribution and starts it again, which cannot
+reach a service that will not hand out a virtual machine. The timeout is only known once
+a start has spent its sixty-second budget, so the first balloon cannot carry it.
+
+The follow-up: when the journal first names HCS_E_CONNECTION_TIMEOUT after the engine
+went away, the tray says once that WSL itself has stopped answering, and a click on that
+balloon opens the window on the Engine page, where DD344's Restart WSL is already
+showing. The tray reads the journal for this the way the Engine page does, as a file
+length check, and never asks the engine on a timer.
+
+It never restarts WSL itself. The consent stays in the page's dialog, which names the
+other distributions that stop.
+
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)

@@ -73,6 +73,11 @@
             <!-- Beside Repair and not on a panel of its own (DD211). The gap it acts on is two of
                  the readings above it, and the interruption it costs is the one Check filesystem
                  already costs, so this is the row where both of those are already on screen. -->
+            <!-- Hidden until the journal says WSL itself stopped answering (DD344), which is the one
+                 failure the host's own retries cannot reach. First in the row because when it is
+                 showing it is the only button here that would help. -->
+            <Button x:Name="RestartWsl" Content="Restart WSL" Click="RestartTheWsl"
+                    Visibility="Collapsed" Padding="12,2" Margin="0,0,8,0" FontSize="12" />
             <Button x:Name="Repair" Content="Repair" Click="RepairTheFilesystem"
                     Visibility="Collapsed" Padding="12,2" Margin="0,0,8,0" FontSize="12" />
             <!-- Hidden like Repair and for the same rule (DD237): it appears only where a run has

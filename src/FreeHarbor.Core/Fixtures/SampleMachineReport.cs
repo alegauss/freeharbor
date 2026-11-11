@@ -104,6 +104,13 @@ public sealed class SampleFilesystemWork : IFilesystemWork
 
     /// <inheritdoc/>
     /// <remarks>
+    /// Refuses like the rest: reaching the real one from a capture would stop every distribution on
+    /// the desk taking the picture.
+    /// </remarks>
+    public RepairOutcome RestartWsl(Action<RepairStep> report) => Refuse();
+
+    /// <inheritdoc/>
+    /// <remarks>
     /// False, so a capture draws the sentence a machine that has never run a check gets. It is the
     /// harder of the two to notice being wrong, and a picture is where somebody would notice it.
     /// </remarks>

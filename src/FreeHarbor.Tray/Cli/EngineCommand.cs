@@ -98,6 +98,17 @@ internal static class EngineCommand
                 Note(journal, $"  {"",-8}  {line}");
             }
         }
+
+        // DD344. The host's own retry terminates the distribution and starts it again, which cannot
+        // reach a WSL that will not hand out a virtual machine; naming what can is the difference
+        // between a journal that repeats a failure every five minutes and one that ends it.
+        if (WslFailure.SaysWslIsNotAnswering(status.Detail))
+        {
+            Note(journal,
+                $"  {"",-8}  WSL itself is not answering, which retrying cannot fix: Restart WSL on "
+                + $"the Engine page, or {CommandLine.ExecutableName} do engine restart-wsl, shuts all "
+                + "of WSL down and starts the engine again");
+        }
     }
 
     /// <summary>Write out a filesystem reading and the repair it carries (DD191).</summary>

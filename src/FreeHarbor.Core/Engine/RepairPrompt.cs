@@ -54,6 +54,15 @@ public interface IFilesystemWork
     CompactionOutcome CompactAsAdministrator(
         Action<RepairStep> report, Action<string>? saying = null);
 
+    /// <summary>Shut WSL down and see that it answers again (DD344).</summary>
+    /// <param name="report">Called with each step as it lands.</param>
+    /// <returns>What was done.</returns>
+    /// <remarks>
+    /// On this seam for the reason <see cref="Compact"/> is: a window that constructed it could stop
+    /// every distribution on the machine, which a capture must not be one click away from.
+    /// </remarks>
+    RepairOutcome RestartWsl(Action<RepairStep> report);
+
     /// <summary>
     /// Whether a check on this machine still owes a network call before it can start (DD216).
     /// </summary>
@@ -287,6 +296,70 @@ public sealed record RepairPrompt(
             + "Docker starts again afterwards. Declining the prompt costs nothing: the disk is "
             + "left exactly as it is now.\n\n"
             + "Ask for administrator rights?";
+    }
+
+    /// <summary>What restarting WSL asks before it stops anything (DD344).</summary>
+    /// <param name="alsoRunning">
+    /// Other WSL distributions known to be up. Empty where there are none, and also where WSL was
+    /// too stuck to say, which is why the sentence names the blast radius either way.
+    /// </param>
+    /// <returns>The question, as the dialog asks it.</returns>
+    /// <remarks>
+    /// The quit path refuses <c>wsl --shutdown</c> because it stops somebody's other work, and that
+    /// refusal is right for anything done unasked. This is asked, so the cost goes above the
+    /// question, in the order the reader weighs it: what is broken, what this does, who else stops.
+    /// </remarks>
+    public static string RestartWslConfirmation(IReadOnlyList<string>? alsoRunning = null)
+    {
+        var others = alsoRunning is { Count: > 0 }
+            ? "That includes other distributions running right now: "
+              + string.Join(", ", alsoRunning) + ".\n\n"
+            : "That includes any other distribution you have open, such as an Ubuntu shell.\n\n";
+
+        return "WSL itself has stopped answering, so FreeHarbor cannot bring Docker back by "
+            + "restarting it.\n\n"
+            + "Restarting WSL shuts down every WSL distribution on this machine, not just Docker. "
+            + others
+            + "Docker starts again by itself afterwards.\n\n"
+            + "Restart WSL now?";
+    }
+
+    /// <summary>What the panel says while WSL is being restarted (DD344).</summary>
+    public static readonly RepairPrompt RestartingWsl = new(
+        "Restarting WSL",
+        "Docker and every other WSL distribution are stopped, and Docker starts again by itself "
+        + "when this finishes.",
+        OfferRepair: false);
+
+    /// <summary>Read a WSL restart for what the page should now say (DD344).</summary>
+    /// <param name="outcome">What the restart did.</param>
+    /// <returns>The prompt.</returns>
+    /// <remarks>
+    /// The engine is started on every ending where it went down, as the compaction does: the host
+    /// keeps retrying from there, so a WSL that comes right later brings Docker back with it, and
+    /// leaving it stopped would add a click to a failure nobody here caused.
+    /// </remarks>
+    public static RepairPrompt AfterRestart(RepairOutcome outcome)
+    {
+        ArgumentNullException.ThrowIfNull(outcome);
+
+        if (outcome.Succeeded)
+        {
+            return new RepairPrompt(
+                "WSL was restarted",
+                "WSL answers again, and Docker is being started.",
+                OfferRepair: false,
+                StartsAgain: true);
+        }
+
+        return new RepairPrompt(
+            "WSL did not come back",
+            (outcome.Failure?.Detail ?? "nothing said where it stopped")
+            + (outcome.EngineWentDown
+                ? " Docker is being started anyway, and keeps retrying until WSL answers."
+                : " Nothing was stopped, so Docker is as it was."),
+            OfferRepair: false,
+            StartsAgain: outcome.EngineWentDown);
     }
 
     /// <summary>What the panel says while a compaction is running.</summary>

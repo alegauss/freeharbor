@@ -558,12 +558,21 @@ public sealed class TrayTests
         // dialog that says all of WSL stops and names which other distributions are running, and
         // only after a compaction has already been refused. Those two conditions are asserted
         // below, so the exemption cannot quietly become an ordinary call.
-        var allowed = Path.Combine("src", "FreeHarbor.Core", "Engine", "ElevatedCompaction.cs");
+        //
+        // A SECOND exemption, added by DD344 on the same terms: restarting WSL for a WSL that has
+        // stopped answering, which nothing short of a shutdown reaches. Offered only while the
+        // journal says so, and behind a dialog naming the blast radius, both asserted below.
+        string[] allowed =
+        [
+            Path.Combine("src", "FreeHarbor.Core", "Engine", "ElevatedCompaction.cs"),
+            Path.Combine("src", "FreeHarbor.Core", "Engine", "WslRestart.cs"),
+        ];
         var offenders = Directory
             .EnumerateFiles(Path.Combine(RepositoryRoot(), "src"), "*.cs", SearchOption.AllDirectories)
             .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}",
                 StringComparison.Ordinal))
-            .Where(file => !file.EndsWith(allowed, StringComparison.OrdinalIgnoreCase))
+            .Where(file => !allowed.Any(
+                exempt => file.EndsWith(exempt, StringComparison.OrdinalIgnoreCase)))
             .Where(file => File.ReadAllText(file).Contains("\"--shutdown\"", StringComparison.Ordinal))
             .ToList();
 
@@ -584,6 +593,15 @@ public sealed class TrayTests
         Assert.False(
             RepairPrompt.Of(unrefused).OfferElevated,
             "the page offers the shutdown without a refusal having happened first");
+
+        // DD344's two conditions: the dialog says all of WSL stops and names who else, and the
+        // offer needs a journal whose latest word is WSL not answering.
+        var restart = RepairPrompt.RestartWslConfirmation(["Ubuntu"]);
+        Assert.Contains("every WSL distribution", restart, StringComparison.Ordinal);
+        Assert.Contains("Ubuntu", restart, StringComparison.Ordinal);
+        Assert.False(
+            WslFailure.WslIsNotAnsweringNow(["2026-11-11 19:47:10  Running   the engine answered"]),
+            "the page offers to restart WSL on a machine whose engine is answering");
     }
 
     // ---- the exits nobody thinks of as quitting (DD129) ---------------------------------------

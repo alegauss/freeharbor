@@ -465,7 +465,12 @@ public sealed class RepairPromptTests
         Assert.Contains(
             "private DispatcherTimer DrawAsTheyLand(", page, StringComparison.Ordinal);
 
-        foreach (var run in new[] { "internal async Task Compacting(", "internal async Task Run(" })
+        foreach (var run in new[]
+                 {
+                     "internal async Task Compacting(",
+                     "internal async Task Run(",
+                     "internal async Task RestartingWsl(",
+                 })
         {
             var at = page.IndexOf(run, StringComparison.Ordinal);
             Assert.True(at > 0, $"{run} is gone, so this guard reads nothing");
@@ -484,10 +489,10 @@ public sealed class RepairPromptTests
                 $"{run} never stops the ticker, so it redraws a working panel over the outcome");
         }
 
-        // In a finally on both, because the thrown ending is the one where a ticker left running
-        // would paint over the exception the reader needs.
+        // In a finally on every one, because the thrown ending is the one where a ticker left
+        // running would paint over the exception the reader needs. Three since DD344.
         Assert.Equal(
-            2,
+            3,
             page.Split("            ticker.Stop();", StringSplitOptions.None).Length - 1);
     }
 

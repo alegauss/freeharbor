@@ -4,6 +4,8 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
+- 💭 **DD345** (deps: —) **The tray balloon says there is nothing to click while WSL itself is not answering** — Found by DD344: the balloon fires at 15s, before the timeout is known, so it should follow up once the journal names it and open the Engine page on click. → §DD345
+
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)

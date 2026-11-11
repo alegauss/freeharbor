@@ -184,6 +184,12 @@ internal sealed partial class EnginePage : System.Windows.Controls.UserControl
         // open since before the first read would otherwise show the sentence for an empty file.
         Digest.Text = JournalDigest.Of(lines).Summary();
 
+        // Offered from the journal and not from a run on this page (DD344): the failure is the
+        // host's, found by a start this page never made, and the journal is where it lands.
+        RestartWsl.Visibility = WslFailure.WslIsNotAnsweringNow(lines)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
         var empty = EmptyState(lines.Count);
         LogPane.Visibility = empty is null ? Visibility.Visible : Visibility.Collapsed;
         Empty.Visibility = empty is null ? Visibility.Collapsed : Visibility.Visible;
@@ -437,6 +443,7 @@ internal sealed partial class EnginePage : System.Windows.Controls.UserControl
     /// </remarks>
     private void Busy(bool running)
     {
+        RestartWsl.IsEnabled = !running;
         Check.IsEnabled = !running;
         Repair.IsEnabled = !running;
         Compact.IsEnabled = !running;
@@ -493,6 +500,82 @@ internal sealed partial class EnginePage : System.Windows.Controls.UserControl
 
         Show(prompt, Transcript(steps, outcome.Findings));
         Busy(false);
+    }
+
+    /// <summary>Restart WSL, once asked to and once told who else stops (DD344).</summary>
+    /// <param name="sender">Unused.</param>
+    /// <param name="e">Unused.</param>
+    /// <remarks>
+    /// The other distributions are asked for off the UI thread. On the machine this button is for,
+    /// <c>wsl --list --running</c> is one of the calls that hangs, and it would hang the window with
+    /// it until the probe budget ran out.
+    /// </remarks>
+    private async void RestartTheWsl(object sender, RoutedEventArgs e)
+    {
+        Busy(true);
+        IReadOnlyList<string> others;
+        try
+        {
+            others = await Task.Run(() => _work.OtherDistributionsRunning).ConfigureAwait(true);
+        }
+        finally
+        {
+            Busy(false);
+        }
+
+        var answer = System.Windows.MessageBox.Show(
+            Window.GetWindow(this),
+            RepairPrompt.RestartWslConfirmation(others),
+            "Restart WSL",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning,
+            System.Windows.MessageBoxResult.No);
+
+        if (answer is System.Windows.MessageBoxResult.Yes)
+        {
+            await RestartingWsl().ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>Run the restart, off the thread that draws the result (DD344).</summary>
+    /// <returns>The work.</returns>
+    /// <remarks>
+    /// The compaction's bracket: the interlude before, the steps drawn as they land, the engine
+    /// started at the end. Internal so a test can drive it without the dialog.
+    /// </remarks>
+    internal async Task RestartingWsl()
+    {
+        Busy(true);
+        _interlude.Expected();
+        Show(RepairPrompt.RestartingWsl, steps: null);
+
+        var steps = new System.Collections.Concurrent.ConcurrentQueue<RepairStep>();
+        var ticker = DrawAsTheyLand(steps, RepairPrompt.RestartingWsl);
+        RepairOutcome outcome;
+        try
+        {
+            outcome = await Task.Run(() => _work.RestartWsl(steps.Enqueue)).ConfigureAwait(true);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            outcome = new RepairOutcome(
+                [new RepairStep(WslRestart.ShutdownStep, false, exception.Message)]);
+        }
+        finally
+        {
+            ticker.Stop();
+        }
+
+        var prompt = RepairPrompt.AfterRestart(outcome);
+        if (prompt.StartsAgain)
+        {
+            _interlude.StartAgain();
+            prompt = prompt.AndStarting(TrayState.StartBudget);
+        }
+
+        Show(prompt, Transcript(steps, findings: null));
+        Busy(false);
+        await RereadTheMachine().ConfigureAwait(true);
     }
 
     /// <summary>
