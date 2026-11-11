@@ -1,5 +1,6 @@
 using System.IO.Pipes;
 using System.Text;
+using FreeHarbor.Core.Preflight.Windows;
 
 namespace FreeHarbor.Core.Engine;
 
@@ -74,15 +75,22 @@ public static class EnginePing
             await pipe.FlushAsync(deadline.Token).ConfigureAwait(false);
             whatRanOut = "no answer";
 
-            var buffer = new byte[4096];
+            var buffer = new byte[ReplyCap];
             var read = await pipe.ReadAsync(buffer, deadline.Token).ConfigureAwait(false);
             if (read == 0)
             {
                 return new PingResult(false, null, "the pipe accepted a connection and said nothing");
             }
 
-            var reply = Encoding.ASCII.GetString(buffer, 0, read);
-            return Interpret(reply);
+            if (!IsHttp(buffer.AsSpan(0, read)))
+            {
+                // Not the daemon, so whoever it is gets to finish its sentence (DD343). The one in
+                // practice is the relay's wsl.exe writing its own refusal, and a first read can hold
+                // a single character of that; it exits once it has said it, so this ends at EOF.
+                read += await ReadRestAsync(pipe, buffer, read, deadline.Token).ConfigureAwait(false);
+            }
+
+            return Interpret(buffer.AsSpan(0, read).ToArray());
         }
         catch (OperationCanceledException) when (!cancellation.IsCancellationRequested)
         {
@@ -96,10 +104,113 @@ public static class EnginePing
         }
     }
 
+    /// <summary>The most of a reply a ping reads. A status line and its headers fit many times over.</summary>
+    private const int ReplyCap = 4096;
+
+    /// <summary>The most of a non-HTTP answer a report carries.</summary>
+    private const int QuoteCap = 300;
+
+    /// <summary>Whether a reply begins the way every HTTP response does.</summary>
+    /// <param name="head">The first bytes read.</param>
+    /// <returns>Whether it could be the daemon.</returns>
+    /// <remarks>A prefix of "HTTP/" counts, because a first read may stop anywhere.</remarks>
+    private static bool IsHttp(ReadOnlySpan<byte> head)
+    {
+        ReadOnlySpan<byte> http = "HTTP/"u8;
+        var length = Math.Min(head.Length, http.Length);
+        return head[..length].SequenceEqual(http[..length]);
+    }
+
+    /// <summary>Read into the rest of <paramref name="buffer"/> until EOF, a full buffer or the deadline.</summary>
+    /// <returns>How many more bytes arrived.</returns>
+    private static async Task<int> ReadRestAsync(
+        Stream pipe, byte[] buffer, int offset, CancellationToken deadline)
+    {
+        var more = 0;
+        try
+        {
+            while (offset + more < buffer.Length)
+            {
+                var read = await pipe.ReadAsync(buffer.AsMemory(offset + more), deadline)
+                    .ConfigureAwait(false);
+                if (read == 0)
+                {
+                    break;
+                }
+
+                more += read;
+            }
+        }
+        catch (Exception exception) when (exception is OperationCanceledException or IOException)
+        {
+            // What already arrived is the report. Running out of budget here must not turn a
+            // sentence that has started into "no answer".
+        }
+
+        return more;
+    }
+
+    /// <summary>Read the raw bytes the pipe answered with.</summary>
+    /// <param name="reply">Everything the ping read.</param>
+    /// <returns>The verdict.</returns>
+    /// <remarks>
+    /// Bytes rather than text, because the encoding is part of the finding (DD343). The daemon
+    /// speaks ASCII HTTP. Anything else is a voice in its place, and the one this project has met is
+    /// wsl.exe, which writes its own refusal in UTF-16LE: read as ASCII that kept every other byte a
+    /// NUL, and the journal printed the first letter and lost the rest at the first zero.
+    /// </remarks>
+    internal static PingResult Interpret(byte[] reply)
+    {
+        ArgumentNullException.ThrowIfNull(reply);
+        if (IsHttp(reply))
+        {
+            return Interpret(Encoding.ASCII.GetString(reply));
+        }
+
+        var fromWsl = ConsoleTool.EncodingOf(reply) == Encoding.Unicode;
+        var said = Quote(ConsoleTool.Decode(reply));
+        return new PingResult(false, null, fromWsl
+            ? $"wsl.exe answered in the daemon's place: {said}"
+            : $"the pipe answered with something that is not HTTP: {said}");
+    }
+
     /// <summary>Read a status line and the API version out of a reply.</summary>
     /// <param name="reply">What the daemon wrote.</param>
     /// <returns>The verdict.</returns>
-    internal static PingResult Interpret(string reply)
+    internal static PingResult Interpret(string reply) => InterpretHttp(reply);
+
+    /// <summary>One line of printable text, short enough for a journal line.</summary>
+    private static string Quote(string text)
+    {
+        var builder = new StringBuilder(text.Length);
+        var space = false;
+        foreach (var c in text)
+        {
+            if (char.IsWhiteSpace(c) || char.IsControl(c))
+            {
+                space = builder.Length > 0;
+                continue;
+            }
+
+            if (space)
+            {
+                builder.Append(' ');
+                space = false;
+            }
+
+            builder.Append(c);
+        }
+
+        if (builder.Length == 0)
+        {
+            return "(nothing printable)";
+        }
+
+        return builder.Length <= QuoteCap ? builder.ToString() : builder.ToString(0, QuoteCap) + "…";
+    }
+
+    /// <summary>The status line and API version of an HTTP reply.</summary>
+    private static PingResult InterpretHttp(string reply)
     {
         var lines = reply.Split('\n');
         var status = lines.Length > 0 ? lines[0].Trim() : "";

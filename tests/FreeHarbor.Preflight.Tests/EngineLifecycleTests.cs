@@ -333,6 +333,41 @@ public sealed class EngineLifecycleTests
     public void Anything_that_is_not_a_success_is_not_running(string reply) =>
         Assert.False(EnginePing.Interpret(reply).Answered);
 
+    [Fact]
+    public void Wsl_exe_answering_in_utf16_is_quoted_whole_and_not_blamed_on_the_daemon()
+    {
+        // DD343: the journal kept "the daemon replied: U" — wsl.exe's UTF-16LE refusal read as
+        // ASCII, cut at the first NUL.
+        const string refusal = "Um erro ocorreu.\r\nCódigo de erro: Wsl/Service/CreateInstance/HCS_E_CONNECTION_TIMEOUT\r\n";
+        var result = EnginePing.Interpret(Encoding.Unicode.GetBytes(refusal));
+
+        Assert.False(result.Answered);
+        Assert.Equal(
+            "wsl.exe answered in the daemon's place: Um erro ocorreu. Código de erro: "
+            + "Wsl/Service/CreateInstance/HCS_E_CONNECTION_TIMEOUT",
+            result.Detail);
+        Assert.DoesNotContain('\0', result.Detail);
+    }
+
+    [Fact]
+    public void Plain_bytes_that_are_not_http_are_quoted_without_naming_the_daemon()
+    {
+        var result = EnginePing.Interpret(Encoding.ASCII.GetBytes("socat: E connect(): No such file\n"));
+
+        Assert.False(result.Answered);
+        Assert.Equal("the pipe answered with something that is not HTTP: socat: E connect(): No such file", result.Detail);
+    }
+
+    [Fact]
+    public void Http_bytes_still_read_as_the_daemon()
+    {
+        var result = EnginePing.Interpret(Encoding.ASCII.GetBytes("HTTP/1.1 500 Internal Server Error\r\n\r\n"));
+
+        Assert.False(result.Answered);
+        Assert.Equal("the daemon replied: HTTP/1.1 500 Internal Server Error", result.Detail);
+        Assert.True(EnginePing.Interpret(Encoding.ASCII.GetBytes(Ok200)).Answered);
+    }
+
     // ---- the relay, over a real named pipe --------------------------------------------------
 
     [Fact]
