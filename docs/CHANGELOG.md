@@ -354,3 +354,4 @@
 ## Block I — The site on the design system
 
 - ✅ **DD285 (the site on the shared site layer)** **The site keeps its own copy of the template that eight product sites share** — Nav, hero, section heads, feature index, sponsor, footer, copy button and theme toggle come from the design system on navy with an azure brand; the build uses its prerender and OG helpers.
+- ✅ **DD336** **The site pins the design system at 2026.3.23 while 2026.3.26 is published** — The site builds on design system 2026.3.26; routes, twins, sitemap, robots and OG card match, the one change being the brand name span VDS228 added so the nav fits a phone.

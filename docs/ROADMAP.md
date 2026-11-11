@@ -33,7 +33,6 @@
 ## Block I — The site on the design system
 
 - ⏳ **DD285** (deps: viglet-design-system: VDS249) **The site keeps its own copy of the template that eight product sites share** — The site is not yet in the design system's consumers.json, which is VDS249's change in that repository. → §DD285
-- 📋 **DD336** (deps: —) **The site pins the design system at 2026.3.23 while 2026.3.26 is published** — The site renders from the package's site layer, so three releases of its chrome and tokens are not yet in the pages. → §DD336
 
 ## Non-goals
 

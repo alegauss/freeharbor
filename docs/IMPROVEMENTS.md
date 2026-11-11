@@ -382,21 +382,3 @@ repository's change, the way VDS222 registered the pilot.
 Done when:
 
 - The site appears in the design system's consumers.json.
-
-### §DD336 The site on the current design system
-
-`site/package.json` pins `@viglet/viglet-design-system` at 2026.3.23, and npm has
-published 2026.3.26 (8 November 2026). The site renders from the package's `./site`
-layer (DD285), so the three releases between carry its nav, footer, hero, section heads
-and tone tokens.
-
-Bump the pin to 2026.3.26 and rebuild the site. Then compare the prerendered pages and
-the OG card with the previous build: every route's text, the sitemap and robots should
-be unchanged, and any visual change should trace to a release note in the design
-system's changelog (read it with `roadkeep -C <design system> delivered`, not by hand).
-A change the site did not ask for is filed against the design system, not patched
-locally.
-
-Done when:
-
-- The site builds on 2026.3.26 and its routes match the previous build apart from changes a release names.
