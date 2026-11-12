@@ -105,8 +105,5 @@
         ]
       }
     ]
-  },
-  "env": {
-    "ROADKEEP_HOME": "${CLAUDE_PROJECT_DIR}/.roadkeep"
   }
 }
