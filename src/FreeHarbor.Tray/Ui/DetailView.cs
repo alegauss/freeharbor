@@ -4,7 +4,10 @@ namespace FreeHarbor.Tray.Ui;
 
 /// <summary>One line of a service's recent output (DD299).</summary>
 /// <param name="Text">The line, without its ending.</param>
-/// <param name="IsError">Whether it came on stderr, which the pane draws in the danger colour.</param>
+/// <param name="IsError">
+/// Whether the pane draws it in the danger colour: its own level where it names one, else whether it
+/// came on stderr (<see cref="LogLevel"/>).
+/// </param>
 public sealed record OutputLine(string Text, bool IsError);
 
 /// <summary>One address a project serves, as the detail page's Endpoints grid draws it (DD299).</summary>
@@ -307,12 +310,13 @@ public sealed record DetailView(
             lines.AddRange(parts[..^1]
                 .Select(part => part.TrimEnd('\r'))
                 .Where(part => part.Length > 0)
-                .Select(part => new OutputLine(part, chunk.Stream == LogStream.StdErr)));
+                .Select(part => new OutputLine(part, LogLevel.IsError(part, chunk.Stream == LogStream.StdErr))));
         }
 
         lines.AddRange(pending
-            .Where(rest => rest.Value.TrimEnd('\r').Length > 0)
-            .Select(rest => new OutputLine(rest.Value.TrimEnd('\r'), rest.Key == LogStream.StdErr)));
+            .Select(rest => (Text: rest.Value.TrimEnd('\r'), Stream: rest.Key))
+            .Where(rest => rest.Text.Length > 0)
+            .Select(rest => new OutputLine(rest.Text, LogLevel.IsError(rest.Text, rest.Stream == LogStream.StdErr))));
 
         return lines.Count <= keep ? lines : lines[^keep..];
     }

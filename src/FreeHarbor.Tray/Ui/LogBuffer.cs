@@ -6,7 +6,10 @@ namespace FreeHarbor.Tray.Ui;
 
 /// <summary>One line of a container's log, as the window shows it.</summary>
 /// <param name="Text">The line, without its newline.</param>
-/// <param name="IsError">Whether it came off stderr, which is where a failure usually says why.</param>
+/// <param name="IsError">
+/// Whether it is drawn as an error: its own level where it names one, else whether it came off
+/// stderr (<see cref="LogLevel"/>).
+/// </param>
 public sealed record LogLine(string Text, bool IsError);
 
 /// <summary>What a log window says when there is nothing to show.</summary>
@@ -186,7 +189,9 @@ public sealed class LogBuffer
 
     private void Flush()
     {
-        _lines.Add(new LogLine(_partial.ToString(), _partialIsError));
+        // The stream decides only where the line names no level of its own (LogLevel).
+        var text = _partial.ToString();
+        _lines.Add(new LogLine(text, LogLevel.IsError(text, _partialIsError)));
         _partial.Clear();
 
         while (_lines.Count > MaximumLines)
