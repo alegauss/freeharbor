@@ -1128,9 +1128,8 @@
                        Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
             <Border Margin="12,0,0,0" CornerRadius="5" Padding="8,2" VerticalAlignment="Center"
                     Background="{Binding Head.ChipFill}" ToolTip="{Binding Head.ChipEvidence}">
-              <TextBlock FontSize="12" Foreground="{Binding Head.ChipText}"><Run
-                         Text="{Binding Head.ChipShape, Mode=OneWay}" FontSize="10" /> <Run
-                         Text="{Binding Head.ChipWord, Mode=OneWay}" /></TextBlock>
+              <TextBlock FontSize="12" Foreground="{Binding Head.ChipText}"
+                         Text="{Binding Head.ChipWord}" />
             </Border>
           </StackPanel>
           <TextBlock Text="{Binding Head.Description}" Margin="0,4,0,0" TextWrapping="Wrap"
@@ -1142,33 +1141,10 @@
         </StackPanel>
       </DockPanel>
 
-      <!-- One banner per service that stopped and did not mean to (DD328): the service in bold, the
-           daemon's own sentence, and the one verb that answers it inside the banner. Danger at low
-           opacity under it and Danger as its stroke, so it reads as a failure on either theme with
-           no colour of its own. -->
-      <ItemsControl ItemsSource="{Binding Problems}" Margin="0,16,0,0"
-                    Visibility="{Binding HasProblems, Converter={StaticResource Shown}}">
-        <ItemsControl.ItemTemplate>
-          <DataTemplate>
-            <Grid Margin="0,0,0,8">
-              <Border CornerRadius="6" Opacity="0.12" Background="{x:Static ui:Palette.DangerBrush}" />
-              <Border CornerRadius="6" BorderThickness="1" Padding="12,8"
-                      BorderBrush="{x:Static ui:Palette.DangerBrush}">
-                <DockPanel>
-                  <Button DockPanel.Dock="Right" Content="{Binding StartLabel}" Tag="{Binding Row}"
-                          Click="PrimaryAction" Style="{DynamicResource RowAction}"
-                          Visibility="{Binding Row.CanStart, Converter={StaticResource Shown}}" />
-                  <TextBlock VerticalAlignment="Center" TextWrapping="Wrap"
-                             Foreground="{DynamicResource TextFillColorPrimaryBrush}"><Run Text="●" FontSize="11"
-                             Foreground="{x:Static ui:Palette.DangerBrush}" />  <Run
-                             Text="{Binding Row.Title, Mode=OneWay}" FontWeight="SemiBold" />: <Run
-                             Text="{Binding Row.Status, Mode=OneWay}" /></TextBlock>
-                </DockPanel>
-              </Border>
-            </Grid>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
+      <!-- No banner per failed service: a red strip with a Start button in it read as an alarm to
+           answer now, when a stopped service is often fine left stopped. The state word in the
+           service's colour and its own Start/Stop in SERVICES say the same thing at the right
+           volume. -->
 
       <TextBlock Text="ENDPOINTS" Margin="0,20,0,8" FontSize="12" FontWeight="SemiBold"
                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
@@ -1216,7 +1192,8 @@
       <TextBlock Text="SERVICES" Margin="0,0,0,8" FontSize="12" FontWeight="SemiBold"
                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
       <!-- One bordered list: each service's shape in its colour, its title over its image, its state
-           word at the right in the same colour, and Logs. -->
+           word at the right in the same colour, then Logs and its own Start or Stop, the same verb
+           and handler as the list row's. -->
       <Border CornerRadius="6" BorderThickness="1" Padding="12,4"
               BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
               Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
@@ -1226,6 +1203,9 @@
             <DockPanel Margin="0,6" ToolTip="{Binding ChipEvidence}">
               <TextBlock DockPanel.Dock="Left" Text="{Binding ChipShape}" Width="14" Margin="0,0,10,0"
                          FontSize="12" VerticalAlignment="Center" Foreground="{Binding ToneInk}" />
+              <Button DockPanel.Dock="Right" Content="{Binding PrimaryVerb}" Tag="{Binding}"
+                      Click="PrimaryAction" Style="{DynamicResource RowAction}" Margin="6,0,0,0"
+                      Visibility="{Binding HasPrimary, Converter={StaticResource Shown}}" />
               <Button DockPanel.Dock="Right" Content="Logs" Tag="{Binding}" Click="OpenLogs"
                       Style="{DynamicResource RowAction}" />
               <TextBlock DockPanel.Dock="Right" Text="{Binding StateWord}" Margin="12,0,10,0" FontSize="12"
