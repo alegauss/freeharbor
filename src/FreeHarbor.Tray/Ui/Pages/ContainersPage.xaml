@@ -532,12 +532,6 @@
                            VerticalAlignment="{Binding TitleAlignment}"
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                            Visibility="{Binding IsProject, Converter={StaticResource Shown}}" />
-                <!-- DD324. A service inside a project leads with its state's shape, in its chip's
-                     colour: the tile belongs to the header above it. -->
-                <TextBlock DockPanel.Dock="Left" Text="{Binding ChipShape}" IsHitTestVisible="False"
-                           FontSize="14" Width="14" Margin="0,0,12,0" VerticalAlignment="Center"
-                           Foreground="{Binding ShapeInk}"
-                           Visibility="{Binding HasStateShape, Converter={StaticResource Shown}}" />
                 <!-- DD294. The icon tile: a glyph for what the image is, a picture from disk, or the
                      title's first letter, white on the hue hashed from the name. Opaque where the
                      chips are tints, because white on a tint vanishes on the light theme. 40 px is
@@ -559,7 +553,21 @@
                 </Border>
                 <!-- The title over what it is for. The container's own name, which the title
                      replaced, is the tooltip, so nothing the daemon calls it is lost. -->
-                <StackPanel VerticalAlignment="{Binding TitleAlignment}" ToolTip="{Binding NameEvidence}">
+                <!-- The right margin is the gutter to IMAGE: without it a trimmed description's
+                     ellipsis ran straight into the image name. On the cell's content and not on
+                     the image, so the IMAGE header still lines up with its column. -->
+                <DockPanel VerticalAlignment="{Binding TitleAlignment}" LastChildFill="True"
+                           Margin="0,0,16,0">
+                <!-- DD324. A service inside a project leads with its state's shape, in its chip's
+                     colour: the tile belongs to the header above it. Beside the title and not
+                     centred on the block, or under a description it reads as that line's bullet.
+                     It never shares a row with the tile (HasTile excludes it), so it can live in
+                     the title's own panel. -->
+                <TextBlock DockPanel.Dock="Left" Text="{Binding ChipShape}" IsHitTestVisible="False"
+                           FontSize="14" Width="14" Margin="0,0,12,0" VerticalAlignment="Top"
+                           Foreground="{Binding ShapeInk}"
+                           Visibility="{Binding HasStateShape, Converter={StaticResource Shown}}" />
+                <StackPanel ToolTip="{Binding NameEvidence}">
                     <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                                IsHitTestVisible="{Binding IsContainer}"
@@ -572,7 +580,7 @@
                             Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                             Style="{StaticResource TextLink}"
                             Visibility="{Binding OpensDetail, Converter={StaticResource Shown}}" />
-                    <TextBlock Text="{Binding Description}" TextTrimming="CharacterEllipsis"
+                    <TextBlock Text="{Binding DescriptionLine}" TextTrimming="CharacterEllipsis"
                                FontSize="12" IsHitTestVisible="{Binding IsContainer}"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                Visibility="{Binding HasDescription, Converter={StaticResource Shown}}" />
@@ -586,6 +594,7 @@
                                 Style="{StaticResource TextLink}" />
                     </StackPanel>
                 </StackPanel>
+                </DockPanel>
             </DockPanel>
             <!-- DD167. A second Run rather than a second element: the note has to sit against the
                  image it is about, and anything laid out across the cell puts it at the far edge
@@ -821,7 +830,7 @@
                                    Text="{Binding Head.ChipWord, Mode=OneWay}" /></TextBlock>
                       </Border>
                     </StackPanel>
-                    <TextBlock Text="{Binding Head.Description}" FontSize="12" Margin="0,2,0,0"
+                    <TextBlock Text="{Binding Head.DescriptionLine}" FontSize="12" Margin="0,2,0,0"
                                TextTrimming="CharacterEllipsis"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                Visibility="{Binding Head.HasDescription, Converter={StaticResource Shown}}" />
@@ -1010,7 +1019,7 @@
                     </Border>
                   </StackPanel>
                   <!-- Two lines at most: a description longer than that belongs to the page. -->
-                  <TextBlock Text="{Binding Description}" FontSize="12" Margin="0,2,0,0"
+                  <TextBlock Text="{Binding DescriptionLine}" FontSize="12" Margin="0,2,0,0"
                              TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="34"
                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                              Visibility="{Binding HasDescription, Converter={StaticResource Shown}}" />

@@ -152,6 +152,15 @@ public sealed record ContainerRow(
     /// <summary>The line under the title, or empty, in which case nothing is drawn.</summary>
     public string Description => Details?.Description ?? "";
 
+    /// <summary>
+    /// The description on one line, for the list and the cards: an image's description label is
+    /// often several paragraphs, and a TextBlock trims each of its lines on its own, so the row
+    /// grew a line per paragraph. Every run of whitespace becomes one space, and the trimming
+    /// then ends the single line with an ellipsis. The detail page keeps <see cref="Description"/>.
+    /// </summary>
+    public string DescriptionLine => string.Join(' ',
+        Description.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+
     /// <summary>Whether there is a description to draw.</summary>
     public bool HasDescription => Description.Length > 0;
 
@@ -899,7 +908,7 @@ public sealed record ContainerRow(
 
                 // DD294 and DD295: a container's details or a project's, drawn by the same tile.
                 nameof(Details), nameof(DetailsBeneath), nameof(DetailKey), nameof(WorkingDir),
-                nameof(ConfigFiles), nameof(Description), nameof(HasDescription), nameof(HasTile),
+                nameof(ConfigFiles), nameof(Description), nameof(DescriptionLine), nameof(HasDescription), nameof(HasTile),
                 nameof(TileFill), nameof(TileGlyph), nameof(TilePicture), nameof(TileLetter),
                 nameof(Indent), nameof(Pending), nameof(Failure), nameof(IsPending),
                 nameof(HasFailure), nameof(AnyUp), nameof(CanStart), nameof(CanStop),
