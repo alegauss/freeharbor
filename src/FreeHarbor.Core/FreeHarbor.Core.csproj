@@ -8,6 +8,8 @@
     <!-- The pinned versions and digests travel inside the assembly, so a build carries its own
          answer and "latest" is never resolved at run time. -->
     <EmbeddedResource Include="Engine\engine-manifest.json" />
+    <!-- DD347: the names the icon font can draw, so the core can resolve one without WPF. -->
+    <EmbeddedResource Include="Details\fluent-icons.txt" />
   </ItemGroup>
 
   <ItemGroup>

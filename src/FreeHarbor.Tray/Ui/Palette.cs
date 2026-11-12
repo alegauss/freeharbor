@@ -165,6 +165,26 @@ internal static class Palette
     public static readonly System.Windows.Media.FontFamily Mono =
         new("Cascadia Mono, Consolas, Courier New");
 
+    /// <summary>
+    /// The face an icon tile's glyph is set in (DD347): Fluent UI System Icons, carried in this
+    /// executable as a resource rather than asked of Windows, which ships no font with this set.
+    /// </summary>
+    /// <remarks>
+    /// The pack scheme is registered by touching <see cref="System.IO.Packaging.PackUriHelper"/> first:
+    /// a test or a console verb reaches this class with no WPF Application, and a pack URI parsed
+    /// before the scheme exists throws instead of waiting to be drawn. The chevrons and the
+    /// window's own small glyphs stay in Segoe MDL2 Assets, which every Windows has.
+    /// </remarks>
+    public static readonly System.Windows.Media.FontFamily Icons = IconFont();
+
+    private static System.Windows.Media.FontFamily IconFont()
+    {
+        _ = System.IO.Packaging.PackUriHelper.UriSchemePack;
+        return new(
+            new Uri("pack://application:,,,/FreeHarbor;component/"),
+            "./Ui/Fonts/#FluentSystemIcons-Regular");
+    }
+
     /// <summary>Danger for anything that wants text.</summary>
     public static string DangerHex => $"#{DangerR:X2}{DangerG:X2}{DangerB:X2}";
 

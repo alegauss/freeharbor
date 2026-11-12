@@ -101,20 +101,59 @@ public static class ContainerDetails
     public const string ServiceLabel = "com.docker.compose.service";
 
     /// <summary>
-    /// The icons this build carries, by the name a label or an image resolves to.
+    /// The images and purposes that have an icon of their own, and the concept of
+    /// <see cref="IconCatalogue"/> each one draws.
     /// </summary>
     /// <remarks>
-    /// A name here is a promise that the window has a picture for it. The screen that draws the tile
-    /// is where that promise is tested, so a name added here without its picture fails there.
+    /// <para>What a thing is, never its owner's mark (DD294): a cylinder for a database, a globe for a
+    /// web server. These are the names an image resolves to by itself; anything else the catalogue
+    /// holds can still be named in a label, a project file or the edit dialog (DD347).</para>
+    ///
+    /// <para>Kept as names and not rewritten to concepts on read, so a value saved before DD347 reads
+    /// back as what was saved. A test holds every concept here to one the catalogue has.</para>
     /// </remarks>
-    public static readonly IReadOnlySet<string> Bundled = new HashSet<string>(StringComparer.Ordinal)
-    {
-        "elasticsearch", "grafana", "mailpit", "mariadb", "minio", "mongo", "mysql", "nginx",
-        "node", "postgres", "prometheus", "python", "rabbitmq", "redis", "traefik", "wordpress",
+    public static readonly IReadOnlyDictionary<string, string> ImageIcons =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["elasticsearch"] = "database-search",
+            ["mariadb"] = "database",
+            ["mongo"] = "database",
+            ["mysql"] = "database",
+            ["postgres"] = "database",
+            ["redis"] = "database-stack",
+            ["nginx"] = "globe",
+            ["traefik"] = "arrow-routing",
+            ["wordpress"] = "globe",
+            ["mailpit"] = "mail-inbox",
+            ["node"] = "code",
+            ["python"] = "code",
+            ["grafana"] = "chart-multiple",
+            ["prometheus"] = "data-histogram",
+            ["rabbitmq"] = "arrow-swap",
+            ["minio"] = "storage",
 
-        // DD332: what a project is for rather than what it runs, so a project file can say it.
-        "analytics", "chat", "docs", "search", "shop",
-    };
+            // DD332: what a project is for rather than what it runs, so a project file can say it.
+            ["analytics"] = "chart-multiple",
+            ["chat"] = "chat",
+            ["docs"] = "book",
+            ["search"] = "search",
+            ["shop"] = "shopping-bag",
+        };
+
+    /// <summary>The names of <see cref="ImageIcons"/>.</summary>
+    public static IReadOnlySet<string> Bundled { get; } =
+        new HashSet<string>(ImageIcons.Keys, StringComparer.Ordinal);
+
+    /// <summary>The concept a bundled icon name draws: its image's, or the name itself where it is one.</summary>
+    /// <param name="name">A name from <see cref="Bundled"/> or <see cref="IconCatalogue"/>.</param>
+    /// <returns>The catalogue's name for it, or <see langword="null"/> where neither knows it.</returns>
+    public static string? ConceptOf(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        return ImageIcons.TryGetValue(name, out var concept) ? concept
+            : IconCatalogue.Contains(name) ? name
+            : null;
+    }
 
     // Image names that are one of the bundled icons under another spelling.
     private static readonly Dictionary<string, string> Aliases = new(StringComparer.Ordinal)
@@ -316,13 +355,16 @@ public static class ContainerDetails
         var colon = last.IndexOf(':', StringComparison.Ordinal);
         var bare = (colon < 0 ? last : last[..colon]).ToLowerInvariant();
 
-        return Known(bare);
+        // Image names only: an image that happens to be called "cloud" or "key" is not saying it is one.
+        var canonical = Aliases.TryGetValue(bare, out var alias) ? alias : bare;
+        return Bundled.Contains(canonical) ? canonical : null;
     }
 
+    /// <summary>A name somebody wrote: an image's icon, an alias of one, or any concept the font has (DD347).</summary>
     private static string? Known(string name)
     {
         var canonical = Aliases.TryGetValue(name, out var alias) ? alias : name;
-        return Bundled.Contains(canonical) ? canonical : null;
+        return Bundled.Contains(canonical) || IconCatalogue.Contains(canonical) ? canonical : null;
     }
 
     private static (DetailIcon Icon, string Source) Icon(

@@ -117,6 +117,40 @@ public static class Attribution
     }
 
     /// <summary>
+    /// What this build carries inside its own executable, as opposed to what it downloads (DD347).
+    /// </summary>
+    /// <remarks>
+    /// Redistributed, so unlike the engine its licence text has to travel with it: MIT asks for the
+    /// copyright and permission notice in every copy, and NOTICE is where this project keeps them.
+    /// </remarks>
+    public static IReadOnlyList<BundledComponent> Embedded { get; } =
+    [
+        new BundledComponent(
+            "fluent-system-icons",
+            "Fluent UI System Icons",
+            Details.IconCatalogue.Version,
+            "MIT",
+            "https://github.com/microsoft/fluentui-system-icons",
+            "The icon font the window draws a container's or project's tile in, carried inside "
+            + "FreeHarbor.exe. Copyright (c) 2020 Microsoft Corporation."),
+    ];
+
+    /// <summary>The MIT licence text the embedded components are under, as their copies must carry it.</summary>
+    public const string MitText =
+        "Permission is hereby granted, free of charge, to any person obtaining a copy of this "
+        + "software and associated documentation files (the \"Software\"), to deal in the Software "
+        + "without restriction, including without limitation the rights to use, copy, modify, merge, "
+        + "publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons "
+        + "to whom the Software is furnished to do so, subject to the following conditions: The above "
+        + "copyright notice and this permission notice shall be included in all copies or "
+        + "substantial portions of the Software. THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY "
+        + "OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF "
+        + "MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL "
+        + "THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, "
+        + "WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION "
+        + "WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.";
+
+    /// <summary>
     /// The NOTICE file, rendered.
     /// </summary>
     /// <remarks>
@@ -149,6 +183,20 @@ public static class Attribution
         }
 
         text.Append('\n')
+            .Append("CARRIED INSIDE FREEHARBOR.EXE\n");
+        foreach (var component in Embedded)
+        {
+            text.Append('\n')
+                .Append(component.Name).Append('\n')
+                .Append("  version  ").Append(component.Version).Append('\n')
+                .Append("  licence  ").Append(component.Licence).Append('\n')
+                .Append("  source   ").Append(component.Origin).Append('\n')
+                .Append(Wrap(component.Note, "  "))
+                .Append('\n')
+                .Append(Wrap(MitText, "  "));
+        }
+
+        text.Append('\n')
             .Append("This file is generated from the same manifest the installer downloads from.\n")
             .Append("Adding an artefact without an attribution entry fails a test.\n");
 
@@ -175,6 +223,14 @@ public static class Attribution
             .Append("than MIT.\n\nIt installs, and does not redistribute:\n");
 
         foreach (var component in Components(manifest))
+        {
+            text.Append("  · ").Append(component.Name)
+                .Append(' ').Append(component.Version)
+                .Append(", ").Append(component.Licence).Append('\n');
+        }
+
+        text.Append("\nAnd carries, inside this executable:\n");
+        foreach (var component in Embedded)
         {
             text.Append("  · ").Append(component.Name)
                 .Append(' ').Append(component.Version)

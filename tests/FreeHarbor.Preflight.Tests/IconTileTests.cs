@@ -12,13 +12,63 @@ public sealed class IconTileTests
         new() { Id = name, Image = image, Names = ["/" + name], State = "running", Labels = labels };
 
     [Fact]
-    public void Every_bundled_name_has_a_glyph_and_every_glyph_a_bundled_name()
+    public void Every_bundled_name_draws_a_concept_the_font_has()
     {
         // The resolver promises a picture for each name in Bundled; this is where that promise is
-        // kept. A name added on one side alone would draw a blank tile.
-        Assert.Equal(
-            ContainerDetails.Bundled.Order(StringComparer.Ordinal),
-            IconTile.Glyphs.Keys.Order(StringComparer.Ordinal));
+        // kept. A concept misspelt in ImageIcons would draw a blank tile.
+        Assert.All(ContainerDetails.Bundled, name =>
+        {
+            Assert.True(IconCatalogue.Contains(ContainerDetails.ImageIcons[name]), name);
+            Assert.NotEqual("", IconTile.Glyph(name));
+        });
+    }
+
+    [Fact]
+    public void Every_suggested_icon_is_one_the_font_has()
+    {
+        // DD347: a suggestion the catalogue does not hold would be an empty button.
+        Assert.All(EditDetailsWindow.SuggestedIcons, name => Assert.True(IconCatalogue.Contains(name), name));
+        Assert.Equal(EditDetailsWindow.SuggestedIcons.Count, EditDetailsWindow.SuggestedIcons.Distinct().Count());
+    }
+
+    [Fact]
+    public void The_catalogue_holds_thousands_of_concepts_and_draws_those_above_the_basic_plane()
+    {
+        // DD347. brain sits at U+F0798, outside the 16-bit range, and a char cast would cut it.
+        Assert.True(IconCatalogue.Names.Count > 2000);
+        Assert.Equal(char.ConvertFromUtf32(0xF0798), IconCatalogue.GlyphOf("brain"));
+        Assert.Null(IconCatalogue.GlyphOf("no-such-icon"));
+    }
+
+    [Fact]
+    public void A_search_puts_the_exact_name_first_and_matches_every_word()
+    {
+        var found = IconCatalogue.Search("database", 50);
+        Assert.Equal("database", found[0]);
+        Assert.All(found, name => Assert.Contains("database", name, StringComparison.Ordinal));
+
+        var bag = IconCatalogue.Search("Shopping Bag", 10);
+        Assert.Equal("shopping-bag", bag[0]);
+        Assert.Empty(IconCatalogue.Search("  ", 10));
+    }
+
+    [Fact]
+    public void A_label_can_name_any_concept_the_font_has_and_not_a_typo()
+    {
+        // DD347: freeharbor.icon=cloud is a picture now; before it fell through to the letter.
+        var cloud = ContainerRow.From(Container("example/app:1", "api-1", new() { ["freeharbor.icon"] = "cloud" }));
+        var typo = ContainerRow.From(Container("example/app:1", "api-1", new() { ["freeharbor.icon"] = "clowd" }));
+
+        Assert.Equal(IconCatalogue.GlyphOf("cloud"), cloud.TileGlyph);
+        Assert.Equal("", typo.TileGlyph);
+        Assert.Equal("A", typo.TileLetter);
+    }
+
+    [Fact]
+    public void An_image_named_like_a_concept_does_not_take_its_icon()
+    {
+        // Only the image names in ImageIcons resolve by themselves: an image called "key" is not one.
+        Assert.Null(ContainerDetails.BundledFor("example/key:1"));
     }
 
     [Fact]
@@ -34,7 +84,7 @@ public sealed class IconTileTests
     {
         var row = ContainerRow.From(Container("postgres:17", "shop-db-1"));
 
-        Assert.Equal(IconTile.Glyphs["postgres"], row.TileGlyph);
+        Assert.Equal(IconCatalogue.GlyphOf("database"), row.TileGlyph);
         Assert.Equal("", row.TileLetter);
     }
 

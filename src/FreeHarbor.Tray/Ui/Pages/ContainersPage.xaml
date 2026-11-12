@@ -295,7 +295,7 @@
                     <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="6" Margin="0,0,8,0"
                             VerticalAlignment="Center" Background="{Binding TileFill}">
                         <Grid>
-                            <TextBlock Text="{Binding TileGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                            <TextBlock Text="{Binding TileGlyph}" FontFamily="{x:Static ui:Palette.Icons}" FontSize="11"
                                        Foreground="{x:Static ui:Palette.TileInk}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
                             <TextBlock Text="{Binding TileLetter}" FontSize="11" FontWeight="SemiBold"
@@ -541,7 +541,7 @@
                         Background="{Binding TileFill}"
                         Visibility="{Binding HasTile, Converter={StaticResource Shown}}">
                     <Grid>
-                        <TextBlock Text="{Binding TileGlyph}" FontFamily="Segoe MDL2 Assets"
+                        <TextBlock Text="{Binding TileGlyph}" FontFamily="{x:Static ui:Palette.Icons}"
                                    FontSize="18" Foreground="{x:Static ui:Palette.TileInk}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                         <TextBlock Text="{Binding TileLetter}" FontSize="17" FontWeight="SemiBold"
@@ -811,7 +811,7 @@
                   <Border DockPanel.Dock="Left" Width="44" Height="44" CornerRadius="11" Margin="0,0,12,0"
                           VerticalAlignment="Top" Background="{Binding Head.TileFill}">
                     <Grid>
-                      <TextBlock Text="{Binding Head.TileGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                      <TextBlock Text="{Binding Head.TileGlyph}" FontFamily="{x:Static ui:Palette.Icons}" FontSize="20"
                                  Foreground="{x:Static ui:Palette.TileInk}"
                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
                       <TextBlock Text="{Binding Head.TileLetter}" FontSize="18" FontWeight="SemiBold"
@@ -979,7 +979,7 @@
                 <Border DockPanel.Dock="Left" Width="44" Height="44" CornerRadius="11" Margin="0,0,12,0"
                         VerticalAlignment="Center" Background="{Binding TileFill}">
                   <Grid>
-                    <TextBlock Text="{Binding TileGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                    <TextBlock Text="{Binding TileGlyph}" FontFamily="{x:Static ui:Palette.Icons}" FontSize="20"
                                Foreground="{x:Static ui:Palette.TileInk}"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                     <TextBlock Text="{Binding TileLetter}" FontSize="18" FontWeight="SemiBold"
@@ -1094,7 +1094,7 @@
         <Border DockPanel.Dock="Left" Width="64" Height="64" CornerRadius="16" Margin="0,0,16,0"
                 VerticalAlignment="Top" Background="{Binding Head.TileFill}">
           <Grid>
-            <TextBlock Text="{Binding Head.TileGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="28"
+            <TextBlock Text="{Binding Head.TileGlyph}" FontFamily="{x:Static ui:Palette.Icons}" FontSize="28"
                        Foreground="{x:Static ui:Palette.TileInk}"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
             <TextBlock Text="{Binding Head.TileLetter}" FontSize="26" FontWeight="SemiBold"

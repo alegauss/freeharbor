@@ -40,6 +40,29 @@ internal partial class EditDetailsWindow : Window
     private ResolvedDetails _beneath;
     private bool _loading;
 
+    // DD347: the icon chosen for the target, kept apart from the list because the search replaces
+    // the list's items, and a selection that lived only there would go with them.
+    private string? _iconValue;
+
+    // Set while ListIcons refills the buttons, so the selection events that causes are not a pick.
+    private bool _listing;
+
+    /// <summary>How many matches a search shows: enough to scan, few enough to draw at once.</summary>
+    private const int IconSearchLimit = 120;
+
+    /// <summary>
+    /// What the picker offers before anything is typed (DD347): the kinds of thing a compose project
+    /// usually runs or is for. A test holds every name to one the catalogue can draw.
+    /// </summary>
+    internal static readonly IReadOnlyList<string> SuggestedIcons =
+    [
+        "database", "database-stack", "server", "server-multiple", "globe", "cloud", "code",
+        "storage", "mail-inbox", "chat", "search", "shopping-bag", "book", "chart-multiple",
+        "data-histogram", "arrow-swap", "shield", "key", "people-team", "bot", "brain", "cube",
+        "box", "settings", "wrench", "image", "video", "music-note-2", "games", "calendar",
+        "money", "building", "heart-pulse", "rocket", "flash", "home",
+    ];
+
     /// <summary>Open the dialog on one row, with the rows the rail lists beside it.</summary>
     /// <param name="targets">
     /// Every row the dialog can edit: a project's header and its containers, or the one container.
@@ -287,33 +310,13 @@ internal partial class EditDetailsWindow : Window
                   + "with --label freeharbor.title=…"
                 : $"Saved under the name {row.Name}.";
 
-        // Automatic first, which is "whatever the sources say", then every bundled icon, then a file
-        // if one is saved or chosen. A choice of what is drawn and never a free text box, so a typo
-        // cannot become a blank tile.
         var pending = _pending.GetValueOrDefault(row.DetailKey!);
-        var icon = pending is not null ? pending.Icon : _store.For(row.DetailKey!)?.Icon;
-        IconBox.Items.Clear();
-        IconBox.Items.Add(new IconChoice($"Automatic ({_beneath.IconSource})", null));
-
-        // One button per drawing, not per name: five database images share the cylinder and three
-        // web servers the globe, and a row of identical buttons reads as a bug. The button stores the
-        // saved name where it is one of its group, so opening and saving changes nothing, and the
-        // first name otherwise; the tooltip lists every name it stands for.
-        foreach (var group in ContainerDetails.Bundled.Order(StringComparer.Ordinal)
-                     .GroupBy(name => IconTile.Glyphs.GetValueOrDefault(name, name), StringComparer.Ordinal))
-        {
-            var names = group.ToList();
-            var value = icon is not null && names.Contains(icon, StringComparer.Ordinal) ? icon : names[0];
-            IconBox.Items.Add(new IconChoice(string.Join(", ", names), value));
-        }
-
-        if (icon is not null && Path.IsPathFullyQualified(icon))
-        {
-            IconBox.Items.Add(new IconChoice(Path.GetFileName(icon), icon));
-        }
-
-        IconBox.SelectedItem = IconBox.Items.Cast<IconChoice>().FirstOrDefault(choice => choice.Value == icon)
-            ?? IconBox.Items[0];
+        _iconValue = pending is not null ? pending.Icon : _store.For(row.DetailKey!)?.Icon;
+        IconSearch.Text = "";
+        // Invariant, because the window's words are English: under pt-BR N0 printed "2.935".
+        IconSearchHint.Text = string.Create(
+            System.Globalization.CultureInfo.InvariantCulture, $"Search {IconCatalogue.Names.Count:N0} icons");
+        ListIcons();
 
         var shown = row.Details ?? _beneath;
         TitleBox.Text = pending?.Title ?? shown.Title;
@@ -327,16 +330,16 @@ internal partial class EditDetailsWindow : Window
     /// <summary>Keep what is typed for the target on screen, so moving along the rail loses nothing.</summary>
     private void Stash()
     {
-        if (_row.DetailKey is { } key && IconBox.SelectedItem is IconChoice choice)
+        if (_row.DetailKey is { } key)
         {
             _pending[key] = new Edit(
-                _row, TitleBox.Text, DescriptionBox.Text, choice.Value, _row.IsProject ? null : LinksBox.Text);
+                _row, TitleBox.Text, DescriptionBox.Text, _iconValue, _row.IsProject ? null : LinksBox.Text);
         }
     }
 
     private void Refresh()
     {
-        if (_loading || !IsInitialized || IconBox.SelectedItem is not IconChoice choice)
+        if (_loading || !IsInitialized)
         {
             return;
         }
@@ -350,7 +353,7 @@ internal partial class EditDetailsWindow : Window
         DescriptionSource.Text = description == (_beneath.Description ?? "") || description.Length == 0
             ? _beneath.Description is null ? "none" : $"from {_beneath.DescriptionSource}"
             : ContainerDetails.EditedHere;
-        IconSource.Text = choice.Value is null ? $"from {_beneath.IconSource}" : ContainerDetails.EditedHere;
+        IconSource.Text = _iconValue is null ? $"from {_beneath.IconSource}" : ContainerDetails.EditedHere;
         LinksSource.Text = _row.IsProject
             ? "a project opens its primary service's link"
             : ChangedLinks(_beneath, LinksBox.Text) is null
@@ -375,7 +378,7 @@ internal partial class EditDetailsWindow : Window
                 ? "Anyone with the project sees these details once the file is committed."
                 : "Only you see these details, and nothing in the project changes.";
 
-        var icon = choice.Value switch
+        var icon = _iconValue switch
         {
             null => _beneath.Icon,
             var path when Path.IsPathFullyQualified(path) => new DetailIcon(IconKind.File, path),
@@ -394,6 +397,66 @@ internal partial class EditDetailsWindow : Window
 
     private void FieldChanged(object sender, RoutedEventArgs e) => Refresh();
 
+    /// <summary>
+    /// Fill the icon buttons: Automatic, the chosen icon, then the suggestions or what the search found.
+    /// </summary>
+    /// <remarks>
+    /// A choice of what is drawn and never a free text box, so a typo cannot become a blank tile. The
+    /// chosen icon is pinned after Automatic whatever the search shows, so narrowing the list never
+    /// drops the selection and Save never writes something nobody picked (DD347).
+    /// </remarks>
+    private void ListIcons()
+    {
+        _listing = true;
+        try
+        {
+            var query = IconSearch.Text.Trim();
+            var names = query.Length == 0 ? SuggestedIcons : IconCatalogue.Search(query, IconSearchLimit);
+
+            IconBox.Items.Clear();
+            IconBox.Items.Add(new IconChoice($"Automatic ({_beneath.IconSource})", null));
+            if (_iconValue is not null && !names.Contains(_iconValue, StringComparer.Ordinal))
+            {
+                IconBox.Items.Add(IconChoice.For(_iconValue));
+            }
+
+            foreach (var name in names)
+            {
+                IconBox.Items.Add(IconChoice.For(name));
+            }
+
+            IconBox.SelectedItem = IconBox.Items.Cast<IconChoice>()
+                .FirstOrDefault(choice => choice.Value == _iconValue) ?? IconBox.Items[0];
+            IconFound.Text = query.Length == 0 ? ""
+                : names.Count == 0 ? "nothing found"
+                : names.Count == IconSearchLimit ? $"first {IconSearchLimit}"
+                : $"{names.Count} found";
+        }
+        finally
+        {
+            _listing = false;
+        }
+    }
+
+    private void IconSearchChanged(object sender, RoutedEventArgs e)
+    {
+        if (!_loading && IsInitialized)
+        {
+            ListIcons();
+        }
+    }
+
+    private void IconPicked(object sender, RoutedEventArgs e)
+    {
+        if (_listing || IconBox.SelectedItem is not IconChoice choice)
+        {
+            return;
+        }
+
+        _iconValue = choice.Value;
+        Refresh();
+    }
+
     private void RailChanged(object sender, RoutedEventArgs e)
     {
         if (_loading || Rail.SelectedItem is not RailItem { Row: var next } || ReferenceEquals(next, _row))
@@ -410,7 +473,12 @@ internal partial class EditDetailsWindow : Window
     private void ResetDescription(object sender, RoutedEventArgs e) =>
         DescriptionBox.Text = _beneath.Description ?? "";
 
-    private void ResetIcon(object sender, RoutedEventArgs e) => IconBox.SelectedIndex = 0;
+    private void ResetIcon(object sender, RoutedEventArgs e)
+    {
+        _iconValue = null;
+        ListIcons();
+        Refresh();
+    }
 
     private void ResetLinks(object sender, RoutedEventArgs e) => LinksBox.Text = LinksText(_beneath.Links);
 
@@ -427,9 +495,9 @@ internal partial class EditDetailsWindow : Window
             return;
         }
 
-        var choice = new IconChoice(Path.GetFileName(dialog.FileName), dialog.FileName);
-        _ = IconBox.Items.Add(choice);
-        IconBox.SelectedItem = choice;
+        _iconValue = dialog.FileName;
+        ListIcons();
+        Refresh();
     }
 
     private void CopyPath(object sender, RoutedEventArgs e)
@@ -635,8 +703,23 @@ internal partial class EditDetailsWindow : Window
     /// <param name="Value">What is stored: a bundled name, a path, or null for automatic.</param>
     private sealed record IconChoice(string Label, string? Value)
     {
+        /// <summary>The button for a stored value: a file by its name, an icon by its name and concept.</summary>
+        public static IconChoice For(string value)
+        {
+            if (Path.IsPathFullyQualified(value))
+            {
+                return new IconChoice(Path.GetFileName(value), value);
+            }
+
+            // An image's icon saved before DD347 says which concept it draws: "postgres (database)".
+            var concept = ContainerDetails.ConceptOf(value);
+            return new IconChoice(
+                concept is not null && concept != value ? $"{value} ({concept.Replace('-', ' ')})" : value.Replace('-', ' '),
+                value);
+        }
+
         /// <summary>The glyph its button draws (DD333), or empty where it draws its words instead.</summary>
-        public string Glyph => Value is not null && IconTile.Glyphs.TryGetValue(Value, out var glyph) ? glyph : "";
+        public string Glyph => Value is not null && !Path.IsPathFullyQualified(Value) ? IconTile.Glyph(Value) : "";
 
         /// <summary>What a button with no glyph says: <c>Auto</c> for automatic, a file's name for a file.</summary>
         public string Words => Glyph.Length > 0 ? "" : Value is null ? "Auto" : Label;

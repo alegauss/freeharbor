@@ -39,6 +39,9 @@
          have no WPF Application at all (a test, a console verb), which is what rules the pack://
          URI above out. Three inclusions of one file, each with a different reader. -->
     <EmbeddedResource Include="FreeHarbor.ico" LogicalName="FreeHarbor.ico" />
+    <!-- DD347: the icon tiles' font, Fluent UI System Icons (MIT). A WPF resource, so Palette.Icons
+         reaches it by pack URI inside the one published file. Its licence travels in NOTICE. -->
+    <Resource Include="Ui\Fonts\FluentSystemIcons-Regular.ttf" />
   </ItemGroup>
 
   <!-- One self-contained file when published, and Release only. A clean Windows 11 has no .NET

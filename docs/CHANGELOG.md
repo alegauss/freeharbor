@@ -202,6 +202,7 @@
 - ✅ **DD340** **--capture-window cannot photograph this machine's own containers: without --fixture it always draws an empty page** — --capture-window --live asks the engine first and draws this machine's real containers; the read now resumes on the UI thread, and fixture captures stay byte-identical.
 - ✅ **DD341** **A crashed service and one that finished cleanly both read "exited", told apart only by colour** — The window writes failed for a non-zero exit and stopped for a clean one, keeping the daemon's state for filters, the CLI, and paused, restarting or created.
 - ✅ **DD342** **A card's state words are left-aligned in their column, so running, failed and stopped end at different points** — The state word on a card and on the detail page's service list is right-aligned in a fixed column, so running, failed and stopped end on one line.
+- ✅ **DD347** **Edit details offers 16 Segoe MDL2 glyphs, too few to describe what a container or project is** — Tiles draw Fluent UI System Icons (MIT) bundled in the exe; Edit details searches its 2,935 concepts, labels name any of them, and saved names still draw.
 
 ## Block D — Container operations (what a user came to do)
 

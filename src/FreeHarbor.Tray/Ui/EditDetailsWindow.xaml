@@ -135,7 +135,7 @@
                         <Border DockPanel.Dock="Left" Width="24" Height="24" CornerRadius="6" Margin="0,0,10,0"
                                 VerticalAlignment="Center" Background="{Binding Row.TileFill}">
                             <Grid>
-                                <TextBlock Text="{Binding Row.TileGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                <TextBlock Text="{Binding Row.TileGlyph}" FontFamily="{x:Static ui:Palette.Icons}" FontSize="11"
                                            Foreground="{x:Static ui:Palette.TileInk}"
                                            HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding Row.TileLetter}" FontSize="11" FontWeight="SemiBold"
@@ -191,7 +191,7 @@
                 <Border x:Name="Tile" DockPanel.Dock="Left" Width="40" Height="40" CornerRadius="10"
                         Margin="0,0,10,0">
                     <Grid>
-                        <TextBlock x:Name="TileGlyph" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                        <TextBlock x:Name="TileGlyph" FontFamily="{x:Static ui:Palette.Icons}" FontSize="18"
                                    Foreground="{x:Static ui:Palette.TileInk}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                         <TextBlock x:Name="TileLetter" FontSize="17" FontWeight="SemiBold"
@@ -216,7 +216,30 @@
                 <TextBlock Text="Icon" Style="{StaticResource Caption}" />
                 <TextBlock x:Name="IconSource" Style="{StaticResource Source}" />
             </DockPanel>
-            <!-- DD333: every bundled glyph as a square button, the chosen one outlined in the accent,
+            <!-- DD347: thousands of icons, so a search over their names, and a short list of common
+                 ones while it is empty. The hint is laid over the box, never in it, as RailFilter's is. -->
+            <Grid Margin="0,0,0,8">
+                <TextBox x:Name="IconSearch" TextChanged="IconSearchChanged"
+                         ToolTip="Search the icons by name: database, cloud, shopping bag" />
+                <TextBlock x:Name="IconSearchHint" Margin="12,0,0,0" VerticalAlignment="Center"
+                           IsHitTestVisible="False" FontSize="12"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=IconSearch}" Value="">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock x:Name="IconFound" Margin="0,0,12,0" HorizontalAlignment="Right"
+                           VerticalAlignment="Center" IsHitTestVisible="False" FontSize="12"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+            </Grid>
+            <!-- DD333: every listed glyph as a square button, the chosen one outlined in the accent,
                  then Choose file as a dashed button: a picture to point at rather than a name to read
                  out of a list. A ListBox, so the code that fills and reads it is the ComboBox's. -->
             <DockPanel LastChildFill="True">
@@ -240,7 +263,7 @@
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
-                <ListBox x:Name="IconBox" SelectionChanged="FieldChanged" BorderThickness="0"
+                <ListBox x:Name="IconBox" SelectionChanged="IconPicked" BorderThickness="0"
                          Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
@@ -277,7 +300,7 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid>
-                                <TextBlock Text="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                <TextBlock Text="{Binding Glyph}" FontFamily="{x:Static ui:Palette.Icons}" FontSize="20"
                                            Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                                 <TextBlock Text="{Binding Words}" FontSize="12"
                                            Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
