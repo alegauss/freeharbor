@@ -1306,36 +1306,67 @@ var
   // Set by the tasklist callback, because a callback cannot return anything.
   SawTheProcess: Boolean;
 
+  // The image name the callback looks for: the tray's, or docker.exe's while the clients drain.
+  LookingFor: String;
+
   // Whether the install path has already done it. The stop is asked for twice on purpose — see
   // NextButtonClick and PrepareToInstall below — and this is what makes the second one free.
   AlreadyStopped: Boolean;
 
 procedure TasklistSaid(const S: String; const Error, FirstLine: Boolean);
 begin
-  if Pos(Lowercase('{#MyAppExeName}'), Lowercase(S)) > 0 then
+  if Pos(Lowercase(LookingFor), Lowercase(S)) > 0 then
     SawTheProcess := True;
 end;
 
-function AnythingIsStillRunning: Boolean;
+/// Whether a process with this image name is running, or False where tasklist could not be asked.
+/// With no match tasklist prints "INFO: No tasks are running..." and the name appears nowhere in it,
+/// which is the whole decision.
+function ImageIsRunning(const Image: String): Boolean;
 var
   Code: Integer;
 begin
-  // tasklist rather than a handle test: a running executable can still be renamed and can still be
-  // opened for reading, so every cheap probe answers the wrong question. With no match it prints
-  // "INFO: No tasks are running..." and the image name appears nowhere in it, which is the whole
-  // decision below.
   SawTheProcess := False;
+  LookingFor := Image;
   if not ExecAndLogOutput(ExpandConstant('{sys}\tasklist.exe'),
-       '/FI "IMAGENAME eq {#MyAppExeName}" /NH', '', SW_HIDE,
+       '/FI "IMAGENAME eq ' + Image + '" /NH', '', SW_HIDE,
        ewWaitUntilTerminated, Code, @TasklistSaid) then
   begin
-    // It could not be asked. Answering yes here would force-kill on no evidence, so this defers to
-    // Restart Manager, which is exactly what CloseApplications is carried for.
     Result := False;
     Exit;
   end;
 
   Result := SawTheProcess;
+end;
+
+/// Give the docker clients the engine stop disconnected the moment they need to exit.
+procedure LetDockerClientsDrain;
+var
+  Waited: Integer;
+begin
+  // {app}\bin\docker.exe is the shim on PATH, and every `docker logs -f`, `docker events` or
+  // editor extension attached to the engine is one, with the real CLI under {app}\cli as its child.
+  // --stop drops their connection and they exit on their own, but not at once: the shim then spends
+  // up to 300 ms asking whether the engine answers, to say how to start it. A user clicking straight
+  // through the wizard reached the Preparing page inside that window, and Restart Manager listed
+  // "docker" as holding files; Back and Next made it vanish. Bounded, because docker.exe is also
+  // Docker Desktop's name and tasklist cannot tell the two apart: a client that never exits is
+  // left to Restart Manager, which is what it is for.
+  Waited := 0;
+  while ImageIsRunning('docker.exe') and (Waited < 5000) do
+  begin
+    Sleep(250);
+    Waited := Waited + 250;
+  end;
+end;
+
+function AnythingIsStillRunning: Boolean;
+begin
+  // tasklist rather than a handle test: a running executable can still be renamed and can still be
+  // opened for reading, so every cheap probe answers the wrong question. Where tasklist could not be
+  // asked this is False: answering yes would force-kill on no evidence, so it defers to Restart
+  // Manager, which is exactly what CloseApplications is carried for.
+  Result := ImageIsRunning('{#MyAppExeName}');
 end;
 
 procedure StopEverything;
@@ -1355,6 +1386,7 @@ begin
   // deletion. It also takes the detached `--run` process with it, since what that serves lives
   // inside the distribution being terminated.
   Exec(Exe, '--stop', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, Code);
+  LetDockerClientsDrain;
 
   // Then the tray, by the verb written for this (DD121). It waits until the process is actually
   // gone rather than until the request was delivered, so returning from here means the file is no
