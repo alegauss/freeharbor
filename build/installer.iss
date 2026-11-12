@@ -1343,21 +1343,43 @@ end;
 procedure LetDockerClientsDrain;
 var
   Waited: Integer;
+  Code: Integer;
+  Root: String;
 begin
   // {app}\bin\docker.exe is the shim on PATH, and every `docker logs -f`, `docker events` or
   // editor extension attached to the engine is one, with the real CLI under {app}\cli as its child.
   // --stop drops their connection and they exit on their own, but not at once: the shim then spends
   // up to 300 ms asking whether the engine answers, to say how to start it. A user clicking straight
   // through the wizard reached the Preparing page inside that window, and Restart Manager listed
-  // "docker" as holding files; Back and Next made it vanish. Bounded, because docker.exe is also
-  // Docker Desktop's name and tasklist cannot tell the two apart: a client that never exits is
-  // left to Restart Manager, which is what it is for.
+  // "docker" as holding files; Back and Next made it vanish.
+  //
+  // Bounded, because docker.exe is also Docker Desktop's name and tasklist cannot tell the two
+  // apart. What is still running from this install's own folder after the wait is stopped by path,
+  // which is what "close the applications automatically" would do a page later, but before Restart
+  // Manager scans rather than after it has already put the dialog up. Each one is written to the
+  // Setup log with its command line, since which client it was is the one thing a report needs.
   Waited := 0;
   while ImageIsRunning('docker.exe') and (Waited < 5000) do
   begin
     Sleep(250);
     Waited := Waited + 250;
   end;
+
+  if not ImageIsRunning('docker.exe') then
+    Exit;
+
+  Root := ExpandConstant('{app}') + '\';
+  StringChangeEx(Root, '''', '''''', True);
+  ExecAndLogOutput(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+    '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$r = ''' + Root + '''; '
+    + 'Get-CimInstance Win32_Process | Where-Object { $_.Name -eq ''docker.exe'' -and $_.ExecutablePath '
+    + '-and $_.ExecutablePath.StartsWith($r, [StringComparison]::OrdinalIgnoreCase) } | ForEach-Object { '
+    + '''stopping docker.exe '' + $_.ProcessId + '': '' + $_.CommandLine; '
+    + 'Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"',
+    '', SW_HIDE, ewWaitUntilTerminated, Code, nil);
+
+  // The kernel closes a process's handles after the process, and the scan follows immediately.
+  Sleep(500);
 end;
 
 function AnythingIsStillRunning: Boolean;
@@ -1386,15 +1408,18 @@ begin
   // deletion. It also takes the detached `--run` process with it, since what that serves lives
   // inside the distribution being terminated.
   Exec(Exe, '--stop', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, Code);
-  LetDockerClientsDrain;
 
   // Then the tray, by the verb written for this (DD121). It waits until the process is actually
   // gone rather than until the request was delivered, so returning from here means the file is no
   // longer open. A kill would leave the notification icon in the overflow until something hovers it.
   Exec(Exe, '--quit', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, Code);
 
+  // After both, so nothing of ours is left to start another docker while the clients drain.
   if not AnythingIsStillRunning then
+  begin
+    LetDockerClientsDrain;
     Exit;
+  end;
 
   // The last resort. Reached by a process that ignored the verb or by a `--run` started outside the
   // tray; either way the alternative is the failure this whole section exists to remove.
@@ -1404,6 +1429,7 @@ begin
   // Handles are closed by the kernel after the process is, and the first delete follows
   // immediately. Half a second costs nothing on the path where it was not needed.
   Sleep(500);
+  LetDockerClientsDrain;
 end;
 
 /// The install's half of it: once, however many times it is asked for (DD236).
@@ -1535,6 +1561,12 @@ begin
     // most needs it is the unattended one, where an in-use file is a deployment that fails with
     // nothing watching.
     StopBeforeInstalling;
+
+    // Every time, unlike the stop: this function runs immediately before Restart Manager scans,
+    // and a docker client started since the ready page (an editor's poll, an agent's command) is
+    // otherwise found there. Free when none is running: one tasklist.
+    if FileExists(ExpandConstant('{app}\{#MyAppExeName}')) then
+      LetDockerClientsDrain;
     Exit;
   end;
 
