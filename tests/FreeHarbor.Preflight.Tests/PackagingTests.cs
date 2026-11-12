@@ -436,10 +436,16 @@ public sealed class PackagingTests
 
         // And the engine that guard reaches is the vendored one, which is the whole point of
         // carrying a copy: a checkout beside this repository is somebody else's working tree, and
-        // mid-refactor it does not import at all.
-        Assert.Equal(
-            "${CLAUDE_PROJECT_DIR}/.roadkeep",
-            Settings().GetProperty("env").GetProperty("ROADKEEP_HOME").GetString());
+        // mid-refactor it does not import at all. Since roadkeep 0.2.576 the launcher finds
+        // `.roadkeep/` by itself, second only to an explicit ROADKEEP_HOME, and an engine that
+        // variable names is the only one it tries (RK1678). So the committed settings must NOT pin
+        // it: a pin to `.roadkeep` turns every clone that has not vendored the engine, CI included,
+        // from "unenforced" into a refused hook. What is asserted is the launcher's own order.
+        Assert.False(
+            Settings().TryGetProperty("env", out var env) && env.TryGetProperty("ROADKEEP_HOME", out _),
+            "settings.json pins ROADKEEP_HOME, so a clone without .roadkeep/ gets no engine at all");
+        var launcher = File.ReadAllText(Path.Combine(RepositoryRoot(), ".claude", "hooks", "roadkeep-launch.py"));
+        Assert.Contains("VENDORED = \".roadkeep\"", launcher, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -499,10 +505,13 @@ public sealed class PackagingTests
                 WorkingDirectory = root,
             };
 
-            // Exactly what settings.json hands the hooks, so the test asks the question the harness
-            // asks and not an easier one.
+            // Exactly what the harness hands the hooks, so the test asks the question the harness
+            // asks and not an easier one: the project directory, and no ROADKEEP_HOME since
+            // settings.json stopped pinning it (roadkeep 0.2.576). Removed rather than left unset,
+            // because a developer's own environment may name a checkout, which would be answered
+            // first and is not what a fresh session sees.
             run.Environment["CLAUDE_PROJECT_DIR"] = root;
-            run.Environment["ROADKEEP_HOME"] = "${CLAUDE_PROJECT_DIR}/.roadkeep";
+            run.Environment.Remove("ROADKEEP_HOME");
 
             // Importing the launcher makes Python write a .pyc beside it, inside the repository, on
             // every run of this test — and run-commit.cmd stages everything by design, so the first
