@@ -368,7 +368,8 @@ public sealed class DetailViewTests
     [Fact]
     public void A_card_groups_its_failures_by_kind_in_plain_words_and_keeps_the_codes_in_the_tooltip()
     {
-        // DD337: twenty-two red lines of "Exited (255)" become one, and 137 and 143 read as words.
+        // DD337: twenty-two red lines of "Exited (255)" become one, and 137 reads as words. 143 is a
+        // stop somebody asked for, so turing is not an alert at all.
         var failed = Enumerable.Range(1, 22)
             .Select(i => Summary($"svc{i:00}", "exited", "wp") with { Status = "Exited (255) 3 days ago" });
         var rows = Rows(
@@ -381,7 +382,7 @@ public sealed class DetailViewTests
         var card = Assert.Single(DetailView.Cards(rows, ByState).Projects);
 
         Assert.Equal(
-            ["22 services failed", "backend was killed 18 hours ago", "turing was shut down 5 days ago"],
+            ["22 services failed", "backend was killed 18 hours ago"],
             card.CardAlerts.Select(alert => alert.Sentence));
         Assert.Contains("svc01: Exited (255) 3 days ago", card.CardAlerts[0].Evidence, StringComparison.Ordinal);
         Assert.Contains("and 12 more", card.CardAlerts[0].Evidence, StringComparison.Ordinal);
@@ -390,7 +391,7 @@ public sealed class DetailViewTests
         Assert.Equal("Show all 24 services", card.ShowAllLabel);
 
         // The detail page keeps the daemon's own words, one line per service.
-        Assert.Equal(24, card.Problems.Count);
+        Assert.Equal(23, card.Problems.Count);
     }
 
     [Fact]
@@ -401,10 +402,14 @@ public sealed class DetailViewTests
             Summary("up"),
             Summary("done", "exited") with { Status = "Exited (0) 1 minute ago" },
             Summary("crashed", "exited"),
-            Summary("frozen", "paused"));
+            Summary("frozen", "paused"),
+            Summary("termed", "exited") with { Status = "Exited (143) 1 minute ago" },
+            Summary("interrupted", "exited") with { Status = "Exited (130) 1 minute ago" },
+            Summary("killed", "exited") with { Status = "Exited (137) 1 minute ago" });
 
+        // SIGTERM and SIGINT are stops somebody asked for; SIGKILL can be the memory limit.
         Assert.Equal(
-            ["running", "stopped", "failed", "paused"],
+            ["running", "stopped", "failed", "paused", "stopped", "stopped", "failed"],
             rows.Select(row => row.StateWord));
         Assert.Equal(["failed"],rows.Where(row => row.Name == "crashed").Select(row => row.ChipWord));
         Assert.Equal("exited", rows.Single(row => row.Name == "crashed").State);
@@ -417,7 +422,7 @@ public sealed class DetailViewTests
         ContainerSummary Titled(string name, string title) =>
             Summary(name, "exited", "ds") with
             {
-                Status = "Exited (143) 2 days ago",
+                Status = "Exited (137) 2 days ago",
                 Labels = new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     [ContextPack.ProjectLabel] = "ds",
@@ -430,8 +435,8 @@ public sealed class DetailViewTests
         var apart = Assert.Single(
             DetailView.Cards(Rows(Titled("ds-a", "DSpace"), Titled("ds-b", "Solr")), ByState).Projects);
 
-        Assert.Equal("2 services were shut down", Assert.Single(repeated.CardAlerts).Sentence);
-        Assert.Equal("DSpace and Solr were shut down", Assert.Single(apart.CardAlerts).Sentence);
+        Assert.Equal("2 services were killed", Assert.Single(repeated.CardAlerts).Sentence);
+        Assert.Equal("DSpace and Solr were killed", Assert.Single(apart.CardAlerts).Sentence);
     }
 
     [Fact]

@@ -708,10 +708,24 @@ public sealed record ContainerRow(
         { IsProject: true } => RowTone.Warn,
         { IsRunning: true } => RowTone.Good,
         { State: "paused" } or { State: "restarting" } or { State: "created" } => RowTone.Warn,
-        _ when ExitCode is 0 => RowTone.Muted,
+        _ when StoppedOnRequest(ExitCode) => RowTone.Muted,
         { IsLive: false } => RowTone.Bad,
         _ => RowTone.Muted,
     };
+
+    /// <summary>
+    /// Whether an exit code is a stop somebody asked for rather than a failure.
+    /// </summary>
+    /// <remarks>
+    /// 0 is a clean exit. 143 (SIGTERM) and 130 (SIGINT) are what <c>docker stop</c>,
+    /// <c>compose down</c>, WSL shutting down or Ctrl+C leave behind from any process that does not
+    /// trap the signal: a shell as PID 1, most JVMs, <c>sleep</c>. Drawing those as failed made
+    /// every ordinary stop an alarm. 137 stays a failure: SIGKILL is the memory limit as often as a
+    /// stop that ran out of its grace period.
+    /// </remarks>
+    /// <param name="code">The exit code, or <see langword="null"/> where the status carried none.</param>
+    /// <returns>Whether the container counts as stopped and not failed.</returns>
+    public static bool StoppedOnRequest(int? code) => code is 0 or 130 or 143;
 
     /// <summary>
     /// The exit code the daemon put in the status line, where it put one there.
@@ -753,6 +767,9 @@ public sealed record ContainerRow(
         { State: "restarting" } => "Restarting: the daemon is bringing it back up.",
         { State: "created" } => "Created and never started.",
         { ExitCode: 0 } => "Exited 0: it finished and meant to.",
+        { ExitCode: 143 } => "Exited 143: SIGTERM. It was asked to stop, by docker stop, compose down "
+            + "or the engine shutting down, and did not trap the signal. Counted as stopped.",
+        { ExitCode: 130 } => "Exited 130: SIGINT. It was interrupted, as Ctrl+C does. Counted as stopped.",
         { ExitCode: 137 } => "Exited 137: SIGKILL. Usually the memory limit, sometimes a stop that "
             + "ran out of its grace period.",
         { ExitCode: { } code } => $"Exited {code.ToString(System.Globalization.CultureInfo.InvariantCulture)}"

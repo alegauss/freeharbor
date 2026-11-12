@@ -406,9 +406,10 @@ public sealed class SampleMachine : IEngineClient
                 ("freeharbor.primary", "Console"))),
 
         // No label of any kind and an image with no bundled icon: the monogram and the bare name.
-        // 143 is a SIGTERM that was not caught, the failure the detail page's banner is for.
+        // Exit 1 is the application's own error, a failure. Not 143: a SIGTERM is a stop somebody
+        // asked for and is drawn as stopped (ContainerRow.StoppedOnRequest).
         Service("c9aaaaaaaaaa0000", SearchLab, "indexer", IndexerImage, Exited,
-            "Exited (143) 3 minutes ago", dependsOn: "engine:service_started:false"),
+            "Exited (1) 3 minutes ago", dependsOn: "engine:service_started:false"),
 
         // Exposed but not published: the port that is text rather than a link.
         Service("c4dddddddddd0000", SearchLab, "cache", CacheImage, Running,
