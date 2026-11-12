@@ -257,12 +257,10 @@ internal partial class EditDetailsWindow : Window
             ? $"Edit details · container {row.Name}"
             : $"Edit details · compose project {project}";
 
-        var files = (row.ConfigFiles ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries
-            | StringSplitOptions.TrimEntries);
         // DD333: the project's own file in mono, then each file merged over it by name.
-        Files.Text = files.Length == 0 ? "" : files[0];
-        MoreFiles.Text = string.Concat(files.Skip(1).Select(file => " + " + Path.GetFileName(file)));
-        FilesRow.Visibility = files.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+        Files.Text = row.ConfigPath;
+        MoreFiles.Text = row.MoreConfigFiles;
+        FilesRow.Visibility = row.HasConfigPath ? Visibility.Visible : Visibility.Collapsed;
 
         SaveTo.Items.Add(new SaveTarget(SaveDestination.FreeHarbor));
         if (CanSaveToFile(row))
@@ -500,41 +498,9 @@ internal partial class EditDetailsWindow : Window
         Refresh();
     }
 
-    private void CopyPath(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            System.Windows.Clipboard.SetText(_row.ConfigFiles ?? "");
-        }
-        catch (System.Runtime.InteropServices.ExternalException)
-        {
-            // Another process holds the clipboard; the path is still on screen to select.
-        }
-    }
+    private void CopyPath(object sender, RoutedEventArgs e) => ProjectFolder.CopyPath(_row);
 
-    private void OpenFolder(object sender, RoutedEventArgs e)
-    {
-        var folder = _row.WorkingDir;
-        if (folder is null || !Directory.Exists(folder))
-        {
-            return;
-        }
-
-        try
-        {
-            // Named and not inherited (DD261): Explorer outlives this dialog, and the directory it
-            // would hold is the install's own.
-            using var _ = Process.Start(new ProcessStartInfo("explorer.exe", $"\"{folder}\"")
-            {
-                UseShellExecute = true,
-                WorkingDirectory = Environment.SystemDirectory,
-            });
-        }
-        catch (System.ComponentModel.Win32Exception)
-        {
-            // Explorer refused; the folder is still named in the header to open by hand.
-        }
-    }
+    private void OpenFolder(object sender, RoutedEventArgs e) => ProjectFolder.Open(_row);
 
     private void Save(object sender, RoutedEventArgs e)
     {

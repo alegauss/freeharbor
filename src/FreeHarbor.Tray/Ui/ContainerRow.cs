@@ -146,6 +146,19 @@ public sealed record ContainerRow(
     /// <summary>The compose files, comma-separated as compose stamps them, or nothing.</summary>
     public string? ConfigFiles { get; init; }
 
+    private string[] ConfigList => (ConfigFiles ?? "")
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    /// <summary>The project's own compose file, by its full path, or empty outside compose (DD333).</summary>
+    public string ConfigPath => ConfigList.FirstOrDefault() ?? "";
+
+    /// <summary>Each file merged over <see cref="ConfigPath"/>, by name: " + compose.override.yml".</summary>
+    public string MoreConfigFiles =>
+        string.Concat(ConfigList.Skip(1).Select(file => " + " + System.IO.Path.GetFileName(file)));
+
+    /// <summary>Whether compose recorded a file to show, copy and open the folder of.</summary>
+    public bool HasConfigPath => ConfigPath.Length > 0;
+
     /// <summary>What the name cell draws: the resolved title, or the name on a header.</summary>
     public string Title => Details?.Title ?? Name;
 
@@ -932,7 +945,8 @@ public sealed record ContainerRow(
 
                 // DD294 and DD295: a container's details or a project's, drawn by the same tile.
                 nameof(Details), nameof(DetailsBeneath), nameof(DetailKey), nameof(WorkingDir),
-                nameof(ConfigFiles), nameof(Description), nameof(DescriptionLine), nameof(HasDescription), nameof(HasTile),
+                nameof(ConfigFiles), nameof(ConfigPath), nameof(MoreConfigFiles), nameof(HasConfigPath),
+                nameof(Description), nameof(DescriptionLine), nameof(HasDescription), nameof(HasTile),
                 nameof(TileFill), nameof(TileGlyph), nameof(TilePicture), nameof(TileLetter),
                 nameof(Indent), nameof(Pending), nameof(Failure), nameof(IsPending),
                 nameof(HasFailure), nameof(AnyUp), nameof(CanStart), nameof(CanStop),

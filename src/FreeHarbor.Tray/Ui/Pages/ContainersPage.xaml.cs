@@ -485,6 +485,24 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
     /// <summary>Whether the detail page is showing, so a capture can tell a name that opened nothing.</summary>
     internal bool DetailShowing => Detail.Visibility == Visibility.Visible;
 
+    /// <summary>The project page's Copy path, the same verb Edit details has (DD333).</summary>
+    private void CopyConfigPath(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: ContainerRow row })
+        {
+            Ui.ProjectFolder.CopyPath(row);
+        }
+    }
+
+    /// <summary>The project page's Open folder, the same verb Edit details has (DD333).</summary>
+    private void OpenProjectFolder(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: ContainerRow row })
+        {
+            Ui.ProjectFolder.Open(row);
+        }
+    }
+
     /// <summary>Back to the list, at the scroll position it was left at: it was never torn down.</summary>
     private void CloseDetails(object sender, RoutedEventArgs e)
     {

@@ -1138,6 +1138,25 @@
                      Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
         </StackPanel>
       </DockPanel>
+      <!-- Where the project lives, as Edit details shows it (DD333): its own file by full path in
+           mono, each file merged over it by name, and the same two verbs beside them. The page
+           is where somebody comes to find the project, so the path cannot wait for an edit. -->
+      <StackPanel Orientation="Horizontal" Margin="80,10,0,0"
+                  Visibility="{Binding Head.HasConfigPath, Converter={StaticResource Shown}}">
+        <TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,8,0"
+                   VerticalAlignment="Center"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        <TextBlock Text="{Binding Head.ConfigPath}" FontSize="12" VerticalAlignment="Center"
+                   FontFamily="{x:Static ui:Palette.Mono}" TextTrimming="CharacterEllipsis"
+                   ToolTip="{Binding Head.WorkingDir}"
+                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+        <TextBlock Text="{Binding Head.MoreConfigFiles}" FontSize="12" VerticalAlignment="Center"
+                   Margin="6,0,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Button Content="Copy path" Tag="{Binding Head}" Click="CopyConfigPath" Margin="12,0,6,0"
+                Style="{DynamicResource RowAction}" />
+        <Button Content="Open folder" Tag="{Binding Head}" Click="OpenProjectFolder"
+                Style="{DynamicResource RowAction}" />
+      </StackPanel>
 
       <!-- No banner per failed service: a red strip with a Start button in it read as an alarm to
            answer now, when a stopped service is often fine left stopped. The state word in the
