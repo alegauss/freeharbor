@@ -26,6 +26,20 @@ public sealed class RelayExitCodeTests
 {
     private static string Named() => LiveEngine.Named();
 
+    /// <summary>Assert the exit code, carrying what the client said when it is wrong (DD346).</summary>
+    /// <param name="expected">The code the client should exit with.</param>
+    /// <param name="ran">What it did.</param>
+    /// <remarks>
+    /// The compose run failed once in a full run and passed alone, and the only thing the failure
+    /// kept was that 0 was not what came back. The client's own words are what tell a relay
+    /// teardown from a pull that timed out or a project network another test still held.
+    /// </remarks>
+    private static void Exited(int expected, FreeHarbor.Core.Agent.ComposeResult ran) =>
+        Assert.True(
+            ran.ExitCode == expected,
+            $"expected exit {expected}, got {ran.ExitCode?.ToString() ?? "none"}"
+            + $"{(ran.Failure is null ? "" : $" ({ran.Failure})")}; the client said:\n{ran.Output}");
+
     [FactWhenTheEngineAnswers]
     public async Task An_exec_that_succeeds_is_reported_as_a_success()
     {
@@ -37,14 +51,14 @@ public sealed class RelayExitCodeTests
 
         var started = engine.Run(
             LiveEngine.Anywhere, "run", "-d", "--name", name, LiveEngine.Image, "sleep", "60");
-        Assert.Equal(0, started.ExitCode);
+        Exited(0, started);
 
         try
         {
             var exec = engine.Run(LiveEngine.Anywhere, "exec", name, "sh", "-c", "echo hi");
 
             Assert.Contains("hi", exec.Output, StringComparison.Ordinal);
-            Assert.Equal(0, exec.ExitCode);
+            Exited(0, exec);
         }
         finally
         {
@@ -62,13 +76,13 @@ public sealed class RelayExitCodeTests
 
         var created = engine.Run(
             LiveEngine.Anywhere, "create", "--name", name, LiveEngine.Image, "true");
-        Assert.Equal(0, created.ExitCode);
+        Exited(0, created);
 
         try
         {
             var attached = engine.Run(LiveEngine.Anywhere, "start", "-a", name);
 
-            Assert.Equal(0, attached.ExitCode);
+            Exited(0, attached);
         }
         finally
         {
@@ -88,13 +102,13 @@ public sealed class RelayExitCodeTests
 
         var created = engine.Run(
             LiveEngine.Anywhere, "create", "--name", name, LiveEngine.Image, "sh", "-c", "exit 3");
-        Assert.Equal(0, created.ExitCode);
+        Exited(0, created);
 
         try
         {
             var attached = engine.Run(LiveEngine.Anywhere, "start", "-a", name);
 
-            Assert.Equal(3, attached.ExitCode);
+            Exited(3, attached);
         }
         finally
         {
@@ -122,7 +136,7 @@ public sealed class RelayExitCodeTests
             var ran = engine.Run(
                 scratch.FullName, "compose", "-p", project, "run", "--rm", "-T", "probe");
 
-            Assert.Equal(0, ran.ExitCode);
+            Exited(0, ran);
         }
         finally
         {

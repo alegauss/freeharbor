@@ -117,6 +117,7 @@
 - ✅ **DD343** **A ping answered by wsl.exe's own UTF-16 error reads as the daemon replying, cut to one letter** — A ping that reads something other than HTTP now decodes it, so wsl.exe's UTF-16LE refusal is quoted whole as wsl.exe answering in the daemon's place.
 - ✅ **DD344** **A hung WSL (HCS_E_CONNECTION_TIMEOUT) leaves the host retrying every 5 minutes with nothing offered that would fix it** — While the journal's latest word is HCS_E_CONNECTION_TIMEOUT, the Engine page offers Restart WSL and do engine takes restart-wsl; both name who else stops.
 - ✅ **DD345** **The tray balloon says there is nothing to click while WSL itself is not answering** — Once the journal names HCS_E_CONNECTION_TIMEOUT after the engine went away, the tray says once that WSL itself stopped answering, and a click opens the Engine page on Restart WSL.
+- ✅ **DD346 (assertion carries the client's words)** **The live compose run test failed once in a full run and passed alone, and its assertion keeps none of compose's words** — Every exit-code assertion in RelayExitCodeTests now prints the code, any failure and the client's own output when it is wrong.
 
 ## Block B — The daemon client (talk to the engine)
 
