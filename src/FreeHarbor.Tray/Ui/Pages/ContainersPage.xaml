@@ -621,17 +621,16 @@
                  than per row (Ui/RowStyle.cs). A chip is an assertion, so it carries the evidence
                  for itself in its tooltip — and the evidence is more than the status column already
                  shows, or the tooltip would be the same sentence twice. -->
-            <!-- DD297. The shape goes before the word (L8), and a header carries the chip too: its
-                 project's count, in the tone of what is under it. Of the containers under it and not
-                 of the project as the daemon knows it: the filter can hide some, and a count a reader
-                 cannot check against what is on screen is worse than none. -->
+            <!-- DD297. A header carries the chip too: its project's count, in the tone of what is
+                 under it. Of the containers under it and not of the project as the daemon knows it:
+                 the filter can hide some, and a count a reader cannot check against what is on screen
+                 is worse than none. In the list the chip is the word alone: a service already leads
+                 with the shape beside its title, and a dot inside the chip as well only cluttered it. -->
             <Border Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="{Binding TitleAlignment}"
                     CornerRadius="5" Padding="8,2" Background="{Binding ChipFill}"
                     ToolTip="{Binding ChipEvidence}">
                 <TextBlock FontSize="12" TextTrimming="CharacterEllipsis"
-                           Foreground="{Binding ChipText}"><Run
-                           Text="{Binding ChipShape, Mode=OneWay}" FontSize="10" /> <Run
-                           Text="{Binding ChipWord, Mode=OneWay}" /></TextBlock>
+                           Text="{Binding ChipWord}" Foreground="{Binding ChipText}" />
             </Border>
             <TextBlock Grid.Column="3" Text="{Binding Status}" TextTrimming="CharacterEllipsis"
                        VerticalAlignment="Center"
@@ -825,9 +824,8 @@
                               Style="{StaticResource TextLink}" VerticalAlignment="Center" />
                       <Border Margin="10,0,0,0" CornerRadius="5" Padding="8,2" VerticalAlignment="Center"
                               Background="{Binding Head.ChipFill}" ToolTip="{Binding Head.ChipEvidence}">
-                        <TextBlock FontSize="12" Foreground="{Binding Head.ChipText}"><Run
-                                   Text="{Binding Head.ChipShape, Mode=OneWay}" FontSize="10" /> <Run
-                                   Text="{Binding Head.ChipWord, Mode=OneWay}" /></TextBlock>
+                        <TextBlock FontSize="12" Foreground="{Binding Head.ChipText}"
+                                   Text="{Binding Head.ChipWord}" />
                       </Border>
                     </StackPanel>
                     <TextBlock Text="{Binding Head.DescriptionLine}" FontSize="12" Margin="0,2,0,0"
@@ -1013,9 +1011,8 @@
                             Style="{StaticResource TextLink}" VerticalAlignment="Center" />
                     <Border Margin="10,0,0,0" CornerRadius="5" Padding="8,2" VerticalAlignment="Center"
                             Background="{Binding ChipFill}" ToolTip="{Binding ChipEvidence}">
-                      <TextBlock FontSize="12" Foreground="{Binding ChipText}"><Run
-                                 Text="{Binding ChipShape, Mode=OneWay}" FontSize="10" /> <Run
-                                 Text="{Binding ChipWord, Mode=OneWay}" /></TextBlock>
+                      <TextBlock FontSize="12" Foreground="{Binding ChipText}"
+                                 Text="{Binding ChipWord}" />
                     </Border>
                   </StackPanel>
                   <!-- Two lines at most: a description longer than that belongs to the page. -->
