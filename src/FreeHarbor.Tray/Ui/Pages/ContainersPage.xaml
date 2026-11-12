@@ -801,7 +801,32 @@
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                     Tag="{Binding}" MouseLeftButtonUp="CardClicked" Cursor="Hand">
-              <StackPanel>
+              <!-- The grid makes every card in a row as tall as the tallest, so the footer is docked
+                   to the bottom of the card rather than following its content: Start sits on the
+                   same line across a row whatever each card holds above it. -->
+              <DockPanel LastChildFill="True">
+                <!-- The one verb, which is the accent button only when it is Start (spec section 5,
+                     fixed), because starting is what a stopped card is opened for. No Restart beside
+                     it: DD36 keeps a row to its one verb, and the project's page is a click away.
+                     DD326: the project's uptime on the left of the footer. -->
+                <DockPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                <TextBlock Text="{Binding Uptime}" FontSize="12" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
+                  <TextBlock Text="{Binding Head.Pending}" VerticalAlignment="Center" Margin="0,0,8,0"
+                             Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                             Visibility="{Binding Head.IsPending, Converter={StaticResource Shown}}" />
+                  <Button Content="Stop" Tag="{Binding Head}" Click="PrimaryAction"
+                          Style="{DynamicResource RowAction}"
+                          Visibility="{Binding Head.CanStop, Converter={StaticResource Shown}}" />
+                  <Button Content="Start" Tag="{Binding Head}" Click="PrimaryAction"
+                          Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
+                          MinWidth="0"
+                          Visibility="{Binding Head.CanStart, Converter={StaticResource Shown}}" />
+                </StackPanel>
+                </DockPanel>
+              <StackPanel VerticalAlignment="Top">
                 <DockPanel>
                   <!-- DD326: the header's ⋯, the list header's menu, at the top right. -->
                   <Button DockPanel.Dock="Right" Content="⋯" Click="OpenOverflow" Tag="{Binding Head}"
@@ -842,18 +867,9 @@
                   </StackPanel>
                 </DockPanel>
 
-                <!-- DD337: one line per kind of failure, in plain words; the exit codes are in the
-                     tooltip and on the project's page. -->
-                <ItemsControl ItemsSource="{Binding CardAlerts}" Margin="0,10,0,0">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <TextBlock FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,0,0,2"
-                                 ToolTip="{Binding Evidence}"
-                                 Foreground="{x:Static ui:Palette.DangerBrush}"><Run Text="●" FontSize="10" /> <Run
-                                 Text="{Binding Sentence, Mode=OneWay}" /></TextBlock>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <!-- DD337's failure lines live on the project's page now, under STATUS: on the card
+                     they repeated in red what the chip and the service's state word already said,
+                     and pushed the card's footer out of line with its neighbours. -->
 
                 <!-- The links: Open filled in the accent, the rest as the list's chips. A stopped
                      project dims these and never the card, so its Start stays readable. -->
@@ -925,29 +941,8 @@
                 <Button Content="{Binding ShowAllLabel}" Tag="{Binding}" Click="ShowAllServices"
                         Style="{StaticResource TextLink}" HorizontalAlignment="Left" Margin="0,4,0,0"
                         Visibility="{Binding HasMoreServices, Converter={StaticResource Shown}}" />
-
-                <!-- The one verb, which is the accent button only when it is Start (spec section 5,
-                     fixed), because starting is what a stopped card is opened for. No Restart beside
-                     it: DD36 keeps a row to its one verb, and the project's page is a click away.
-                     DD326: the project's uptime on the left of the footer. -->
-                <DockPanel Margin="0,12,0,0">
-                <TextBlock Text="{Binding Uptime}" FontSize="12" VerticalAlignment="Center"
-                           TextTrimming="CharacterEllipsis"
-                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
-                  <TextBlock Text="{Binding Head.Pending}" VerticalAlignment="Center" Margin="0,0,8,0"
-                             Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                             Visibility="{Binding Head.IsPending, Converter={StaticResource Shown}}" />
-                  <Button Content="Stop" Tag="{Binding Head}" Click="PrimaryAction"
-                          Style="{DynamicResource RowAction}"
-                          Visibility="{Binding Head.CanStop, Converter={StaticResource Shown}}" />
-                  <Button Content="Start" Tag="{Binding Head}" Click="PrimaryAction"
-                          Style="{DynamicResource AccentButtonStyle}" FontSize="12" Padding="10,3"
-                          MinWidth="0"
-                          Visibility="{Binding Head.CanStart, Converter={StaticResource Shown}}" />
-                </StackPanel>
-                </DockPanel>
               </StackPanel>
+              </DockPanel>
             </Border>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
@@ -1147,7 +1142,25 @@
       <!-- No banner per failed service: a red strip with a Start button in it read as an alarm to
            answer now, when a stopped service is often fine left stopped. The state word in the
            service's colour and its own Start/Stop in SERVICES say the same thing at the right
-           volume. -->
+           volume.
+
+           STATUS is where DD337's sentences went when they left the card: what happened, in plain
+           words, one line per kind ("backend was killed 41 hours ago"), with the exit codes in the
+           tooltip. Body text with only the shape in Danger, so it reads as a fact and not an alarm. -->
+      <StackPanel Margin="0,20,0,0" Visibility="{Binding HasProblems, Converter={StaticResource Shown}}">
+        <TextBlock Text="STATUS" Margin="0,0,0,8" FontSize="12" FontWeight="SemiBold"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        <ItemsControl ItemsSource="{Binding CardAlerts}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Margin="0,0,0,4" TextWrapping="Wrap" ToolTip="{Binding Evidence}"
+                         Foreground="{DynamicResource TextFillColorPrimaryBrush}"><Run Text="●" FontSize="10"
+                         Foreground="{x:Static ui:Palette.DangerBrush}" />  <Run
+                         Text="{Binding Sentence, Mode=OneWay}" /></TextBlock>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
 
       <TextBlock Text="ENDPOINTS" Margin="0,20,0,8" FontSize="12" FontWeight="SemiBold"
                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
