@@ -118,6 +118,7 @@
 - ✅ **DD344** **A hung WSL (HCS_E_CONNECTION_TIMEOUT) leaves the host retrying every 5 minutes with nothing offered that would fix it** — While the journal's latest word is HCS_E_CONNECTION_TIMEOUT, the Engine page offers Restart WSL and do engine takes restart-wsl; both name who else stops.
 - ✅ **DD345** **The tray balloon says there is nothing to click while WSL itself is not answering** — Once the journal names HCS_E_CONNECTION_TIMEOUT after the engine went away, the tray says once that WSL itself stopped answering, and a click opens the Engine page on Restart WSL.
 - ✅ **DD346 (assertion carries the client's words)** **The live compose run test failed once in a full run and passed alone, and its assertion keeps none of compose's words** — Every exit-code assertion in RelayExitCodeTests now prints the code, any failure and the client's own output when it is wrong.
+- ✅ **DD348** **A reinstall keeps the distribution's Alpine packages at the release first imported, so its security patches never land** — Provisioning runs apk upgrade before its adds, so a reinstall moves a kept distribution to its branch's latest patch; simulated here: 3.24.1 to 3.24.4, OpenSSL included.
 
 ## Block B — The daemon client (talk to the engine)
 

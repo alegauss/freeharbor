@@ -278,6 +278,13 @@ public sealed class EngineProvisioner
         return string.Join(" && ",
         [
             "set -e",
+            // DD348. A reinstall keeps the distribution, because re-importing it would lose every
+            // image and volume (ImportDistribution), so the root filesystem stays at the Alpine
+            // release it was first imported from and no rootfs bump in the manifest ever reaches it.
+            // Upgrading in place is what does: within the branch /etc/apk/repositories names, so
+            // 3.24.1 takes 3.24.4's security fixes and never a 3.25 nobody chose. First, so the
+            // packages added below come from the same index as everything they link against.
+            "apk upgrade --no-cache --no-progress",
             // socat is what carries the Engine API out to Windows: a Linux daemon cannot create a
             // Windows named pipe, and every IP route to it is reachable by any local process, so the
             // hop is over wsl.exe's stdio and needs a tool that speaks unix sockets. BusyBox's nc

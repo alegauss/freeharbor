@@ -73,6 +73,46 @@ Done when:
 - A failure of this test names compose's own words, and the cause it names is fixed or
   the test waits for what it needs instead of racing it.
 
+### §DD349 Bumping the engine pins
+
+Checked on 12 November 2026 against the sources the provisioner downloads from:
+download.docker.com lists 29.9.3 for both the Linux static tarball and the Windows CLI
+zip, docker/compose's latest release is v5.7.1, docker/buildx's is v0.39.0, and Alpine's
+latest-stable minirootfs is 3.24.4. None is a new major, so this is a bump within the
+lines already shipped.
+
+Each entry in Engine/engine-manifest.json moves together: version, URL and SHA-256. The
+digest is computed from the downloaded file and, where upstream publishes one (Compose,
+Buildx and Alpine do; Docker's static binaries do not), compared with it before it is
+written. NOTICE is regenerated from Attribution, since it names every version.
+
+The tests prove the manifest's shape, not that the new engine starts, so this ships only
+after one real provision on a machine: a fresh distribution and a reinstall over the
+current one, with docker version, docker compose version and docker buildx version
+answering. A reinstall keeps the distribution's root filesystem, so the Alpine bump
+reaches existing machines through DD348's apk upgrade and not through the new rootfs,
+which only a fresh import uses.
+
+### §DD350 Noticing upstream releases
+
+Dependabot covers package ecosystems and cannot read engine-manifest.json: its pins are
+URLs with a version in them and a SHA-256 of a file on download.docker.com, a GitHub
+release or Alpine's CDN. Renovate's custom managers can bump the version inside a URL
+but do not recompute the digest of an arbitrary download, which would leave the manifest
+refusing its own artefact.
+
+So a scheduled workflow does the work itself, weekly and on demand. It asks the same
+five sources DD349 was checked against, and for anything newer within the current major
+it downloads the file, checks it against the upstream checksum where one is published,
+rewrites the entry, regenerates NOTICE, runs the test suite and opens one pull request
+naming each change with a link to its release notes. A new major (Docker 30, Alpine
+3.25) opens an issue instead, because it can change behaviour and is a decision rather
+than a patch.
+
+What it cannot do is the real proof: GitHub's Windows runners do not offer WSL2, so the
+pull request says that one provision on a machine is still owed before merge, the same
+rule DD349 ships under.
+
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)

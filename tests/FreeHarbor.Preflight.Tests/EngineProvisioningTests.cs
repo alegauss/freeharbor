@@ -274,6 +274,20 @@ public sealed class EngineProvisioningTests : IDisposable
     }
 
     [Fact]
+    public void A_reprovision_upgrades_the_kept_distribution_before_adding_to_it()
+    {
+        // DD348. The distribution survives a reinstall, so this line is the only way an Alpine patch
+        // release reaches a machine that already has one. Before the adds, so they install against
+        // the upgraded index rather than the one the distribution was imported with.
+        var script = EngineProvisioner.InstallScript(@"C:\downloads\docker.tgz");
+
+        var upgrade = script.IndexOf("apk upgrade --no-cache --no-progress", StringComparison.Ordinal);
+        Assert.True(upgrade > 0, "the script never upgrades the distribution's packages");
+        Assert.True(upgrade < script.IndexOf("apk add", StringComparison.Ordinal),
+            "the upgrade runs after the packages it should have upgraded the index for");
+    }
+
+    [Fact]
     public void The_filesystem_tools_are_installed_before_anything_needs_them()
     {
         // DD196. The timing is the whole argument: apk needs a writable root and a network, and the
