@@ -294,9 +294,17 @@ internal partial class EditDetailsWindow : Window
         var icon = pending is not null ? pending.Icon : _store.For(row.DetailKey!)?.Icon;
         IconBox.Items.Clear();
         IconBox.Items.Add(new IconChoice($"Automatic ({_beneath.IconSource})", null));
-        foreach (var name in ContainerDetails.Bundled.Order(StringComparer.Ordinal))
+
+        // One button per drawing, not per name: five database images share the cylinder and three
+        // web servers the globe, and a row of identical buttons reads as a bug. The button stores the
+        // saved name where it is one of its group, so opening and saving changes nothing, and the
+        // first name otherwise; the tooltip lists every name it stands for.
+        foreach (var group in ContainerDetails.Bundled.Order(StringComparer.Ordinal)
+                     .GroupBy(name => IconTile.Glyphs.GetValueOrDefault(name, name), StringComparer.Ordinal))
         {
-            IconBox.Items.Add(new IconChoice(name, name));
+            var names = group.ToList();
+            var value = icon is not null && names.Contains(icon, StringComparer.Ordinal) ? icon : names[0];
+            IconBox.Items.Add(new IconChoice(string.Join(", ", names), value));
         }
 
         if (icon is not null && Path.IsPathFullyQualified(icon))
