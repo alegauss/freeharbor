@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
 PackageIdentifier: alegauss.FreeHarbor
-PackageVersion: 2.0.0
+PackageVersion: 2.1.0
 InstallerType: inno
 Scope: user
 InstallModes:
@@ -16,15 +16,15 @@ ExpectedReturnCodes:
   - InstallerReturnCode: 7
     ReturnResponse: systemNotSupported
     ReturnResponseUrl: https://github.com/alegauss/freeharbor#installing
-ReleaseDate: 2026-10-30
+ReleaseDate: 2026-11-11
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/alegauss/freeharbor/releases/download/v2.0.0/FreeHarbor-Setup-2.0.0.exe
-    InstallerSha256: B6A8C0ACCFC97F535A3D0D0D18A5ADCDE0638622B999B76481771766606BC4DC
+    InstallerUrl: https://github.com/alegauss/freeharbor/releases/download/v2.1.0/FreeHarbor-Setup-2.1.0.exe
+    InstallerSha256: 0E9316AD6B5F9F1DFB4CAB612E494461645A1989E7418F3218456182A3B257CA
     AppsAndFeaturesEntries:
-      - DisplayName: FreeHarbor 2.0.0
+      - DisplayName: FreeHarbor 2.1.0
         Publisher: FreeHarbor contributors
-        DisplayVersion: 2.0.0
+        DisplayVersion: 2.1.0
         ProductCode: '{6B0E4D2A-9C77-4A31-8F5E-FREEHARBOR0001}_is1'
         InstallerType: inno
 ManifestType: installer
