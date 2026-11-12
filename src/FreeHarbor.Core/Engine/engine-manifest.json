@@ -11,41 +11,42 @@
     "Compose publishes a .sha256 sibling on its release. The value below was not taken from it:",
     "the file was downloaded, hashed here, and the published sibling agreed — so what is recorded",
     "is a digest this project measured and upstream corroborated, which is the stronger of the two.",
-    "Buildx publishes no sibling at all, so its digest is only the one this project measured."
+    "Buildx publishes no sibling, and its checksums.txt leaves the Windows builds out; since DD349",
+    "both GitHub artefacts are also corroborated by the digest GitHub's release API reports per asset."
   ],
   "rootfs": {
     "id": "rootfs",
-    "version": "3.24.1",
-    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/x86_64/alpine-minirootfs-3.24.1-x86_64.tar.gz",
-    "fileName": "alpine-minirootfs-3.24.1-x86_64.tar.gz",
-    "sha256": "41f73e3cf5fa919b8aa5ca6b30dc48f0da2720776d7423e2a7748211456fe081"
+    "version": "3.24.4",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/x86_64/alpine-minirootfs-3.24.4-x86_64.tar.gz",
+    "fileName": "alpine-minirootfs-3.24.4-x86_64.tar.gz",
+    "sha256": "cdaa38cb8de3537967ee5b6c9b6cd00cc962da2b018e6eea48696bb274923012"
   },
   "engine": {
     "id": "engine",
-    "version": "29.7.2",
-    "url": "https://download.docker.com/linux/static/stable/x86_64/docker-29.7.2.tgz",
-    "fileName": "docker-29.7.2.tgz",
-    "sha256": "803d433f226db4776e1768fd319fc6c6e4935a456acf84fcc0080818b854bc8f"
+    "version": "29.9.3",
+    "url": "https://download.docker.com/linux/static/stable/x86_64/docker-29.9.3.tgz",
+    "fileName": "docker-29.9.3.tgz",
+    "sha256": "3fb5d1f13014c18cc54945bc177c58a9056a482dada031e17d12cf2e6922c973"
   },
   "cli": {
     "id": "cli",
-    "version": "29.7.2",
-    "url": "https://download.docker.com/win/static/stable/x86_64/docker-29.7.2.zip",
-    "fileName": "docker-29.7.2.zip",
-    "sha256": "ed9222f478a5d143ac90e8e2fd3209b5076382cdb4b210321f97aa4b68bc6811"
+    "version": "29.9.3",
+    "url": "https://download.docker.com/win/static/stable/x86_64/docker-29.9.3.zip",
+    "fileName": "docker-29.9.3.zip",
+    "sha256": "7c4ff7bbb31579046cd34dd8b91f7cbd3ab3482a1a85330170be726ef792d751"
   },
   "compose": {
     "id": "compose",
-    "version": "5.4.0",
-    "url": "https://github.com/docker/compose/releases/download/v5.4.0/docker-compose-windows-x86_64.exe",
-    "fileName": "docker-compose-windows-x86_64-5.4.0.exe",
-    "sha256": "d51bc731b3ff6f062a26e8fdfd391ae98aeab516432f097c66d39c1c9d06680e"
+    "version": "5.7.1",
+    "url": "https://github.com/docker/compose/releases/download/v5.7.1/docker-compose-windows-x86_64.exe",
+    "fileName": "docker-compose-windows-x86_64-5.7.1.exe",
+    "sha256": "e4316597452650ae92fe9719a2a7c2fce8f56c5ceafed88d2aed6e39b2b2b2d0"
   },
   "buildx": {
     "id": "buildx",
-    "version": "0.36.1",
-    "url": "https://github.com/docker/buildx/releases/download/v0.36.1/buildx-v0.36.1.windows-amd64.exe",
-    "fileName": "buildx-v0.36.1.windows-amd64.exe",
-    "sha256": "cd7d06a00d924b5800d2654b507afe100378a4685fcec6585eeadc599a527330"
+    "version": "0.39.0",
+    "url": "https://github.com/docker/buildx/releases/download/v0.39.0/buildx-v0.39.0.windows-amd64.exe",
+    "fileName": "buildx-v0.39.0.windows-amd64.exe",
+    "sha256": "b51a432f9013fe9b506e34df9eb4e3d2464350ddf792d579ce07f36cc57cb743"
   }
 }

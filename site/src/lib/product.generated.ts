@@ -17,11 +17,11 @@ export const product: ProductData = {
   "artefacts": {
     "count": 5,
     "versions": {
-      "rootfs": "3.24.1",
-      "engine": "29.7.2",
-      "cli": "29.7.2",
-      "compose": "5.4.0",
-      "buildx": "0.36.1"
+      "rootfs": "3.24.4",
+      "engine": "29.9.3",
+      "cli": "29.9.3",
+      "compose": "5.7.1",
+      "buildx": "0.39.0"
     },
     "hosts": [
       "dl-cdn.alpinelinux.org",
