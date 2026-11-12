@@ -4,8 +4,6 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
-- ⏳ **DD346** (deps: —) **The live compose run test failed once in a full run and passed alone, and its assertion keeps none of compose's words** — Reproduce the flake with a live engine; the next failure names compose's words, and their cause is fixed or the test waits for it. → §DD346
-
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)

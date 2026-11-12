@@ -4,6 +4,7 @@
 
 - ⏸ **DD321** (deps: —) **In a full test run the pipe relay once took no second connection for thirty seconds, then passed alone** — set aside (Needs a full run that fails it.): The next failing run's message says whether the relay stopped accepting. → §DD321
 - ⏸ **DD303** (deps: —) **Testcontainers detects the engine on about one run in two even with an API version the engine accepts** — set aside (Needs Turing runs.): Whether the misses are docker-java's or the pipe's DD142 bursts decides who fixes it, and nobody has set the runs against the journal. → §DD303
+- ⏸ **DD346** (deps: —) **The live compose run test failed once in a full run and passed alone, and its assertion keeps none of compose's words** — set aside (the engine was stopped when the run reached it): Reproduce it with a live engine and fix what compose then names. → §DD346
 
 ## Block B — The daemon client (talk to the engine)
 
