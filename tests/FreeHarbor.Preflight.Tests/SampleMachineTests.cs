@@ -92,7 +92,7 @@ public sealed class SampleMachineTests
 
         // Exactly one, or the note is the fixture's normal state rather than its exception.
         var orphan = Assert.Single(rows, row => row.ImageIsGone);
-        Assert.Equal("image gone", orphan.ImageNote);
+        Assert.Equal("image gone · recreate to update", orphan.ImageNote);
         Assert.Equal("666666666666", orphan.Image);
     }
 

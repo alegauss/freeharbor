@@ -607,14 +607,17 @@
                  refusals land on. Empty on every other row, so it costs nothing to draw. The
                  tooltip carries what to do, because the reflex this provokes — restart it — is the
                  one thing that does not work. -->
-            <TextBlock Grid.Column="1" TextTrimming="CharacterEllipsis"
-                       VerticalAlignment="Center"
-                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                       Visibility="{Binding IsContainer, Converter={StaticResource Shown}}"><Run
-                       Text="{Binding Image, Mode=OneWay}" /> <Run
-                       Text="{Binding ImageNote, Mode=OneWay}" FontSize="11"
-                       ToolTip="{Binding ImageEvidence}"
-                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" /></TextBlock>
+            <!-- The note goes on a second line under the digest, as a description sits under a
+                 title: on the same line it ran into the image and read as part of its name. -->
+            <StackPanel Grid.Column="1" VerticalAlignment="Center"
+                        Visibility="{Binding IsContainer, Converter={StaticResource Shown}}">
+                <TextBlock Text="{Binding Image}" TextTrimming="CharacterEllipsis"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="{Binding ImageNote}" FontSize="12" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding ImageEvidence}"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                           Visibility="{Binding HasImageNote, Converter={StaticResource Shown}}" />
+            </StackPanel>
             <!-- A chip, because state is the column actually scanned and it used to be drawn in
                  the same tertiary grey as the status restating it. The fill is translucent so one
                  pair of bytes works on both surfaces, and it is resolved once per render rather

@@ -160,7 +160,7 @@ public sealed class ContainerRowTests
         });
 
         Assert.True(row.ImageIsGone);
-        Assert.Equal("image gone", row.ImageNote);
+        Assert.Equal("image gone · recreate to update", row.ImageNote);
         Assert.Contains("Recreating the container", row.ImageEvidence, StringComparison.Ordinal);
     }
 

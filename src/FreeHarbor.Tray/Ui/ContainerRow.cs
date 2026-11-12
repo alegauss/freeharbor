@@ -771,7 +771,14 @@ public sealed record ContainerRow(
     public bool ImageIsGone { get; init; }
 
     /// <summary>What the note beside the image says, or nothing where the image is still there.</summary>
-    public string ImageNote => ImageIsGone ? "image gone" : "";
+    /// <remarks>
+    /// Drawn on its own line under the digest, and saying what to do: a restart is the reflex and
+    /// keeps the old image, so the one verb that helps belongs in the note and not only its tooltip.
+    /// </remarks>
+    public string ImageNote => ImageIsGone ? "image gone · recreate to update" : "";
+
+    /// <summary>Whether there is a note to draw under the image.</summary>
+    public bool HasImageNote => ImageIsGone;
 
     /// <summary>
     /// Why the note says it, and what to do about it.
@@ -854,7 +861,7 @@ public sealed record ContainerRow(
                 nameof(Image), nameof(State), nameof(Status), nameof(Ports), nameof(Service),
                 nameof(DependsOn), nameof(ExitCode), nameof(StateEvidence), nameof(IsRunning),
                 nameof(IsLive), nameof(ImageIsGone),
-                nameof(ImageNote), nameof(ImageEvidence),
+                nameof(ImageNote), nameof(HasImageNote), nameof(ImageEvidence),
 
                 // DD297: a header has no ports to chip, opens no standalone block and is described in
                 // its project file rather than invited to be.
