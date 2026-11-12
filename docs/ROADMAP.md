@@ -4,8 +4,7 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
-- 🛠 **DD349** (deps: —) **The pins trail upstream: Moby and the CLI at 29.7.2, Compose 5.4.0, Buildx 0.36.1, Alpine 3.24.1** — Bumping to 29.9.3, 5.7.1, 0.39.0 and 3.24.4 needs new digests, a regenerated NOTICE and one real provision before it ships. → §DD349
-- 📋 **DD350** (deps: DD349) **Nothing notices a new Moby, CLI, Compose, Buildx or Alpine release, so the pins drift until someone looks** — Dependabot cannot read the manifest, so a weekly workflow checks the five sources and opens a PR with new digests, minor bumps only. → §DD350
+- 📋 **DD350** (deps: DD349 ✅) **Nothing notices a new Moby, CLI, Compose, Buildx or Alpine release, so the pins drift until someone looks** — Dependabot cannot read the manifest, so a weekly workflow checks the five sources and opens a PR with new digests, minor bumps only. → §DD350
 
 ## Block B — The daemon client (talk to the engine)
 
