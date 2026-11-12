@@ -882,6 +882,15 @@ internal partial class ContainersPage : System.Windows.Controls.UserControl
             return;
         }
 
+        // On the detail page the ⋯ belongs to the page itself, so Details would open what is already
+        // open and seem to do nothing. It goes, and the separator under it with it.
+        var leadsWithDetails = !DetailShowing;
+        if (menu.Items.Count > 1 && menu.Items[0] is System.Windows.Controls.MenuItem { Header: "Details" } details
+            && menu.Items[1] is System.Windows.Controls.Separator rule)
+        {
+            details.Visibility = rule.Visibility = leadsWithDetails ? Visibility.Visible : Visibility.Collapsed;
+        }
+
         menu.PlacementTarget = button;
         menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
         menu.DataContext = button.Tag;

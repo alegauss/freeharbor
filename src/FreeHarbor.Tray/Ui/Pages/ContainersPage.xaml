@@ -1201,8 +1201,9 @@
         <ItemsControl.ItemTemplate>
           <DataTemplate>
             <DockPanel Margin="0,6" ToolTip="{Binding ChipEvidence}">
-              <TextBlock DockPanel.Dock="Left" Text="{Binding ChipShape}" Width="14" Margin="0,0,10,0"
-                         FontSize="12" VerticalAlignment="Center" Foreground="{Binding ToneInk}" />
+              <!-- At the top, level with the title: centred on the block it read as the image line's. -->
+              <TextBlock DockPanel.Dock="Left" Text="{Binding ChipShape}" Width="14" Margin="0,1,10,0"
+                         FontSize="12" VerticalAlignment="Top" Foreground="{Binding ToneInk}" />
               <Button DockPanel.Dock="Right" Content="{Binding PrimaryVerb}" Tag="{Binding}"
                       Click="PrimaryAction" Style="{DynamicResource RowAction}" Margin="6,0,0,0"
                       Visibility="{Binding HasPrimary, Converter={StaticResource Shown}}" />
