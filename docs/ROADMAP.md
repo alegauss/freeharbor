@@ -4,7 +4,7 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
-- 📋 **DD350** (deps: DD349 ✅) **Nothing notices a new Moby, CLI, Compose, Buildx or Alpine release, so the pins drift until someone looks** — Dependabot cannot read the manifest, so a weekly workflow checks the five sources and opens a PR with new digests, minor bumps only. → §DD350
+- 🛠 **DD350** (deps: DD349 ✅) **Nothing notices a new Moby, CLI, Compose, Buildx or Alpine release, so the pins drift until someone looks** — Dependabot cannot read the manifest, so a weekly workflow checks the five sources and opens a PR with new digests, minor bumps only. → §DD350
 
 ## Block B — The daemon client (talk to the engine)
 

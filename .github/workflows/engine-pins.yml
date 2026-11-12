@@ -1,0 +1,113 @@
+# DD350 — the engine pins, kept current the way dependabot.yml keeps everything else current.
+#
+# Dependabot cannot read src/FreeHarbor.Core/Engine/engine-manifest.json: its five pins are URLs with
+# a version in them and a SHA-256 of a file on download.docker.com, a GitHub release or Alpine's CDN.
+# build/update-pins.ps1 does the reading, downloading, hashing and rewriting; this runs it weekly,
+# on the same Monday morning Dependabot uses, and turns what it changed into one pull request.
+#
+# Within the current major only. A new major (Docker 30, Compose 6, a new Alpine branch) can change
+# behaviour, so it is filed as an issue for somebody to decide, once, and never pinned here.
+#
+# What this cannot do is the proof that matters most: a hosted runner has no WSL2 (check.yml says
+# the same), so nothing here starts the new engine. The pull request says so in its body, and the
+# install over a live machine is owed before merge, as it was for DD349.
+#
+# Two settings this relies on, both outside the repository:
+#   - Settings > Actions > General > "Allow GitHub Actions to create and approve pull requests".
+#   - A pull request opened with GITHUB_TOKEN does not start other workflows, so check.yml will not
+#     run on it by itself. The test suite runs here, on this branch, before the pull request is
+#     opened; pushing any commit to the branch (or closing and reopening it) starts check.yml too.
+
+name: engine-pins
+
+on:
+  schedule:
+    # Monday 09:00 in São Paulo, which is 12:00 UTC: the hour dependabot.yml already uses.
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: engine-pins
+  cancel-in-progress: false
+
+jobs:
+  pins:
+    name: look for newer engine releases
+    # Windows, because the test suite is net10.0-windows; the check itself would run anywhere.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Look for newer releases within each major
+        id: look
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: build/update-pins.ps1 -Body "$env:RUNNER_TEMP/pins.md" -Majors "$env:RUNNER_TEMP/majors.txt"
+
+      # NOTICE names every version and a test refuses a committed copy that differs from what
+      # Attribution renders, so it is regenerated from the code rather than edited.
+      - name: Regenerate NOTICE
+        if: steps.look.outputs.changed == 'true'
+        run: dotnet run build/write-notice.cs -- NOTICE
+
+      # The site states each pinned version from the manifest (scripts/product.mjs); no npm install,
+      # because the generator reads committed files with node's own modules only.
+      - name: Regenerate the site's product facts
+        if: steps.look.outputs.changed == 'true'
+        run: node site/scripts/product.mjs
+
+      - name: Test
+        if: steps.look.outputs.changed == 'true'
+        run: dotnet test --nologo --blame
+
+      # One branch, reused: a week that finds something newer than last week's open pull request
+      # force-pushes over it, so there is never more than one to review.
+      - name: Open or update the pull request
+        if: steps.look.outputs.changed == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUMMARY: ${{ steps.look.outputs.summary }}
+        run: |
+          $branch = 'engine-pins/weekly'
+          $title = "chore(engine): bump the engine pins ($env:SUMMARY)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B $branch
+          git add src/FreeHarbor.Core/Engine/engine-manifest.json NOTICE site/src/lib/product.generated.ts
+          git commit -m $title
+          git push --force origin $branch
+          $open = gh pr list --head $branch --state open --json number --jq '.[0].number'
+          if ($open) {
+            gh pr edit $open --title $title --body-file "$env:RUNNER_TEMP/pins.md"
+          } else {
+            gh pr create --head $branch --title $title --body-file "$env:RUNNER_TEMP/pins.md"
+          }
+
+      # A new major is a decision, so it is an issue, filed once: an open one with the same title
+      # means this week found what an earlier week already reported.
+      - name: File new majors as issues
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $path = "$env:RUNNER_TEMP/majors.txt"
+          if (-not (Test-Path $path)) { exit 0 }
+          foreach ($major in (Get-Content $path | Where-Object { $_.Trim() })) {
+            $title = "New major release to evaluate: $major"
+            $existing = gh issue list --state open --search "in:title `"$title`"" --json title --jq '.[].title'
+            if ($existing -contains $title) { continue }
+            gh issue create --title $title --body ("The weekly pin check (DD350) found a release outside the major the engine manifest pins, so it was not pinned. " +
+              "A new major can change behaviour: read its release notes, then bump engine-manifest.json by hand and provision it on a real machine before release.")
+          }
