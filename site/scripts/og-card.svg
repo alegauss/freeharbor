@@ -34,5 +34,5 @@
   <circle cx="118" cy="563" r="6" fill="#67C3F2"/>
   <text id="chip" x="136" y="571" font-family="DejaVu Sans, Arial, sans-serif" font-size="20" fill="#9db3c1">Windows 10 / 11 · Per-user install · Apache-2.0</text>
 
-  <text x="1110" y="571" text-anchor="end" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="20" fill="#7d95a5">alegauss.github.io/freeharbor</text>
+  <text x="1110" y="571" text-anchor="end" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="20" fill="#7d95a5">alegauss.com/freeharbor</text>
 </svg>

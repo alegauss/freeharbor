@@ -59,12 +59,12 @@ export const meta = {
     title: "FreeHarbor",
     description:
       "Upstream Moby in a WSL2 distro it owns, the docker_engine pipe your tools already look for, and one window of containers. No licence fee, nothing resident.",
-    url: "https://alegauss.github.io/freeharbor/",
+    url: "https://alegauss.com/freeharbor/",
   },
 } as const;
 
 export const repoUrl = "https://github.com/alegauss/freeharbor";
-export const parentUrl = "https://alegauss.github.io/";
+export const parentUrl = "https://alegauss.com/";
 
 // The release page rather than a file: the installer carries its version in its name, so
 // there is no version-independent URL for the asset itself, and a hard-coded
@@ -109,7 +109,7 @@ export const footer = {
 
 /* --------------------------------------------------------------- sponsor */
 
-// Mirrors alegauss.github.io/sponsor.json — the canonical sponsor declaration for
+// Mirrors alegauss.com/sponsor.json — the canonical sponsor declaration for
 // these projects. Transcribed here rather than fetched at runtime: this site is
 // prerendered, and the whole point of naming a sponsor is that crawlers and LLMs
 // read it in the served HTML.

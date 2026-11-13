@@ -8,7 +8,7 @@
 
 **[Download `FreeHarbor-Setup.exe`](https://github.com/alegauss/freeharbor/releases/latest)** · per-user install, no admin prompt · no account, no telemetry
 
-**[alegauss.github.io/freeharbor](https://alegauss.github.io/freeharbor/)**
+**[alegauss.com/freeharbor](https://alegauss.com/freeharbor/)**
 
 </div>
 
@@ -232,14 +232,14 @@ are written: they are governed by a tool, and a hand edit is refused.
 
 For Claude Code:
 
-- **[Claude Code Tray](https://alegauss.github.io/claude-tray/)**: your rate-limit usage as a Windows tray icon that turns red before you run out.
-- **[roadkeep](https://alegauss.github.io/roadkeep/)**: keeps ROADMAP, CHANGELOG and IMPROVEMENTS to one format, as a CLI and a Claude Code plugin.
-- **[commitclerk](https://alegauss.github.io/commitclerk/)**: Conventional Commits messages from your staged diff, in a single-file Python CLI.
-- **[polyweave](https://alegauss.github.io/polyweave/)**: a Claude Code plugin that makes a game's 3D assets, sounds and names by declaring what each has to satisfy.
+- **[Claude Code Tray](https://alegauss.com/claude-tray/)**: your rate-limit usage as a Windows tray icon that turns red before you run out.
+- **[roadkeep](https://alegauss.com/roadkeep/)**: keeps ROADMAP, CHANGELOG and IMPROVEMENTS to one format, as a CLI and a Claude Code plugin.
+- **[commitclerk](https://alegauss.com/commitclerk/)**: Conventional Commits messages from your staged diff, in a single-file Python CLI.
+- **[polyweave](https://alegauss.com/polyweave/)**: a Claude Code plugin that makes a game's 3D assets, sounds and names by declaring what each has to satisfy.
 
 For Windows developers:
 
-- **[winwright](https://alegauss.github.io/winwright/)**: drives a Windows desktop app from a test and reports what was actually observed.
-- **[Quickshell](https://alegauss.github.io/quickshell/)**: an SSH client for Windows with sessions, keys, SFTP and tunnels, and without the rest of the suite.
+- **[winwright](https://alegauss.com/winwright/)**: drives a Windows desktop app from a test and reports what was actually observed.
+- **[Quickshell](https://alegauss.com/quickshell/)**: an SSH client for Windows with sessions, keys, SFTP and tunnels, and without the rest of the suite.
 
-All of them: [alegauss.github.io](https://alegauss.github.io/)
+All of them: [alegauss.com](https://alegauss.com/)

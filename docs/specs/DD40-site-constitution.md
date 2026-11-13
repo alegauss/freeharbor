@@ -268,7 +268,7 @@ Three facts about this repository shape it:
   its output directory would delete them. So the site builds to `site/dist/` and the
   published tree is assembled from there — never written into `docs/`.
 - **The base path is derived, not chosen.** The site is served at
-  <https://alegauss.github.io/freeharbor/>, so Vite's `base` is `/freeharbor/` and every
+  <https://alegauss.com/freeharbor/>, so Vite's `base` is `/freeharbor/` and every
   canonical, sitemap entry and asset path carries that prefix. This was written as *the URL
   does not change*, and DD59 falsified it: GitHub Pages derives the prefix from the
   repository name, so renaming the repository moved every published address at once.

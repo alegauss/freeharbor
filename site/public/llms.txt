@@ -29,9 +29,9 @@ This site answers a coding agent in files it can grep, not only in hydrated mark
 route has a Markdown twin beside it, the same page converted from the same render, with
 the navigation, the footer and the call to action dropped. Read `<route>/index.md` instead
 of the HTML: the landing page is
-[`/index.md`](https://alegauss.github.io/freeharbor/index.md). The full list of routes,
+[`/index.md`](https://alegauss.com/freeharbor/index.md). The full list of routes,
 their twins and their byte sizes is in
-[`manifest.json`](https://alegauss.github.io/freeharbor/manifest.json).
+[`manifest.json`](https://alegauss.com/freeharbor/manifest.json).
 
 ## Why it exists
 
@@ -224,8 +224,8 @@ servers, with no per-user licence.
 
 ## Links
 
-- [Website](https://alegauss.github.io/freeharbor/): project page
-- [Manifest](https://alegauss.github.io/freeharbor/manifest.json): the routes and their Markdown twins
+- [Website](https://alegauss.com/freeharbor/): project page
+- [Manifest](https://alegauss.com/freeharbor/manifest.json): the routes and their Markdown twins
 - [GitHub repository](https://github.com/alegauss/freeharbor): source code
 - [Roadmap](https://github.com/alegauss/freeharbor/blob/main/docs/ROADMAP.md): what is open, and why each line exists
 - [Changelog](https://github.com/alegauss/freeharbor/blob/main/docs/CHANGELOG.md): what has shipped

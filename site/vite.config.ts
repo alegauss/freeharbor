@@ -5,7 +5,7 @@ import { siteThemeScript } from "@viglet/viglet-design-system/site";
 import { THEME_KEY } from "./src/lib/site-content.ts";
 
 // GitHub Pages derives this from the repository name, so it is not a preference — the site
-// is served at https://alegauss.github.io/freeharbor/ and every canonical, asset path and
+// is served at https://alegauss.com/freeharbor/ and every canonical, asset path and
 // sitemap entry carries the prefix. (§6, DD59)
 export const BASE = "/freeharbor/";
 
