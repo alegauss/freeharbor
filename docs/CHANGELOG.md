@@ -213,6 +213,7 @@
 - ✅ **DD341** **A crashed service and one that finished cleanly both read "exited", told apart only by colour** — The window writes failed for a non-zero exit and stopped for a clean one, keeping the daemon's state for filters, the CLI, and paused, restarting or created.
 - ✅ **DD342** **A card's state words are left-aligned in their column, so running, failed and stopped end at different points** — The state word on a card and on the detail page's service list is right-aligned in a fixed column, so running, failed and stopped end on one line.
 - ✅ **DD347** **Edit details offers 16 Segoe MDL2 glyphs, too few to describe what a container or project is** — Tiles draw Fluent UI System Icons (MIT) bundled in the exe; Edit details searches its 2,935 concepts, labels name any of them, and saved names still draw.
+- 🗑 **DD335** **A tile's colour cannot be chosen, where edit-project.png draws colour swatches under the icon** — abandoned: The owner kept the hashed hue so a name is one colour on every machine; the departure is item 5 of section 9 in the DD294 spec.
 
 ## Block D — Container operations (what a user came to do)
 

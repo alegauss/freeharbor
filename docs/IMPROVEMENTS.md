@@ -110,25 +110,7 @@ than a task because adopting it reverses a recorded decision:
 4. The read order as a numbered list with its keys in mono, all six steps visible. Today the capture shows the heading and step 1 only before the fold.
 
 If adopted, the spec's section 7 "As built" paragraph is rewritten in the same commit,
-since it would no longer be true.
-
-### §DD335 Choosing a tile's colour
-
-`edit-project.png` draws a row of colour swatches under the icon, so a project or
-service can choose its tile's colour. Nothing carries that today: the hue is hashed from
-the name (`ContainerDetails.HueOf`), so the same name is the same colour on every
-machine, and no label, project file key or store field names a colour.
-
-Adopting it means a new field in all three sources (a `freeharbor.colour` label, a
-`colour:` key in `.freeharbor/project.yaml` and `x-freeharbor`, and the store), a value
-limited to the `Palette` tile hues by index or name (never a hex, L1), the resolver
-preferring it over the hash, and a swatch row in the dialog after the icon row.
-
-Leaving it out is a departure to record in spec section 9: the hash already gives every
-name a stable colour, and a colour somebody chose on one machine would differ from the
-teammate's who did not.
-
-Which is the owner's call, so this is an idea and not a task.
+since it would no longer be true. The owner chose the cards on 16 November 2026.
 
 ## Block D — Container operations (what a user came to do)
 

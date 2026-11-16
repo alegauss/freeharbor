@@ -478,6 +478,10 @@ The `x-freeharbor` block in a compose file takes the same keys. Service labels a
    does not introduce them.
 4. **Colours are tokens.** The board's hex values stand in for the Fluent accent, the
    `Palette` state colours and the new tile hues.
+5. **A tile's colour is not chosen.** `edit-project.png` draws colour swatches under the
+   icon. The hue stays hashed from the name (`ContainerDetails.HueOf`), so the same name is
+   the same colour on every machine, where a colour chosen on one machine would differ from
+   a teammate's who chose none. Decided by the owner on 16 November 2026 (DD335).
 
 ## 10. What the fixture must carry
 
