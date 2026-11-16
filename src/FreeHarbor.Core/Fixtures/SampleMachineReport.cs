@@ -107,7 +107,8 @@ public sealed class SampleFilesystemWork : IFilesystemWork
     /// Refuses like the rest: reaching the real one from a capture would stop every distribution on
     /// the desk taking the picture.
     /// </remarks>
-    public RepairOutcome RestartWsl(Action<RepairStep> report) => Refuse();
+    public RepairOutcome RestartWsl(Action<RepairStep> report, Action<string>? saying = null) =>
+        Refuse();
 
     /// <inheritdoc/>
     /// <remarks>

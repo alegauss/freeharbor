@@ -56,12 +56,13 @@ public interface IFilesystemWork
 
     /// <summary>Shut WSL down and see that it answers again (DD344).</summary>
     /// <param name="report">Called with each step as it lands.</param>
+    /// <param name="saying">Called with which check is running while WSL comes back (DD360).</param>
     /// <returns>What was done.</returns>
     /// <remarks>
     /// On this seam for the reason <see cref="Compact"/> is: a window that constructed it could stop
     /// every distribution on the machine, which a capture must not be one click away from.
     /// </remarks>
-    RepairOutcome RestartWsl(Action<RepairStep> report);
+    RepairOutcome RestartWsl(Action<RepairStep> report, Action<string>? saying = null);
 
     /// <summary>
     /// Whether a check on this machine still owes a network call before it can start (DD216).

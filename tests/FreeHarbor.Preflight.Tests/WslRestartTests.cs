@@ -214,14 +214,57 @@ public sealed class WslRestartTests
     }
 
     [Fact]
-    public void A_wsl_still_silent_after_the_shutdown_is_reported_as_that()
+    public void A_wsl_still_silent_after_every_check_is_reported_as_that()
     {
-        var wsl = new FakeWsl().Answer(0).Answer(null, "", "wsl.exe did not finish");
+        var wsl = new FakeWsl().Answer(0)
+            .Answer(null, "", "wsl.exe did not finish")
+            .Answer(null, "", "wsl.exe did not finish")
+            .Answer(null, "", "wsl.exe did not finish");
 
-        var outcome = new WslRestart(wsl, Stopped).Run();
+        var outcome = new WslRestart(wsl, Stopped, answerChecks: 3, answerPause: TimeSpan.Zero).Run();
 
         Assert.False(outcome.Succeeded);
         Assert.Equal(WslRestart.AnswerStep, outcome.Failure!.What);
+        Assert.Contains("after 3 checks", outcome.Failure.Detail, StringComparison.Ordinal);
+        Assert.Equal(4, wsl.Invocations.Count);
+    }
+
+    // ---- waiting for WSL to come back (DD360) --------------------------------------------------
+
+    [Fact]
+    public void A_wsl_that_comes_back_at_a_later_check_is_a_restart_that_worked()
+    {
+        // Measured on 16 November: the ended service was back minutes later, started by Windows.
+        var wsl = new FakeWsl().Answer(null, "", "hung")
+            .Answer(null, "", "wsl.exe did not finish")
+            .Answer(null, "", "wsl.exe did not finish")
+            .Answer(0, "freeharbor");
+        var said = new List<string>();
+
+        var outcome = new WslRestart(
+                wsl,
+                Stopped,
+                new FakeElevated(new ElevatedRun(Ran: true, ExitCode: 2)),
+                answerPause: TimeSpan.Zero)
+            .Run(saying: said.Add);
+
+        Assert.True(outcome.Succeeded);
+        Assert.Contains("at check 3", outcome.Steps[^1].Detail, StringComparison.Ordinal);
+        Assert.Equal(3, said.Count);
+        Assert.Contains("check 1 of 8", said[0], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Progress_is_said_beside_the_steps_and_never_lands_as_one()
+    {
+        var reported = new List<RepairStep>();
+        var wsl = new FakeWsl().Answer(0).Answer(null, "", "slow").Answer(0);
+
+        new WslRestart(wsl, Stopped, answerPause: TimeSpan.Zero).Run(reported.Add, _ => { });
+
+        Assert.Equal(
+            [FilesystemRepair.StopStep, WslRestart.ShutdownStep, WslRestart.AnswerStep],
+            reported.Select(step => step.What));
     }
 
     // ---- what the page says ------------------------------------------------------------------

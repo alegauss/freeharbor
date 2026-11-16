@@ -46,6 +46,15 @@ public sealed class WslRestart
     private readonly IElevated? _elevated;
     private readonly string? _logPath;
     private readonly TimeSpan _shutdownBudget;
+    private readonly int _answerChecks;
+    private readonly TimeSpan _answerPause;
+
+    /// <summary>How many times WSL is asked whether it answers, after it went down (DD360).</summary>
+    /// <remarks>
+    /// Eight, each bounded by the probe budget and three seconds apart: about two and a half minutes
+    /// on a WSL that never comes back, and one question on the usual one that does.
+    /// </remarks>
+    public const int AnswerChecks = 8;
 
     /// <summary>Construct the restart.</summary>
     /// <param name="wsl">WSL.</param>
@@ -63,13 +72,22 @@ public sealed class WslRestart
     /// shutdown that has not returned by then is the service hanging too, and only ending the
     /// service reaches that, which needs administrator rights.
     /// </param>
+    /// <param name="answerChecks">How many times to ask, or <see langword="null"/> for <see cref="AnswerChecks"/>.</param>
+    /// <param name="answerPause">
+    /// The pause between two questions, or <see langword="null"/> for three seconds. Overridden only
+    /// by a test, which cannot wait on the failing path.
+    /// </param>
     public WslRestart(
         IWsl wsl,
         Func<RepairStep> stopEngine,
         IElevated? elevated = null,
         string? logPath = null,
-        TimeSpan? shutdownBudget = null)
+        TimeSpan? shutdownBudget = null,
+        int? answerChecks = null,
+        TimeSpan? answerPause = null)
     {
+        _answerChecks = Math.Max(1, answerChecks ?? AnswerChecks);
+        _answerPause = answerPause ?? TimeSpan.FromSeconds(3);
         ArgumentNullException.ThrowIfNull(wsl);
         ArgumentNullException.ThrowIfNull(stopEngine);
         _wsl = wsl;
@@ -108,8 +126,11 @@ public sealed class WslRestart
 
     /// <summary>Run it.</summary>
     /// <param name="report">Called with each step as it lands.</param>
+    /// <param name="saying">
+    /// Called with what the running step is doing, for a progress line beside the steps (DD360).
+    /// </param>
     /// <returns>What was done.</returns>
-    public RepairOutcome Run(Action<RepairStep>? report = null)
+    public RepairOutcome Run(Action<RepairStep>? report = null, Action<string>? saying = null)
     {
         var steps = new List<RepairStep>();
         void Land(RepairStep step)
@@ -150,15 +171,48 @@ public sealed class WslRestart
             }
         }
 
-        var answer = _wsl.Run(WslBudget.Probe, "--list", "--quiet");
-        Land(answer.Succeeded
-            ? new RepairStep(AnswerStep, true, "WSL answers again")
-            : new RepairStep(
-                AnswerStep,
-                false,
-                $"WSL shut down but still does not answer: {answer.Detail()}"));
-
+        Land(Answer(saying));
         return new RepairOutcome(steps);
+    }
+
+    /// <summary>Ask WSL whether it answers, until it does or the checks run out (DD360).</summary>
+    /// <param name="saying">Told which check is running, for the page's progress line.</param>
+    /// <returns>The step.</returns>
+    /// <remarks>
+    /// Measured on 16 November 2026: the service ended at 09:01:48 was still stopped a minute later
+    /// and answering a few minutes after that, started again by Windows. One question straight after
+    /// the kill would have reported a restart that worked as one that did not. Progress is said
+    /// beside the steps and never as one, for the reason <see cref="ElevatedCompaction"/> gives.
+    /// </remarks>
+    private RepairStep Answer(Action<string>? saying)
+    {
+        WslResult? last = null;
+        for (var check = 1; check <= _answerChecks; check++)
+        {
+            saying?.Invoke(
+                $"asking WSL whether it answers, check {check} of {_answerChecks}; Windows can "
+                + "take a minute or two to bring the service back");
+
+            last = _wsl.Run(WslBudget.Probe, "--list", "--quiet");
+            if (last.Succeeded)
+            {
+                return new RepairStep(
+                    AnswerStep,
+                    true,
+                    check == 1 ? "WSL answers again" : $"WSL answers again, at check {check}");
+            }
+
+            if (check < _answerChecks)
+            {
+                Thread.Sleep(_answerPause);
+            }
+        }
+
+        return new RepairStep(
+            AnswerStep,
+            false,
+            $"WSL went down but still did not answer after {_answerChecks} checks: "
+            + (last?.Detail() ?? "nothing was asked"));
     }
 
     /// <summary>End the service with administrator rights, after a shutdown that hung (DD351).</summary>

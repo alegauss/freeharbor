@@ -549,12 +549,17 @@ internal sealed partial class EnginePage : System.Windows.Controls.UserControl
         _interlude.Expected();
         Show(RepairPrompt.RestartingWsl, steps: null);
 
+        _saying = null;
         var steps = new System.Collections.Concurrent.ConcurrentQueue<RepairStep>();
         var ticker = DrawAsTheyLand(steps, RepairPrompt.RestartingWsl);
         RepairOutcome outcome;
         try
         {
-            outcome = await Task.Run(() => _work.RestartWsl(steps.Enqueue)).ConfigureAwait(true);
+            // The progress line the compaction already draws (DD360): WSL can take minutes to come
+            // back after the service is ended, and a panel saying nothing for that long reads as a
+            // button that did nothing.
+            outcome = await Task.Run(
+                () => _work.RestartWsl(steps.Enqueue, said => _saying = said)).ConfigureAwait(true);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -564,6 +569,7 @@ internal sealed partial class EnginePage : System.Windows.Controls.UserControl
         finally
         {
             ticker.Stop();
+            _saying = null;
         }
 
         var prompt = RepairPrompt.AfterRestart(outcome);
