@@ -31,6 +31,7 @@ public sealed class PreflightInspectionTests
                 PreflightInspection.Rows.Wsl2,
                 PreflightInspection.Rows.RivalEngine,
                 PreflightInspection.Rows.DockerContext,
+                PreflightInspection.Rows.LeftoverEngine,
             ],
             report.Checks.Select(check => check.Id));
     }
@@ -251,15 +252,89 @@ public sealed class PreflightInspectionTests
                 ContextName = "desktop-linux",
                 Host = "npipe:////./pipe/dockerDesktopLinuxEngine",
             },
+            EngineDistribution = new EngineRegistration
+            {
+                BasePath = @"C:\gone\distro",
+                Expected = @"C:\Users\u\AppData\Local\FreeHarbor\distro",
+            },
         });
 
-        // Five rows are wrong and every one of them names an action. Four blockers, not five: the
+        // Six rows are wrong and every one of them names an action. Five blockers, not six: the
         // docker-context row warns, because a leftover context does not stop this engine from
         // working — it stops the user's CLI from finding it (DD20).
-        Assert.Equal(5, report.Checks.Count);
-        Assert.Equal(4, report.Blockers.Count);
+        Assert.Equal(6, report.Checks.Count);
+        Assert.Equal(5, report.Blockers.Count);
         Assert.All(report.Checks, check => Assert.NotNull(check.Remedy));
     }
+
+    // ---- DD317: a distribution an earlier copy left behind -----------------------------------------
+
+    private const string Here = @"C:\Users\u\AppData\Local\FreeHarbor\distro";
+
+    [Fact]
+    public void No_registered_distribution_is_a_green_row()
+    {
+        var row = Row(Run(FakeMachine.Healthy), PreflightInspection.Rows.LeftoverEngine);
+
+        Assert.Equal(Verdict.Pass, row.Verdict);
+        Assert.Null(row.Remedy);
+    }
+
+    [Fact]
+    public void A_distribution_in_this_install_folder_is_picked_up_again()
+    {
+        var row = Row(Run(FakeMachine.Healthy with
+        {
+            EngineDistribution = new EngineRegistration
+            {
+                BasePath = Here + @"\", BasePathExists = true, DiskBytes = 3L << 30, Expected = Here,
+            },
+        }), PreflightInspection.Rows.LeftoverEngine);
+
+        Assert.Equal(Verdict.Pass, row.Verdict);
+        Assert.Contains("3.0 GB", row.Detail, StringComparison.Ordinal);
+        Assert.Contains("this install uses it", row.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_distribution_whose_folder_is_gone_blocks_with_the_unregister_command()
+    {
+        var report = Run(FakeMachine.Healthy with
+        {
+            EngineDistribution = new EngineRegistration { BasePath = Here, Expected = Here },
+        });
+        var row = Row(report, PreflightInspection.Rows.LeftoverEngine);
+
+        Assert.Equal(Verdict.Fail, row.Verdict);
+        Assert.True(row.Blocking);
+        Assert.Contains("no longer exists", row.Detail, StringComparison.Ordinal);
+        Assert.Contains("`wsl --unregister freeharbor`", row.Remedy, StringComparison.Ordinal);
+        Assert.False(report.CanHostEngine);
+    }
+
+    [Fact]
+    public void A_distribution_registered_elsewhere_warns_and_names_what_unregistering_costs()
+    {
+        var report = Run(FakeMachine.Healthy with
+        {
+            EngineDistribution = new EngineRegistration
+            {
+                BasePath = @"D:\Old\FreeHarbor\distro", BasePathExists = true, DiskBytes = 5L << 30,
+                Expected = Here,
+            },
+        });
+        var row = Row(report, PreflightInspection.Rows.LeftoverEngine);
+
+        Assert.Equal(Verdict.Warn, row.Verdict);
+        Assert.False(row.Blocking);
+        Assert.Contains(@"D:\Old\FreeHarbor\distro (5.0 GB)", row.Detail, StringComparison.Ordinal);
+        Assert.Contains("every image", row.Remedy, StringComparison.Ordinal);
+        Assert.True(report.CanHostEngine);
+    }
+
+    [Fact]
+    public void The_long_path_prefix_wsl_records_is_dropped() =>
+        Assert.Equal(Here, FreeHarbor.Core.Engine.Wsl.WithoutLongPrefix(@"\\?\" + Here));
 
     [Fact]
     public void A_passing_row_offers_no_remedy()

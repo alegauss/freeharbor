@@ -35,7 +35,8 @@ export const product: ProductData = {
       "virtualization",
       "wsl2",
       "rival-engine",
-      "docker-context"
+      "docker-context",
+      "leftover-engine"
     ]
   },
   "tray": {

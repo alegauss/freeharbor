@@ -57,6 +57,7 @@ export const features: FeatureRecord[] = [
           ["WSL2: a missing wsl.exe, a kernel-less half-install, and “new distros default to WSL1” are three states with three lines."],
           ["Container engine: anything else owning the docker command or the docker_engine pipe, because two engines on one pipe leaves neither working."],
           ["Docker context: where your own docker command points, because an engine that is running and a client aimed somewhere else fail with the same sentence."],
+          ["Earlier engine: a freeharbor distribution an earlier copy left registered, because removing the Store package leaves it behind and one whose folder is gone would never start."],
         ],
       },
       {

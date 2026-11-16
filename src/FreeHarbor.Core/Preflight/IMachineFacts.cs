@@ -52,6 +52,32 @@ public interface IMachineFacts
 
     /// <summary>Where this user's own <c>docker</c> command will send a request.</summary>
     DockerClientTarget DockerClient { get; }
+
+    /// <summary>
+    /// The <c>freeharbor</c> distribution WSL has registered, or <see langword="null"/> where none is
+    /// (DD317).
+    /// </summary>
+    EngineRegistration? EngineDistribution { get; }
+}
+
+/// <summary>What WSL has recorded for this tool's distribution, as facts (DD317).</summary>
+/// <remarks>
+/// Removing the MSIX package runs no code, so a distribution can outlive the copy that made it,
+/// or outlive its own folder. These are what a reinstall needs to tell the two apart.
+/// </remarks>
+public sealed record EngineRegistration
+{
+    /// <summary>The folder WSL recorded as the distribution's home, or <see langword="null"/>.</summary>
+    public string? BasePath { get; init; }
+
+    /// <summary>Whether that folder is still on disk.</summary>
+    public bool BasePathExists { get; init; }
+
+    /// <summary>What the files in that folder hold, or <see langword="null"/> where it is gone.</summary>
+    public long? DiskBytes { get; init; }
+
+    /// <summary>The folder this install imports its distribution to.</summary>
+    public string Expected { get; init; } = "";
 }
 
 /// <summary>Where the <c>docker</c> CLI points, as facts.</summary>

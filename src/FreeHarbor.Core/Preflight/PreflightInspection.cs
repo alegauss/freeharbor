@@ -29,6 +29,9 @@ public static class PreflightInspection
 
         /// <summary>The row saying where this user's own docker command points.</summary>
         public const string DockerContext = "docker-context";
+
+        /// <summary>The row for a distribution an earlier copy left registered (DD317).</summary>
+        public const string LeftoverEngine = "leftover-engine";
     }
 
     /// <summary>Read every row from <paramref name="facts"/>, in report order.</summary>
@@ -43,7 +46,64 @@ public static class PreflightInspection
             CheckWsl2(facts),
             CheckRivalEngines(facts),
             CheckDockerContext(facts),
+            CheckLeftoverEngine(facts),
         ]);
+    }
+
+    /// <summary>
+    /// A <c>freeharbor</c> distribution this install did not make, or whose disk is gone (DD317).
+    /// </summary>
+    /// <remarks>
+    /// Removing the MSIX package runs no code, so the distribution outlives it. One whose folder is
+    /// still this install's is picked up again, which is what a reinstall wants. One whose folder is
+    /// gone blocks: the provision leaves a registered distribution alone, so the engine would never
+    /// start, and unregistering it loses nothing that was not lost already. One registered somewhere
+    /// else works, and only warns, because that disk may hold somebody's images.
+    /// </remarks>
+    private static PreflightCheck CheckLeftoverEngine(IMachineFacts facts)
+    {
+        const string Title = "Earlier engine";
+        const string Name = Engine.EnginePaths.CurrentDistribution;
+        if (facts.EngineDistribution is not { } found)
+        {
+            return Green(Rows.LeftoverEngine, Title, $"no {Name} distribution is registered yet");
+        }
+
+        var where = found.BasePath ?? "a folder WSL did not record";
+        if (!found.BasePathExists)
+        {
+            return new PreflightCheck
+            {
+                Id = Rows.LeftoverEngine,
+                Title = Title,
+                Verdict = Verdict.Fail,
+                Detail = $"{Name} is registered at {where}, which no longer exists",
+                Remedy = $"Run `wsl --unregister {Name}`. Its disk is already gone, so this loses "
+                    + "nothing, and the install then makes a new one.",
+                Blocking = true,
+            };
+        }
+
+        var size = found.DiskBytes is { } bytes ? $" ({Engine.EngineRemoval.Spell(bytes)})" : "";
+        if (string.Equals(
+                Path.TrimEndingDirectorySeparator(where),
+                Path.TrimEndingDirectorySeparator(found.Expected),
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return Green(Rows.LeftoverEngine, Title,
+                $"{Name} is already registered at {where}{size}, and this install uses it");
+        }
+
+        return new PreflightCheck
+        {
+            Id = Rows.LeftoverEngine,
+            Title = Title,
+            Verdict = Verdict.Warn,
+            Detail = $"{Name} is registered at {where}{size}, not at {found.Expected}",
+            Remedy = $"This install will use that one. If nothing else does and you want a fresh "
+                + $"engine, run `wsl --unregister {Name}`, which deletes that disk with every image, "
+                + "container and volume on it.",
+        };
     }
 
     private static PreflightCheck CheckWindowsBuild(IMachineFacts facts)

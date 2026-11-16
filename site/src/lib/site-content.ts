@@ -392,6 +392,10 @@ export const preflight = {
       "Docker context",
       ": where your own docker command points, because an engine that is running and a client aimed at something else fail with the same sentence, and only one of them is fixed by starting anything",
     ],
+    [
+      "Earlier engine",
+      ": a freeharbor distribution an earlier copy left registered. One in this install’s folder is picked up again; one whose folder is gone blocks, with wsl --unregister freeharbor as the fix",
+    ],
   ] as [string, string][],
   // What is true of every row, rather than a row. Rendered in the same list, and deliberately
   // not counted by the heading.

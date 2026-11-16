@@ -168,6 +168,49 @@ public sealed class Wsl : IWsl
         }
     }
 
+    /// <summary>The folder WSL recorded for one distribution (DD317).</summary>
+    /// <param name="name">The distribution's name.</param>
+    /// <returns>
+    /// The BasePath without WSL's <c>\\?\</c> prefix, or <see langword="null"/> where the
+    /// distribution is not registered or the key cannot be read.
+    /// </returns>
+    public static string? RegisteredBasePath(string name)
+    {
+        try
+        {
+            using var lxss = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(LxssKey);
+            if (lxss is null)
+            {
+                return null;
+            }
+
+            foreach (var child in lxss.GetSubKeyNames())
+            {
+                using var distribution = lxss.OpenSubKey(child);
+                if (distribution?.GetValue("DistributionName") is string found
+                    && found.Equals(name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return distribution.GetValue("BasePath") is string path
+                        ? WithoutLongPrefix(path)
+                        : null;
+                }
+            }
+
+            return null;
+        }
+        catch (Exception exception) when (exception is System.Security.SecurityException
+            or UnauthorizedAccessException or IOException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>A path without the <c>\\?\</c> prefix WSL writes into BasePath.</summary>
+    /// <param name="path">The path as recorded.</param>
+    /// <returns>The path a reader would type.</returns>
+    internal static string WithoutLongPrefix(string path) =>
+        path.StartsWith(@"\\?\", StringComparison.Ordinal) ? path[4..] : path;
+
     /// <inheritdoc/>
     public WslResult Run(TimeSpan budget, params string[] arguments)
     {

@@ -45,4 +45,7 @@ internal sealed record FakeMachine : IMachineFacts
         ContextName = "default",
         Host = "npipe:////./pipe/docker_engine",
     };
+
+    /// <summary>Nothing registered: the machine a first install meets.</summary>
+    public EngineRegistration? EngineDistribution { get; init; }
 }

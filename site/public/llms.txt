@@ -45,10 +45,11 @@ it.
 
 ## Features
 
-- **Preflight (`freeharbor --preflight`)**: five rows, each with the action that fixes it:
+- **Preflight (`freeharbor --preflight`)**: six rows, each with the action that fixes it:
   Windows build (19041 or later), hardware virtualization, WSL2, any rival container engine
-  that owns the `docker` command or the `docker_engine` pipe, and where this user's own
-  `docker` context points. It changes nothing, prints a person-readable report or `--json`
+  that owns the `docker` command or the `docker_engine` pipe, where this user's own
+  `docker` context points, and a `freeharbor` distribution an earlier copy left registered
+  (blocking only when its folder is gone, with `wsl --unregister freeharbor` as the fix). It changes nothing, prints a person-readable report or `--json`
   for an installer, and exits 1 while a blocking row is not green, so nothing is copied to
   disk on a machine that cannot host an engine. The virtualization row reads the hypervisor
   bit *before* the firmware bit, because Windows reports the firmware bit as false once a

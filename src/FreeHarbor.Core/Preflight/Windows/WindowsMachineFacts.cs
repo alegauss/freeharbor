@@ -24,6 +24,8 @@ public sealed class WindowsMachineFacts : IMachineFacts
 
     private readonly Lazy<DockerClientTarget> _dockerClient = new(DockerContextProbe.Read);
 
+    private readonly Lazy<EngineRegistration?> _engine = new(ReadEngineDistribution);
+
     /// <inheritdoc/>
     public Version OperatingSystem => Environment.OSVersion.Version;
 
@@ -44,6 +46,44 @@ public sealed class WindowsMachineFacts : IMachineFacts
 
     /// <inheritdoc/>
     public DockerClientTarget DockerClient => _dockerClient.Value;
+
+    /// <inheritdoc/>
+    public EngineRegistration? EngineDistribution => _engine.Value;
+
+    /// <summary>Read where WSL keeps this tool's distribution, and what is there (DD317).</summary>
+    private static EngineRegistration? ReadEngineDistribution()
+    {
+        var paths = new Engine.EnginePaths();
+        if (!paths.DistributionRegistered)
+        {
+            return null;
+        }
+
+        var basePath = Engine.Wsl.RegisteredBasePath(paths.DistributionName);
+        var exists = basePath is not null && Directory.Exists(basePath);
+        long? bytes = null;
+        if (exists)
+        {
+            try
+            {
+                bytes = new DirectoryInfo(basePath!).EnumerateFiles().Sum(file => file.Length);
+            }
+            catch (Exception exception) when (exception is IOException
+                or UnauthorizedAccessException)
+            {
+                // The size is the remedy's detail, not the verdict, so a folder that will not be
+                // listed still gets its row.
+            }
+        }
+
+        return new EngineRegistration
+        {
+            BasePath = basePath,
+            BasePathExists = exists,
+            DiskBytes = bytes,
+            Expected = paths.Distribution,
+        };
+    }
 
     /// <summary>
     /// Read what the firmware calls this machine, and ask whether that names a hypervisor.
