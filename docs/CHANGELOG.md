@@ -266,6 +266,7 @@
 - ✅ **DD293** **The product ships as FreeWilly, a name and an orca mark with a copyright problem** — Projects, exe, distro, root, AppId, winget id and site base are FreeHarbor, as a hard cut with no migration, and a ship-and-waves mark from build/logo.mjs replaces the orca.
 - ✅ **DD315** **Nobody has checked whether downloading the engine at first run passes Store policy 10.2.2 on dynamic code** — Store policy 10.2.2 (v7.20) bars code that changes the described function, so the engine download stays and the listing names it.
 - ✅ **DD356** **Turn it on for me never shows a UAC prompt and says the prompt was declined** — The button elevates {sys}\cmd.exe, which reaches the real wsl.exe through Sysnative or System32; only code 1223 reads as declined, and a non-zero exit claims nothing.
+- ✅ **DD357** **A WSL that does not answer reads to Setup as a missing feature, and the page offers to turn it on** — A WSL read that did not finish is its own Unknown row saying Restart, not Shut down, with no command; Setup shows the generic page for it, not the feature one.
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 

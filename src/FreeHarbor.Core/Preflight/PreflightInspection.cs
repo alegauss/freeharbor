@@ -172,6 +172,27 @@ public static class PreflightInspection
             };
         }
 
+        if (wsl.Unreadable is { } unreadable)
+        {
+            // DD357. A machine without the feature answers `--status` with an exit code, so a
+            // question nothing answered is WSL that is there and stuck. It used to share the row
+            // below and its `wsl --update`, which on 16 November put Setup on the page for turning
+            // the feature on, for a WSL installed and running for months. No command in backticks,
+            // on purpose: nothing an elevated terminal can type reliably reaches a stuck service,
+            // and a command here becomes a button on that page.
+            return new PreflightCheck
+            {
+                Id = Rows.Wsl2,
+                Title = "WSL2",
+                Verdict = Verdict.Unknown,
+                Detail = unreadable,
+                Remedy = "WSL did not answer, which is WSL itself being stuck rather than missing. "
+                    + "Restart Windows and run this again. Use Restart, not Shut down: with Fast "
+                    + "Startup on, Shut down brings a stuck WSL back as it was.",
+                Blocking = true,
+            };
+        }
+
         if (wsl.KernelVersion is null)
         {
             // wsl.exe present and no kernel behind it is the half-installed state a Windows
@@ -180,8 +201,8 @@ public static class PreflightInspection
             {
                 Id = Rows.Wsl2,
                 Title = "WSL2",
-                Verdict = wsl.Unreadable is null ? Verdict.Fail : Verdict.Unknown,
-                Detail = wsl.Unreadable ?? "wsl.exe is installed, and no WSL2 kernel is",
+                Verdict = Verdict.Fail,
+                Detail = "wsl.exe is installed, and no WSL2 kernel is",
                 Remedy = "Run `wsl --update` in an administrator terminal.",
                 Blocking = true,
             };

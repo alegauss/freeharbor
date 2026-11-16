@@ -717,8 +717,10 @@ begin
         end;
 
         // Named rather than inferred from the wording, so a rephrased remedy cannot quietly turn
-        // the WSL2 page back into the generic one.
-        if Id = 'wsl2' then
+        // the WSL2 page back into the generic one. Not for Unknown (DD357): that is a WSL which
+        // is there and did not answer, and the page about turning the feature on is the wrong
+        // page for it — the generic one carries the row's own remedy, which is to restart.
+        if (Id = 'wsl2') and (Verdict <> 'Unknown') then
           PreflightWsl2 := True;
       end;
 

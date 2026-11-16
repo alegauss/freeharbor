@@ -153,6 +153,27 @@ public sealed class PreflightInspectionTests
     }
 
     [Fact]
+    public void A_wsl_that_did_not_answer_is_told_to_restart_and_offered_no_command()
+    {
+        // DD357. The command in backticks is what Setup turns into its Turn it on button, and on
+        // 16 November that sent a stuck WSL to the page for turning a missing feature on.
+        var report = Run(new FakeMachine
+        {
+            Wsl = new WslInstallation
+            {
+                CommandPresent = true,
+                FeatureInstalled = true,
+                Unreadable = "wsl.exe did not finish within 15 seconds",
+            },
+        });
+
+        var row = Row(report, PreflightInspection.Rows.Wsl2);
+        Assert.Equal(Verdict.Unknown, row.Verdict);
+        Assert.DoesNotContain("`", row.Remedy, StringComparison.Ordinal);
+        Assert.Contains("Restart, not Shut down", row.Remedy, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void A_wsl1_default_warns_and_does_not_block()
     {
         var report = Run(new FakeMachine
