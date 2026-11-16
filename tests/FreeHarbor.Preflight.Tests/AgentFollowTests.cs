@@ -14,7 +14,7 @@ namespace FreeHarbor.Preflight.Tests;
 public sealed class AgentFollowTests
 {
     /// <summary>One frame: the stream number, three zeroes, the length big-endian, the payload.</summary>
-    private static byte[] Frame(byte stream, string payload)
+    internal static byte[] Frame(byte stream, string payload)
     {
         var body = Encoding.UTF8.GetBytes(payload);
         var frame = new byte[LogFrames.HeaderSize + body.Length];
@@ -88,12 +88,12 @@ public sealed class AgentFollowTests
         new(BudgetTokens: budget ?? LogDigest.DefaultBudgetTokens);
 
     /// <summary>One follow, with the tally the surface now owns, so a test reads both halves.</summary>
-    private readonly record struct Ran(IReadOnlyList<LogLine> Lines, AgentSurface.FollowEnd End)
+    internal readonly record struct Ran(IReadOnlyList<LogLine> Lines, AgentSurface.FollowEnd End)
     {
         internal bool Matched => End == AgentSurface.FollowEnd.Matched;
     }
 
-    private static Ran Followed(
+    internal static Ran Followed(
         Stream stream, LogQuery query, string? until, TimeSpan timeout, bool ceiling)
     {
         var tally = new LogTally(query);
@@ -102,7 +102,7 @@ public sealed class AgentFollowTests
         return new Ran(tally.Lines, end);
     }
 
-    private static readonly TimeSpan Patience = TimeSpan.FromSeconds(5);
+    internal static readonly TimeSpan Patience = TimeSpan.FromSeconds(5);
 
     // ---- the line the caller named ---------------------------------------------------------------
 
@@ -442,39 +442,7 @@ public sealed class AgentFollowTests
             StringComparison.Ordinal);
     }
 
-    // ---- what a follow costs (DD253) -------------------------------------------------------------
-
-    [Fact]
-    public void A_follow_costs_what_it_reads_rather_than_the_square_of_it()
-    {
-        // `--out` lifts the ceiling on purpose, so the only bounds left are the deadline and the
-        // pattern. Re-splitting the whole buffer per chunk spent the deadline splitting; doubling the
-        // input has to roughly double the time, not quadruple it.
-        static TimeSpan Cost(int lines)
-        {
-            var body = Enumerable.Range(0, lines)
-                .Select(i => $"2024-01-01T00:00:00.000000000Z line {i} of a service that does not stop\n")
-                .SelectMany(l => Frame(1, l))
-                .ToArray();
-
-            // Warm first, so the measurement is the work rather than the first-call JIT.
-            Followed(
-                new MemoryStream(body), new LogQuery(), "never arrives", Patience, ceiling: false);
-
-            var started = System.Diagnostics.Stopwatch.StartNew();
-            Followed(
-                new MemoryStream(body), new LogQuery(), "never arrives", Patience, ceiling: false);
-            return started.Elapsed;
-        }
-
-        var small = Cost(4_000);
-        var large = Cost(16_000);
-
-        // Four times the input. Linear lands near 4x, quadratic near 16x; the bar is deliberately
-        // slack because this is wall clock on a shared machine, and it still separates the two.
-        var ratio = large.TotalMilliseconds / Math.Max(small.TotalMilliseconds, 1);
-        Assert.True(ratio < 9, $"four times the input cost {ratio:F1} times the time, which is not linear.");
-    }
+    // What a follow costs (DD253) is measured in AgentFollowCostTests, alone (DD363).
 
     [Fact]
     public void The_tally_counts_only_what_the_query_would_keep()

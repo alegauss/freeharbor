@@ -326,6 +326,7 @@
 - ✅ **DD287** **read logs --since refuses a relative window like 1m, so following a restart needs an extra read to scrape a t: cursor** — read logs --since takes a window back from now, as 30s, 5m or 2h, beside a t: cursor, so following a restart needs no read first to scrape one.
 - ✅ **DD302** **The agent budget gate is red on any checkout whose line endings differ from the machine that last recorded it** — The log fixture is normalised to LF before it is repeated, so a CRLF and an LF checkout measure one baseline (11641) and one ratio (14.3).
 - ✅ **DD289** **read health and read context show the engine API version but not its minimum, so a refused old client goes unexplained** — read health and read context name the floor beside the version, as 1.55 (accepts 1.40 and later) and api=1.55(min=1.40) (design superseded: dockerd logs no refusal).
+- ✅ **DD363** **The follow's linear-cost test fails in some full test runs and passes alone** — The follow's cost test runs alone in a non-parallel collection on the least of five samples, and passed ten full runs in a row.
 
 ## Block H — The public surface (the site a reader and an agent both read)
 

@@ -213,27 +213,6 @@ which is what DD292's submission uploads.
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
-### §DD363 A cost test measured on one sample
-
-On 16 November 2026, during DD317,
-`AgentFollowTests.A_follow_costs_what_it_reads_rather_than_the_square_of_it` failed once
-in a full `dotnet test` run and passed on its own straight after, and again in the next
-full run. The code under test had not changed.
-
-The test times one pass over 4,000 lines and one over 16,000 lines with a stopwatch, one
-sample each, and asserts the ratio stays under 9. In a full run about 1,900 tests share
-the machine, so one sample of a few milliseconds can be inflated by a pause in either
-half, and the ratio moves with it.
-
-What to build: take the minimum of several samples for each size (five is enough; the
-minimum is the reading least disturbed by the rest of the suite) before forming the
-ratio. Keep the bar at 9, which still separates linear (near 4) from quadratic (near
-16). If that is still noisy, count the work instead of timing it: expose how many times
-the follow splits or scans the buffer and assert that count grows linearly, which no
-busy machine can disturb.
-
-Done when the test passes in ten consecutive full runs.
-
 ## Block H — The public surface (the site a reader and an agent both read)
 
 ## Block I — The site on the design system
