@@ -123,6 +123,7 @@
 - ✅ **DD351** **Restart WSL gives up when wsl --shutdown hangs too, and never asks for the rights that would end the stuck service** — When wsl --shutdown hangs, Restart WSL asks UAC once, ends wslservice.exe and starts it again, then asks WSL; a declined prompt names Restart over Shut down.
 - ✅ **DD360** **Restart WSL on the Engine page asks WSL once after the restart and says nothing while it waits** — After WSL goes down, Restart WSL asks up to 8 times, 3 seconds apart, until it answers, and the Engine page draws which check is running on its progress line.
 - ✅ **DD361** **A reinstall stops at PlaceCli whenever an editor is polling docker, because a running docker.exe cannot be overwritten** — The CLI and plugins are left alone when the bytes match, and otherwise the running copy is renamed aside and swept later; measured with VS Code polling, every place step passes.
+- ✅ **DD350** **Nothing notices a new Moby, CLI, Compose, Buildx or Alpine release, so the pins drift until someone looks** — A weekly workflow pins newer Moby, CLI, Compose, Buildx and Alpine releases within each major in one PR, and files new majors as issues (design recorded in `.github/workflows/engine-pins.yml`).
 
 ## Block B — The daemon client (talk to the engine)
 

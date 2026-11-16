@@ -4,7 +4,6 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
-- 🛠 **DD350** (deps: DD349 ✅) **Nothing notices a new Moby, CLI, Compose, Buildx or Alpine release, so the pins drift until someone looks** — Dependabot cannot read the manifest, so a weekly workflow checks the five sources and opens a PR with new digests, minor bumps only. → §DD350
 - 📋 **DD352** (deps: DD351 ✅) **A WSL that hangs instead of failing is logged as a quiet pipe, so Restart WSL is never offered for it** — On 16 November every wsl.exe hung from logon and none returned HCS_E_CONNECTION_TIMEOUT, so the journal only said the pipe did not answer within 60s. → §DD352
 - 📋 **DD353** (deps: DD351 ✅) **Shut down with Fast Startup on carries a stuck WSL into the next morning, and nothing tells the user Restart is needed** — On 16 November the boot was hybrid (Kernel-Boot type 0x1) after a Shut down, and the WSL stuck at 15:09 the day before came back exactly as stuck. → §DD353
 - 📋 **DD354** (deps: —) **A host that gives up on a hung start leaves its wsl.exe children and itself running** — On 16 November the --run host 27008 wrote this host is done at 07:04 and was still alive at 07:36 with its hung wsl --list and socat children. → §DD354

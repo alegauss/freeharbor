@@ -73,26 +73,6 @@ Done when:
 - A failure of this test names compose's own words, and the cause it names is fixed or
   the test waits for what it needs instead of racing it.
 
-### §DD350 Noticing upstream releases
-
-Dependabot covers package ecosystems and cannot read engine-manifest.json: its pins are
-URLs with a version in them and a SHA-256 of a file on download.docker.com, a GitHub
-release or Alpine's CDN. Renovate's custom managers can bump the version inside a URL
-but do not recompute the digest of an arbitrary download, which would leave the manifest
-refusing its own artefact.
-
-So a scheduled workflow does the work itself, weekly and on demand. It asks the same
-five sources DD349 was checked against, and for anything newer within the current major
-it downloads the file, checks it against the upstream checksum where one is published,
-rewrites the entry, regenerates NOTICE, runs the test suite and opens one pull request
-naming each change with a link to its release notes. A new major (Docker 30, Alpine
-3.25) opens an issue instead, because it can change behaviour and is a decision rather
-than a patch.
-
-What it cannot do is the real proof: GitHub's Windows runners do not offer WSL2, so the
-pull request says that one provision on a machine is still owed before merge, the same
-rule DD349 ships under.
-
 ### §DD352 A hung wsl.exe is the same failure as HCS_E_CONNECTION_TIMEOUT
 
 DD344 offers Restart WSL only while the journal's latest word is the code
