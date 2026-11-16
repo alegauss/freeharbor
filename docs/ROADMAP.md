@@ -4,8 +4,6 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
-- 📋 **DD321** (deps: —) **In a full test run the pipe relay once took no second connection for thirty seconds, then passed alone** — On 16 November a live relay ended its accept loop on IOException after six connections, so one closing client takes the pipe down. → §DD321
-
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)
@@ -22,6 +20,8 @@
 - 📋 **DD292** (deps: DD312 ✅, DD313 ✅, DD314 ✅, DD316 ⏸, DD317 ✅, DD362 ⏸) **Every first download meets a SmartScreen warning, because the installer is not signed** — claude-tray reached the Store (T412), so what is left is the listing and the submission once the package installs and works without admin. → §DD292
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
+
+- 📋 **DD363** (deps: —) **The follow's linear-cost test fails in some full test runs and passes alone** — It times one sample of each size with a stopwatch, so a pause from the rest of the suite moves the ratio past its bar. → §DD363
 
 ## Block H — The public surface (the site a reader and an agent both read)
 

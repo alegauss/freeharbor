@@ -24,34 +24,6 @@ client note. DD321 is a full-run test failure on the same pipe, a second connect
 made in 30 seconds, whose cause is still open; if its message shows the relay stopped
 accepting, it is this engine-side reading reproduced.
 
-### §DD321 A relay that stops accepting under load
-
-On 5 November 2026 `PipeSurvivalTests.A_healthy_relay_stumbles_over_nothing` failed once
-in a full run: the test took 30 seconds and its second `ReachableAsync` returned false.
-It passed three times alone in about 200 ms.
-
-Ruled out the same day: the accept loop being starved (its own thread since DD142, and
-its retry waits on a handle, not on the pool), and the client's timeout running out in
-the pool's queue (a starved pool delays `ConnectAsync` but cannot fail it). The test now
-prints the exception, the time the attempt took and the relay's `Figures`.
-
-The answer came from outside the suite. On 16 November 2026 an installed 2.2.0 host, its
-engine started by hand, wrote this to the journal five seconds after the engine first
-answered:
-
-    relay     stopped accepting: IOException: O pipe está sendo fechado.
-    Starting  the daemon is running and no connection within 3s, first quiet poll,
-              the relay accepted 6, holds 1 open and has stopped accepting
-
-So the relay itself stops: the accept loop ends on an `IOException` ("the pipe is being
-closed") after six connections, with the daemon still up. That is DD142's defect, not
-the client's. The supervisor brought the engine back 34 seconds later.
-
-What to build: the accept loop treats an `IOException` from a listener as the end of
-that one listener, not of the loop, and puts another listener up (as it does after a
-served connection), stopping only on its own cancellation. A test drives a listener that
-throws `IOException` and asserts the next client still connects.
-
 ### §DD346 A flaky live compose test that says nothing
 
 Seen on 11 November 2026 while DD345 ran the full suite:
@@ -255,6 +227,27 @@ Done when `build-msix.cmd` produces a package whose identity matches the reserva
 which is what DD292's submission uploads.
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
+
+### §DD363 A cost test measured on one sample
+
+On 16 November 2026, during DD317,
+`AgentFollowTests.A_follow_costs_what_it_reads_rather_than_the_square_of_it` failed once
+in a full `dotnet test` run and passed on its own straight after, and again in the next
+full run. The code under test had not changed.
+
+The test times one pass over 4,000 lines and one over 16,000 lines with a stopwatch, one
+sample each, and asserts the ratio stays under 9. In a full run about 1,900 tests share
+the machine, so one sample of a few milliseconds can be inflated by a pause in either
+half, and the ratio moves with it.
+
+What to build: take the minimum of several samples for each size (five is enough; the
+minimum is the reading least disturbed by the rest of the suite) before forming the
+ratio. Keep the bar at 9, which still separates linear (near 4) from quadratic (near
+16). If that is still noisy, count the work instead of timing it: expose how many times
+the follow splits or scans the buffer and assert that count grows linearly, which no
+busy machine can disturb.
+
+Done when the test passes in ten consecutive full runs.
 
 ## Block H — The public surface (the site a reader and an agent both read)
 

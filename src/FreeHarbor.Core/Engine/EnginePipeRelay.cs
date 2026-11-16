@@ -153,6 +153,11 @@ public sealed class EnginePipeRelay : IAsyncDisposable
     public string? WhatEndedAccepting { get; private set; }
 
     /// <summary>
+    /// Listeners given up because their client hung up before it was accepted (DD321).
+    /// </summary>
+    public int Dropped { get; private set; }
+
+    /// <summary>
     /// How the next listener is made. Replaced only by a test that needs creation to fail (DD142).
     /// </summary>
     /// <remarks>
@@ -240,6 +245,19 @@ public sealed class EnginePipeRelay : IAsyncDisposable
                 // on a named pipe and the reason Listening is held where that can find it.
                 server.WaitForConnection();
             }
+            catch (IOException) when (!cancellation.IsCancellationRequested)
+            {
+                // DD321. A client that connected and hung up before this wait ran leaves the
+                // instance closing, and the wait says "the pipe is being closed". Measured on 16
+                // November 2026: that ended the loop after six connections with the daemon still
+                // up. It is the end of this one listener, so it is replaced like a served one.
+                if (!ReplaceDropped(server, cancellation))
+                {
+                    return;
+                }
+
+                continue;
+            }
             catch (Exception exception) when (exception is OperationCanceledException
                 or ObjectDisposedException or IOException or InvalidOperationException)
             {
@@ -284,6 +302,23 @@ public sealed class EnginePipeRelay : IAsyncDisposable
 
             Listening = next;
         }
+    }
+
+    /// <summary>Put a listener up in place of one whose client hung up (DD321).</summary>
+    /// <param name="dropped">The listener that will never connect.</param>
+    /// <param name="cancellation">Stops the replacing.</param>
+    /// <returns><see langword="false"/> where cancellation ended the wait for a replacement.</returns>
+    private bool ReplaceDropped(NamedPipeServerStream dropped, CancellationToken cancellation)
+    {
+        dropped.Dispose();
+        Dropped++;
+        if (NextListener(cancellation) is not { } replacement)
+        {
+            return false;
+        }
+
+        Listening = replacement;
+        return true;
     }
 
     /// <summary>Make the next listener, and keep trying while the machine refuses (DD142).</summary>

@@ -250,6 +250,57 @@ public sealed class PipeSurvivalTests
     }
 
     [Fact]
+    public async Task A_client_that_hangs_up_before_it_is_accepted_does_not_end_the_loop()
+    {
+        // DD321, driven the way it happened on 16 November 2026. A client connects to a listener the
+        // loop has not waited on yet and closes, so the wait meets an instance already closing and
+        // throws IOException: "the pipe is being closed". That used to end the accept loop for
+        // good, with the daemon still answering.
+        var pipe = Pipe();
+        var attempt = 0;
+
+        await using var relay = new EnginePipeRelay(new Answering(), pipe);
+        relay.Listener = () =>
+        {
+            attempt++;
+            var server = NamedPipeServerStreamAcl.Create(
+                pipe,
+                PipeDirection.InOut,
+                NamedPipeServerStream.MaxAllowedServerInstances,
+                PipeTransmissionMode.Byte,
+                PipeOptions.Asynchronous,
+                inBufferSize: 0,
+                outBufferSize: 0,
+                pipeSecurity: OnlyThisUser());
+
+            // The one Start makes, connected to and abandoned before the loop's first wait.
+            if (attempt == 1)
+            {
+                using var hasty = new NamedPipeClientStream(".", pipe, PipeDirection.InOut);
+                hasty.Connect(5000);
+            }
+
+            return server;
+        };
+
+        relay.Start();
+
+        Assert.True(
+            await Reached(() => relay.Dropped == 1 || relay.WhatEndedAccepting is not null),
+            "the loop never reached the abandoned listener");
+        Assert.Null(relay.WhatEndedAccepting);
+        Assert.True(await ReachableAsync(pipe), $"after a dropped client: {Why}; {relay.Figures}");
+        Assert.Equal("the relay accepted 1 and is still accepting", await Settled(relay));
+    }
+
+    /// <summary>The relay's figures once the serve in flight has finished.</summary>
+    private static async Task<string> Settled(EnginePipeRelay relay)
+    {
+        await Reached(() => relay.Accepted == 1 && relay.Holding == 0);
+        return relay.Figures;
+    }
+
+    [Fact]
     public async Task A_relay_that_was_stopped_blames_nothing()
     {
         // The other half, and it is not a formality. DisposeAsync ends the blocking wait by closing
