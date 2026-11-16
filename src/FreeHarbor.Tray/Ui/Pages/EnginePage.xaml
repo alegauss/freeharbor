@@ -52,6 +52,7 @@
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" /><!-- what a check found (DD199) -->
+          <RowDefinition Height="Auto" /><!-- Fast Startup brought the stuck WSL back (DD353) -->
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0,0,0,6">
@@ -154,6 +155,12 @@
                    FontFamily="Cascadia Mono, Consolas, Courier New"
                    Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
         </StackPanel>
+        <!-- Shown with Restart WSL and only where this boot resumed a Fast Startup session the stuck
+             WSL was already in (DD353): the button may not be enough, and the user's own remedy has
+             to be Restart, because Shut down is what brought it back. -->
+        <TextBlock Grid.Row="3" x:Name="FastStartupNote" Visibility="Collapsed" Margin="0,8,0,0"
+                   FontSize="11" TextWrapping="Wrap"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
       </Grid>
     </Border>
 

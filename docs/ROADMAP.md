@@ -4,7 +4,6 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
-- 📋 **DD353** (deps: DD351 ✅) **Shut down with Fast Startup on carries a stuck WSL into the next morning, and nothing tells the user Restart is needed** — On 16 November the boot was hybrid (Kernel-Boot type 0x1) after a Shut down, and the WSL stuck at 15:09 the day before came back exactly as stuck. → §DD353
 - 📋 **DD354** (deps: —) **A host that gives up on a hung start leaves its wsl.exe children and itself running** — On 16 November the --run host 27008 wrote this host is done at 07:04 and was still alive at 07:36 with its hung wsl --list and socat children. → §DD354
 - 📋 **DD355** (deps: —) **The live-engine probe has no deadline, so a stuck WSL hangs the whole test suite before its first test** — On 16 November LiveEngine.Look ran docker version through a relay whose wsl.exe never answered, and dotnet test sat in discovery until it was killed. → §DD355
 

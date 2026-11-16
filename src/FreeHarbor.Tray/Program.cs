@@ -791,7 +791,8 @@ internal sealed class TrayApplication : ApplicationContext
             {
                 StopWatchingForAStuckWsl();
                 _journal.Say($"{"tray",-8}  WSL itself is not answering, and the tray said so");
-                Balloon(WslStuckNotice.Text, click: OpenTheEnginePage);
+                Balloon(WslStuckNotice.TextFor(_journalRead.Read(), LastBoot.Read()),
+                    click: OpenTheEnginePage);
             }
         };
         _wslWatch = watch;

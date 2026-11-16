@@ -73,25 +73,6 @@ Done when:
 - A failure of this test names compose's own words, and the cause it names is fixed or
   the test waits for what it needs instead of racing it.
 
-### §DD353 Fast Startup turns Shut down into hibernation of the kernel
-
-With HiberbootEnabled=1, Windows' Shut down hibernates the kernel session and the next
-power-on resumes it; Microsoft-Windows-Kernel-Boot event 27 records the boot type as
-0x1. Services, including WslService and the HCS state under it, come back in the state
-they were in. A user who reads "restart your computer" and presses Shut down has not
-restarted anything, which is what happened between 15 and 16 November: WSL stuck at
-15:09, Shut down at 22:02, and every wsl.exe hung again from logon the next morning.
-
-DD351 already names Restart over Shut down where the UAC prompt is declined. This task
-is the other half: when WSL is found not answering in the first minutes after a logon,
-and the last boot was hybrid, say so in the stuck-WSL notice and on the Engine page, in
-one sentence: Fast Startup brought the stuck WSL back, and Restart (not Shut down)
-clears it.
-
-Read-only. Turning Fast Startup off is the user's decision about their machine, needs
-administrator rights, and has costs outside this product; the most this offers is the
-name of the setting.
-
 ### §DD354 What a host that is done leaves behind
 
 Measured on 16 November with WSL stuck: the host started at 07:02:28 wrote "this host is

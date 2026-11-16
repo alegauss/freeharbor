@@ -48,6 +48,44 @@ public sealed class WslRestartTests
     public void An_empty_journal_offers_nothing() =>
         Assert.False(WslFailure.WslIsNotAnsweringNow([]));
 
+    // ---- Fast Startup carried it over (DD353) ------------------------------------------------
+
+    private static readonly LastBoot HybridAtSeven = new(new DateTime(2026, 11, 16, 6, 57, 1), Hybrid: true);
+
+    private const string HungThisMorning =
+        "2026-11-16 06:59:02  Starting  the launcher is alive, but wsl --list did not answer within 15s, "
+        + WslFailure.WslHung + " and the pipe did not answer within 60s (quiet)";
+
+    [Fact]
+    public void A_wsl_stuck_since_a_hybrid_boot_was_brought_back_by_fast_startup() =>
+        Assert.True(FastStartup.BroughtItBack([Timeout, HungThisMorning], HybridAtSeven));
+
+    [Fact]
+    public void A_cold_boot_brought_nothing_back() =>
+        Assert.False(FastStartup.BroughtItBack([HungThisMorning], HybridAtSeven with { Hybrid = false }));
+
+    [Fact]
+    public void An_unknown_boot_says_nothing() =>
+        Assert.False(FastStartup.BroughtItBack([HungThisMorning], null));
+
+    [Fact]
+    public void A_wsl_that_answered_since_the_boot_hung_for_another_reason() =>
+        Assert.False(FastStartup.BroughtItBack(
+            ["2026-11-16 07:01:00  Running   the engine answered on \\\\.\\pipe\\docker_engine",
+             "2026-11-16 09:30:00  Starting  " + WslFailure.WslHung], HybridAtSeven));
+
+    [Fact]
+    public void Only_a_failure_from_before_the_boot_is_not_evidence_of_this_one() =>
+        Assert.False(FastStartup.BroughtItBack([Timeout], HybridAtSeven));
+
+    [Fact]
+    public void The_balloon_names_restart_over_shut_down_only_after_fast_startup()
+    {
+        Assert.Equal(WslStuckNotice.FastStartupText, WslStuckNotice.TextFor([HungThisMorning], HybridAtSeven));
+        Assert.Equal(WslStuckNotice.Text, WslStuckNotice.TextFor([HungThisMorning], null));
+        Assert.True(WslStuckNotice.FastStartupText.Length <= 255, "a balloon holds 255 characters");
+    }
+
     // ---- the tray's follow-up (DD345) --------------------------------------------------------
 
     [Fact]

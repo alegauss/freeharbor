@@ -23,6 +23,9 @@
          are the two properties Task Manager's own "Virtualization" row reads, and WMI is the
          documented way to reach them without an elevated token. -->
     <PackageReference Include="System.Management" Version="11.0.0" />
+    <!-- DD353: Microsoft-Windows-Kernel-Boot event 27 is the one record of whether this boot
+         resumed a Fast Startup session, and EventLogReader reads it without elevation. -->
+    <PackageReference Include="System.Diagnostics.EventLog" Version="11.0.0" />
   </ItemGroup>
 
 </Project>

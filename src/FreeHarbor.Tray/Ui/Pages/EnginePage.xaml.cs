@@ -186,9 +186,13 @@ internal sealed partial class EnginePage : System.Windows.Controls.UserControl
 
         // Offered from the journal and not from a run on this page (DD344): the failure is the
         // host's, found by a start this page never made, and the journal is where it lands.
-        RestartWsl.Visibility = WslFailure.WslIsNotAnsweringNow(lines)
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+        var stuck = WslFailure.WslIsNotAnsweringNow(lines);
+        RestartWsl.Visibility = stuck ? Visibility.Visible : Visibility.Collapsed;
+
+        // DD353. Only beside the button, and only where the stuck WSL predates this boot.
+        var broughtBack = stuck && FastStartup.BroughtItBack(lines, LastBoot.Read());
+        FastStartupNote.Text = broughtBack ? FastStartup.Sentence : "";
+        FastStartupNote.Visibility = broughtBack ? Visibility.Visible : Visibility.Collapsed;
 
         var empty = EmptyState(lines.Count);
         LogPane.Visibility = empty is null ? Visibility.Visible : Visibility.Collapsed;

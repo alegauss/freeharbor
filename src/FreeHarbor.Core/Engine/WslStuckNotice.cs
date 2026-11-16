@@ -32,6 +32,22 @@ public sealed class WslStuckNotice
         "WSL itself has stopped answering, so FreeHarbor cannot bring the engine back on its own. "
         + "Click here to open the Engine page, where Restart WSL is waiting.";
 
+    /// <summary>What the balloon says when Fast Startup carried the stuck WSL over (DD353).</summary>
+    /// <remarks>
+    /// Its own sentence rather than <see cref="Text"/> with <see cref="FastStartup.Sentence"/> after it,
+    /// because a balloon holds 255 characters and the two together do not fit.
+    /// </remarks>
+    public const string FastStartupText =
+        "WSL is still stuck from before Shut down: Fast Startup brought it back as it was. "
+        + "Click here for Restart WSL. If that fails, use Restart, not Shut down.";
+
+    /// <summary>The balloon's text for this journal and this boot.</summary>
+    /// <param name="journal">The journal's lines, oldest first.</param>
+    /// <param name="boot">This session's boot, or <see langword="null"/>.</param>
+    /// <returns><see cref="FastStartupText"/> where <see cref="FastStartup.BroughtItBack"/>, else <see cref="Text"/>.</returns>
+    public static string TextFor(IReadOnlyList<string> journal, LastBoot? boot) =>
+        FastStartup.BroughtItBack(journal, boot) ? FastStartupText : Text;
+
     /// <summary>The length the journal had when it was last read, or -1 before the first look.</summary>
     private long _length = -1;
 
