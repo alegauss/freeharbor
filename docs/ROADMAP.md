@@ -36,8 +36,6 @@
 
 ## Block I — The site on the design system
 
-- ⏳ **DD285** (deps: viglet-design-system: VDS249) **The site keeps its own copy of the template that eight product sites share** — The site is not yet in the design system's consumers.json, which is VDS249's change in that repository. → §DD285
-
 ## Non-goals
 
 - **Feature parity with Docker Desktop** Kubernetes, the extensions marketplace and Dev

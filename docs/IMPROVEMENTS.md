@@ -458,27 +458,3 @@ Done when the first screen of the README and of the site names the corporate lap
 without admin, and the comparison with Rancher and Podman is on the page.
 
 ## Block I — The site on the design system
-
-### §DD285 The site on the design system's shared template
-
-The site is on the design system's site layer, pinned at 2026.3.22. Chrome.tsx draws the
-nav and the footer, the landing hero and the feature index are SiteHero and
-SiteFeatureIndex, and every section head is SiteSectionHead. The local Nav, Footer,
-Hero, FeatureIndex, CopyButton, Rich, ThemeToggle, lib/theme.ts and scripts/og-image.mjs
-are gone. The build calls prerenderSite and renderOgCard; og-card.mjs keeps filling the
-hand-drawn card, because its measured pill (DD219) is not something ogCardSvg draws.
-Analytics loads only after consent, as the hub's AG1.
-
-The tone is `navy`, not the `cool` this section first named. Cool turned out to be the
-preset's neutral grey with an orange brand, and navy, added later by VDS221 and the
-hub's tone, is the blue ground the page already stood on. Its brand is re-keyed to the
-azure pair.
-
-What is left is the census: the site is not in the design system's consumers.json. Its
-entries measure as ./site, ./site.css, ./tokens.css and ./vite, with tone navy. Adding a
-consumer there rewords that repository's README and census tests, so it is that
-repository's change, the way VDS222 registered the pilot.
-
-Done when:
-
-- The site appears in the design system's consumers.json.
