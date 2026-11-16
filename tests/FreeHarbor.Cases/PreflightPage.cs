@@ -503,7 +503,7 @@ var
   PreflightLink: TNewLinkLabel;
   PreflightAsked, PreflightClear, PreflightWsl2: Boolean;
   PreflightRefused, PreflightFeatureOn, PreflightRestartWanted: Boolean;
-  PreflightSaid, PreflightCommand, PreflightReport: string;
+  PreflightSaid, PreflightCommand, PreflightReport, PreflightFailed: string;
 
 // The page never calls this; the buttons do, and this Setup presses nothing.
 function Preflight: Boolean;

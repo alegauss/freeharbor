@@ -1278,6 +1278,31 @@ public sealed class PackagingTests
     }
 
     [Fact]
+    public void The_elevation_goes_through_cmd_because_a_32_bit_shellexec_cannot_see_wsl()
+    {
+        // DD356. Setup is 32-bit and ShellExec does not turn file-system redirection off, so a runas
+        // on {sys}\wsl.exe failed with code 2 before any prompt was drawn. cmd.exe is in both views;
+        // it is elevated, and it reaches the real wsl.exe through Sysnative or System32.
+        var code = PreflightCode();
+        var turn = code[code.IndexOf("procedure TurnItOn;", StringComparison.Ordinal)..];
+        turn = turn[..turn.IndexOf("\nend;", StringComparison.Ordinal)];
+
+        Assert.Contains("ShellExec('runas', ExpandConstant('{sys}\\cmd.exe'), ThroughCmd(", turn, StringComparison.Ordinal);
+        Assert.Contains("%SystemRoot%\\Sysnative\\", code, StringComparison.Ordinal);
+        Assert.Contains("%SystemRoot%\\System32\\", code, StringComparison.Ordinal);
+
+        // Only ERROR_CANCELLED is a refusal; every other failure is named rather than blamed on
+        // the person who was never shown a prompt.
+        Assert.Contains("if Shell = 1223 then", turn, StringComparison.Ordinal);
+        Assert.Contains("PreflightFailed :=", turn, StringComparison.Ordinal);
+
+        // A run that exited non-zero claims nothing.
+        var failed = turn.IndexOf("if Shell <> 0 then", StringComparison.Ordinal);
+        var claimed = turn.IndexOf("PreflightFeatureOn := True;", StringComparison.Ordinal);
+        Assert.True(failed >= 0 && claimed > failed, "a failed run still says the feature was turned on");
+    }
+
+    [Fact]
     public void The_restart_is_asked_for_and_the_install_is_waiting_on_the_other_side()
     {
         // The feature needs a reboot before it is usable, so the run ends by asking for one rather

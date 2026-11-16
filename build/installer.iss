@@ -308,6 +308,10 @@ var
   PreflightFeatureOn: Boolean;
   PreflightRestartWanted: Boolean;
 
+  // DD356. Why the elevated run did not happen or did not succeed, where that was not a refusal.
+  // Empty when there is nothing to say.
+  PreflightFailed: string;
+
   // Asked once and remembered, because the wizard walks over this page in both directions and
   // re-reading the machine on every Back would be a pause with no new answer in it.
   PreflightAsked: Boolean;
@@ -944,8 +948,8 @@ end;
 function RestartIsPending: Boolean;
 begin
   // Written by Component Based Servicing when a Windows feature is enabled, and readable without
-  // elevation — which is what makes it usable here. ShellExec cannot hand back an elevated child's
-  // exit code, so this is the one piece of evidence available about whether the run did anything.
+  // elevation — which is what makes it usable here. The exit code says the command did not fail;
+  // this is the one piece of evidence available that it actually enabled something.
   Result := RegKeyExists(
     HKEY_LOCAL_MACHINE,
     'SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending');
@@ -968,21 +972,35 @@ begin
   Arguments := Copy(Line, Space + 1, MaxInt);
 end;
 
-/// A bare program name, resolved where Windows keeps its own.
-function InSystem32(const Exe: string): string;
+/// The arguments that make an elevated cmd.exe run the named command from the real System32 (DD356).
+function ThroughCmd(const Exe, Arguments: string): string;
+var
+  Name: string;
 begin
-  // Setup is a 32-bit process, so a bare name found through PATH resolves against SysWOW64 — and
-  // wsl.exe is a 64-bit tool that exists only in the real System32. {sys} is the constant that
-  // knows the difference, which is why the same expansion is what runs tasklist and taskkill in
-  // the uninstall below.
-  Result := Exe;
+  // Setup is a 32-bit process and wsl.exe exists only in the 64-bit System32. Exec copes, because
+  // it turns redirection off in 64-bit install mode; ShellExec does not. Measured on 16 November
+  // 2026 with a probe Setup on this script's own settings: ShellExec of {sys}\wsl.exe failed with
+  // code 2 (file not found) before any prompt was drawn, and the page read that as a refusal. The
+  // Sysnative alias is no way round it for runas: the elevation is done by a 64-bit service that has
+  // no such alias, and that failed with code 3.
+  //
+  // cmd.exe is in both views, so the shell finds it and elevates it, and the elevated cmd measured
+  // as 32-bit. So it is cmd that reaches the tool, through Sysnative when it is 32-bit and through
+  // System32 when it is not. One prompt either way, and cmd hands back the tool's exit code.
+  Result := '';
   if (Pos('\', Exe) > 0) or (Pos('/', Exe) > 0) then
+  begin
+    Result := '/c "' + Exe + '" ' + Arguments;
     Exit;
+  end;
 
-  if Pos('.', Exe) = 0 then
-    Result := Exe + '.exe';
+  Name := Exe;
+  if Pos('.', Name) = 0 then
+    Name := Name + '.exe';
 
-  Result := ExpandConstant('{sys}\') + Result;
+  Result := '/c if exist "%SystemRoot%\Sysnative\' + Name + '" ('
+    + '"%SystemRoot%\Sysnative\' + Name + '" ' + Arguments
+    + ') else ("%SystemRoot%\System32\' + Name + '" ' + Arguments + ')';
 end;
 
 /// Leave Setup where the restart will find it.
@@ -1091,6 +1109,11 @@ begin
       PreflightMemo.Text :=
         'Turn it on for me needs one administrator prompt, and that prompt was not granted. '
         + 'Nothing has changed, and the steps below do the same thing by hand.'#13#10#13#10
+        + PreflightMemo.Text
+    else if PreflightFailed <> '' then
+      PreflightMemo.Text :=
+        'Turn it on for me did not turn it on. ' + PreflightFailed
+        + ' The steps below do the same thing by hand.'#13#10#13#10
         + PreflightMemo.Text;
   end
   else
@@ -1120,17 +1143,25 @@ begin
   WasPending := RestartIsPending;
 
   PreflightTurnOn.Enabled := False;
+  PreflightFailed := '';
   try
     // SW_SHOWNORMAL, deliberately: `wsl --install` takes minutes and prints as it goes, and a
-    // hidden window would leave the wizard frozen with nothing anywhere saying why. It is also the
-    // only place an error from the command is ever seen, since ShellExec cannot hand back the exit
-    // code of a process it elevated.
-    if not ShellExec('runas', InSystem32(Exe), Arguments, '',
+    // hidden window would leave the wizard frozen with nothing anywhere saying why.
+    if not ShellExec('runas', ExpandConstant('{sys}\cmd.exe'), ThroughCmd(Exe, Arguments), '',
                      SW_SHOWNORMAL, ewWaitUntilTerminated, Shell) then
     begin
-      // The prompt was refused, or this account cannot elevate at all. Neither is an error worth
-      // a dialog — the page already carries the steps that do the same thing.
-      PreflightRefused := True;
+      // ERROR_CANCELLED is the prompt being refused, or an account that cannot elevate at all.
+      // Neither is an error worth a dialog: the page already carries the steps that do the same
+      // thing. Anything else is Windows failing to start it, and DD356 is what reading every
+      // failure as a refusal cost: a button that did nothing and said it had been declined.
+      if Shell = 1223 then
+      begin
+        PreflightRefused := True;
+        Exit;
+      end;
+
+      PreflightFailed := 'Windows could not start it: ' + SysErrorMessage(Shell)
+        + ' (code ' + IntToStr(Shell) + ').';
       Exit;
     end;
   finally
@@ -1138,6 +1169,15 @@ begin
   end;
 
   PreflightRefused := False;
+
+  // cmd hands back the tool's exit code, which the direct ShellExec never could. A run that
+  // failed has turned nothing on, and saying so beats sending somebody to restart for nothing.
+  if Shell <> 0 then
+  begin
+    PreflightFailed := 'It ran and exited ' + IntToStr(Shell) + ', so nothing was turned on.';
+    Exit;
+  end;
+
   PreflightFeatureOn := True;
 
   // Windows itself now wanting a restart, where it did not before, is the one piece of evidence
