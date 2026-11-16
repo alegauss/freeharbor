@@ -1665,6 +1665,18 @@ public sealed class PackagingTests
     }
 
     [Fact]
+    public void The_package_starts_the_tray_at_sign_in_and_never_the_engine_unasked()
+    {
+        // DD313. The installer's two Run values (DD97) as startup tasks: the tray's on, as the
+        // installer's checkbox is ticked by default, and the engine's off, which is the product's rule.
+        var manifest = PackageManifest();
+
+        Assert.Contains("<desktop:StartupTask TaskId=\"FreeHarborTray\" Enabled=\"true\"", manifest, StringComparison.Ordinal);
+        Assert.Contains("<desktop:StartupTask TaskId=\"FreeHarborEngine\" Enabled=\"false\"", manifest, StringComparison.Ordinal);
+        Assert.Contains("uap10:Parameters=\"--run\"", manifest, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void The_package_puts_freeharbor_and_docker_on_PATH_through_aliases()
     {
         // DD312. The allowlist entry an agent was given, Bash(freeharbor read:*), still has to match

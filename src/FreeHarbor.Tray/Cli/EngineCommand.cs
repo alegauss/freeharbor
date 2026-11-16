@@ -1098,6 +1098,11 @@ internal static class EngineCommand
 
     private static int AutostartMode(string mode)
     {
+        if (PackageIdentity.IsPackaged)
+        {
+            return PackagedAutostart(mode, Console.Out);
+        }
+
         var exe = Environment.ProcessPath
             ?? throw new InvalidOperationException("this process has no path");
         var autostart = new Autostart($"\"{exe}\" --run");
@@ -1129,6 +1134,35 @@ internal static class EngineCommand
                 }
 
                 return Ok;
+            default:
+                return Complain($"--autostart takes on, off or status, not {mode}");
+        }
+    }
+
+    /// <summary>What <c>--autostart</c> says under an MSIX package (DD313).</summary>
+    /// <param name="mode">on, off or status.</param>
+    /// <param name="output">Where to write.</param>
+    /// <returns><see cref="Ok"/> for status; <see cref="Failed"/> for a change this cannot make yet.</returns>
+    /// <remarks>
+    /// A package's Run value names an exe under WindowsApps, which nothing outside the package can
+    /// launch, so writing one here would report "on" about a sign-in that starts nothing. Start with
+    /// Windows is the manifest's two startup tasks instead, and until this reads and moves them
+    /// through the StartupTask API, the honest answer is where the user changes them.
+    /// </remarks>
+    internal static int PackagedAutostart(string mode, System.IO.TextWriter output)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        const string Where = "Settings > Apps > Startup";
+        switch (mode)
+        {
+            case "status":
+                output.WriteLine($"  autostart  managed by Windows: \"FreeHarbor engine\" in {Where}, off unless you turned it on");
+                output.WriteLine($"  tray       managed by Windows: \"FreeHarbor\" in {Where}");
+                return Ok;
+            case "on":
+            case "off":
+                output.WriteLine($"  autostart  not changed: under the Microsoft Store package, turn \"FreeHarbor engine\" {mode} in {Where}");
+                return Failed;
             default:
                 return Complain($"--autostart takes on, off or status, not {mode}");
         }

@@ -18,16 +18,24 @@
   The command line (DD312): a folder under WindowsApps cannot be launched from outside, so the
   installer's PATH entry becomes two execution aliases, freeharbor.exe on the tray and docker.exe
   on a second, unlisted application whose executable is the console forwarder. Aliases land in
-  %LOCALAPPDATA%\Microsoft\WindowsApps, late on PATH. The startup tasks (DD313) and the
-  docker-desktop:// handler (DD314) arrive with their own tasks.
+  %LOCALAPPDATA%\Microsoft\WindowsApps, late on PATH. The docker-desktop:// handler (DD314)
+  arrives with its own task.
+
+  Start with Windows (DD313): a package's HKCU Run values are written where nothing launches them,
+  so the installer's two Run values (DD97) become two startup tasks. The tray's is on, as the
+  installer's checkbox is ticked by default; launched by it, the tray opens no window (DD311). The
+  engine's runs the same exe with the run verb, through a third unlisted application, and is off, because
+  the engine never starts unasked. The user changes either in Settings > Apps > Startup.
 -->
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+  xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
   xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap uap5 desktop6 rescap">
+  IgnorableNamespaces="uap uap5 uap10 desktop desktop6 rescap">
 
   <Identity Name="Alegauss.FreeHarbor"
             Publisher="CN=FreeHarbor Sideload"
@@ -66,6 +74,25 @@
             <uap5:ExecutionAlias Alias="freeharbor.exe" />
           </uap5:AppExecutionAlias>
         </uap5:Extension>
+        <desktop:Extension Category="windows.startupTask">
+          <desktop:StartupTask TaskId="FreeHarborTray" Enabled="true" DisplayName="FreeHarbor" />
+        </desktop:Extension>
+      </Extensions>
+    </Application>
+    <!-- The engine at sign-in: the same exe serving the engine, off unless the user turns it on. -->
+    <Application Id="Engine" Executable="FreeHarbor.exe" EntryPoint="Windows.FullTrustApplication"
+                 uap10:Parameters="--run">
+      <uap:VisualElements
+        DisplayName="FreeHarbor engine"
+        Description="Starts FreeHarbor's engine at sign-in."
+        BackgroundColor="transparent"
+        AppListEntry="none"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png" />
+      <Extensions>
+        <desktop:Extension Category="windows.startupTask">
+          <desktop:StartupTask TaskId="FreeHarborEngine" Enabled="false" DisplayName="FreeHarbor engine" />
+        </desktop:Extension>
       </Extensions>
     </Application>
     <!-- The docker forwarder (DD141), console subsystem, which an alias launch keeps. Not in Start. -->

@@ -45,6 +45,21 @@ public sealed class PackageIdentityTests
     }
 
     [Fact]
+    public void Autostart_under_a_package_points_at_Settings_and_changes_nothing()
+    {
+        // DD313. A Run value written from a package names an exe under WindowsApps that nothing
+        // outside the package can launch, so the verb says where the choice lives instead.
+        var status = new StringWriter();
+        Assert.Equal(0, FreeHarbor.Tray.Cli.EngineCommand.PackagedAutostart("status", status));
+        Assert.Contains("Settings > Apps > Startup", status.ToString(), StringComparison.Ordinal);
+        Assert.Contains("\"FreeHarbor engine\"", status.ToString(), StringComparison.Ordinal);
+
+        var on = new StringWriter();
+        Assert.NotEqual(0, FreeHarbor.Tray.Cli.EngineCommand.PackagedAutostart("on", on));
+        Assert.Contains("not changed", on.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void The_build_line_says_where_updates_come_from_only_under_a_package()
     {
         Assert.Equal("Build 2.2.0", AboutPage.BuildLineFor("2.2.0", packaged: false));

@@ -166,17 +166,30 @@ reason it cannot be is recorded here.
 
 ### §DD313 Start with Windows from a package
 
-Today there are two HKCU Run values (DD97): FreeHarbor, which the installer's checkbox
-writes with --tray, and FreeHarbor Engine, which --autostart on writes and nothing
-writes by default. A packaged app writes both into its private hive, where Explorer
-never looks; claude-tray met exactly this (T409).
+The manifest half landed: a FreeHarborTray startup task, on, on the tray's Application,
+and a FreeHarborEngine task, off, on an unlisted Engine Application that runs the same
+exe with `--run` (build\msix\AppxManifest.xml). Measured from a sideload on 16 November
+2026: the tray's task reads Enabled and the engine's Disabled. Under a package,
+`--autostart` writes no Run value and names Settings > Apps > Startup instead.
 
-- **The tray.** A desktop:StartupTask with Enabled="true", as the installer's checkbox is ticked by default. Launched by it, the app stays in the tray, which is the activation rule DD311 sets.
-- **The engine.** A second Application on the same exe, AppListEntry="none", with uap10:Parameters naming the verb the Run value carries today, and its own StartupTask with Enabled="false". Off by default is the product's rule, not a preference.
-- **The verb.** Autostart reads and changes the state through the Windows.ApplicationModel.StartupTask API when packaged, and keeps the Run values when not. --autostart status reports Enabled, Disabled, DisabledByUser or DisabledByPolicy as they are. --autostart on can call RequestEnableAsync, but a task the user disabled in Settings cannot be re-enabled by the app, so the answer then names Settings > Apps > Startup. The WinRT call is declared by hand, as claude-tray's activation lookup is, rather than taking on the SDK projection.
+What is left is the verb reading and moving the tasks itself.
 
-Done when both tasks are visible in Settings > Apps > Startup after a sideload install,
-the engine's is off, and --autostart on and off move it.
+- **The API answers per Application, not per package.** Asked from the tray's Application
+  (the one the freeharbor.exe alias launches), `StartupTask.GetAsync("FreeHarborEngine")`
+  fails and `GetForCurrentPackageAsync` lists the tray's task alone; asked from the Engine
+  Application it answers Disabled. So `--autostart` cannot reach the engine's task from
+  where it runs.
+- **One way through:** the verb hands the question to the Engine Application, which is
+  launched with its own identity through `shell:AppsFolder\<family>!Engine`, with
+  arguments that make it answer rather than serve. Measure whether a parameterised
+  Application accepts extra arguments at activation before building on it; if it does
+  not, add a third unlisted Application whose only job is the startup-task verbs.
+- `--autostart status` reports Enabled, Disabled, DisabledByUser or DisabledByPolicy as
+  they are; `on` calls RequestEnableAsync, and a task the user disabled in Settings is
+  named there rather than forced. The WinRT calls are declared by hand, as
+  PackageIdentity's activation lookup is.
+
+Done when `--autostart on` and `off` move the engine's task from a sideload install.
 
 ### §DD314 The build-details link from a package
 
