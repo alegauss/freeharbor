@@ -331,6 +331,15 @@ internal static class EngineCommand
             asked.Dispose();
             lifecycle.DisposeAsync().AsTask().GetAwaiter().GetResult();
 
+            // DD354. What the teardown failed to take with it, named before the line that says the
+            // host is done. Not under a session ending: a WMI query is time that budget lacks, and
+            // Windows is about to end every one of these anyway.
+            if (grace != EngineLifecycle.HurriedGrace
+                && LeftAlive.Clause(LeftAlive.ChildrenOf(Environment.ProcessId)) is { } alive)
+            {
+                Note(journal, $"  {"host",-8}  {alive}");
+            }
+
             // The last line, and it is here for what its absence means (DD163). Every ending this
             // host reaches on its own passes through this finally, so a file whose final line is
             // anything else describes a host that did not end — it was killed, or the machine went
