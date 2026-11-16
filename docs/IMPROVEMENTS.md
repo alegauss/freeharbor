@@ -136,20 +136,6 @@ Which is the owner's call, so this is an idea and not a task.
 
 ## Block F — Installer and distribution (free, Apache 2.0)
 
-### §DD283 Measuring the winget install before promising it
-
-winget-pkgs validates a new package by installing it silently on a Microsoft VM.
-FreeHarbor's PrepareToInstall refuses with exit 7 when the preflight blocks, and WSL2 or
-hardware virtualization is very likely off on that VM. That refusal is DD130's decision
-and is right for a person, so it is not loosened on a guess.
-
-The measurement comes first: enable LocalManifestFiles, run `winget install --manifest
-build\winget` in Windows Sandbox, which has no WSL2, and in the test guest, which has
-it. If the Sandbox run exits 7 with the systemNotSupported message, the first PR says so
-and asks for manual validation. The README and the site name `winget install
-alegauss.FreeHarbor` only after the PR merges, because an install line that finds
-nothing is worse than none.
-
 ### §DD290 DD290 — Seeing the winget submission through to a working install
 
 From the portfolio review of 30/10/2026 (visibility, `produtos/freewilly.md`). DD282

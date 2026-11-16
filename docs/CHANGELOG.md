@@ -277,6 +277,7 @@
 - ✅ **DD358** **Setup stopped by a stuck WSL can only tell the user to restart Windows** — The page for a stuck WSL offers Restart WSL for me: one UAC prompt ends wslservice.exe, starts it again and reads the machine again, through the page's single ShellExec.
 - ✅ **DD359** **Restart WSL for me shows no progress and judges WSL once, before Windows has brought the service back** — A progress page names each step; after the kill the machine is read up to 8 times until WSL answers, and net start's exit code, 2 for failure and already-started alike, decides nothing.
 - ✅ **DD309** **Nobody knows whether wsl --import run from inside an MSIX package registers a disk both the app and WSL can see** — Virtualized, wsl --import fails with ERROR_PATH_NOT_FOUND; unvirtualized, every verb works from inside the package (design recorded in `docs/specs/DD309-msix-virtualization.md`).
+- ✅ **DD283** **Nobody knows whether winget's validation VM can install it, since the preflight exits 7 without WSL2** — winget's own validation VM measured it on PR 453564: the preflight exits 7, the bot files Validation-Installation-Error, and manual validation must be asked for.
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 

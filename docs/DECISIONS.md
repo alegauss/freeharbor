@@ -12,6 +12,8 @@
 
 ## Block F — Installer and distribution (free, Apache 2.0)
 
+- ✅ **DD283** **Nobody knows whether winget's validation VM can install it, since the preflight exits 7 without WSL2** — A winget PR asks for manual validation instead of the installer skipping its preflight, because a silent install on a machine without WSL2 must still refuse.
+
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
 ## Block H — The public surface (the site a reader and an agent both read)
