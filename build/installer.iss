@@ -2018,6 +2018,20 @@ begin
   end;
 end;
 
+/// Take the engine off through `FreeHarbor.exe --remove-engine` (DD317).
+/// Returns False where the executable is missing or the verb did not finish, so the caller falls
+/// back to the plain wsl.exe sequence.
+function RemoveEngineByVerb: Boolean;
+var
+  Exe: string;
+  Code: Integer;
+begin
+  Exe := ExpandConstant('{app}\{#MyAppExeName}');
+  Result := FileExists(Exe)
+    and Exec(Exe, '--remove-engine', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, Code)
+    and (Code = 0);
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   Code: Integer;
@@ -2068,19 +2082,27 @@ begin
     DelTree(ExpandConstant('{app}\cli'), True, True, True);
     DelTree(ExpandConstant('{app}\cli-plugins'), True, True, True);
 
+    // DD317. The removal is the product's own verb, the one an MSIX user runs before removing the
+    // package, so there is one sequence and not a second copy of it in Pascal. {app}\FreeHarbor.exe
+    // is still on disk here: Inno's file pass runs after usUninstall. Like this page, the verb
+    // leaves the user's own settings alone.
     if RemoveTheDistribution then
     begin
-      // Terminated again rather than trusting the stop above: this is the one operation here that
-      // cannot be repeated, and the executable that would have run --stop may not have been there.
-      Exec(ExpandConstant('{sys}\wsl.exe'), '--terminate ' + DistroName,
-           '', SW_HIDE, ewWaitUntilTerminated, Code);
+      if not RemoveEngineByVerb then
+      begin
+        // The fallback, for an install whose executable is gone or whose verb failed. Terminated
+        // again rather than trusting the stop above: this is the one operation here that cannot be
+        // repeated, and the executable that would have run --stop may not have been there.
+        Exec(ExpandConstant('{sys}\wsl.exe'), '--terminate ' + DistroName,
+             '', SW_HIDE, ewWaitUntilTerminated, Code);
 
-      // Unregister first: the virtual disk is open while the distribution is registered, so
-      // deleting the directory underneath it fails and leaves a distribution pointing at nothing.
-      Exec(ExpandConstant('{sys}\wsl.exe'), '--unregister ' + DistroName,
-           '', SW_HIDE, ewWaitUntilTerminated, Code);
-      DelTree(ExpandConstant('{app}\distro'), True, True, True);
-      DelTree(ExpandConstant('{app}\downloads'), True, True, True);
+        // Unregister first: the virtual disk is open while the distribution is registered, so
+        // deleting the directory underneath it fails and leaves a distribution pointing at nothing.
+        Exec(ExpandConstant('{sys}\wsl.exe'), '--unregister ' + DistroName,
+             '', SW_HIDE, ewWaitUntilTerminated, Code);
+        DelTree(ExpandConstant('{app}\distro'), True, True, True);
+        DelTree(ExpandConstant('{app}\downloads'), True, True, True);
+      end;
     end;
 
     Exit;

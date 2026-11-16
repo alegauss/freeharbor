@@ -98,4 +98,28 @@ public sealed class EnginePathsTests
         Assert.Contains(
             @"DefaultDirName={localappdata}\FreeHarbor", script, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void The_uninstaller_removes_the_engine_through_the_verb_first()
+    {
+        // DD317: one removal, not two. The Pascal sequence stays only as the fallback for an install
+        // whose executable is gone, so the verb has to be asked before it.
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null
+            && !File.Exists(Path.Combine(directory.FullName, "FreeHarbor.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        Assert.True(directory is not null, "the repository root was not found above the test binaries");
+        var script = File.ReadAllText(Path.Combine(directory!.FullName, "build", "installer.iss"));
+
+        Assert.Contains("Exec(Exe, '--remove-engine'", script, StringComparison.Ordinal);
+        var question = script.IndexOf("if RemoveTheDistribution then", StringComparison.Ordinal);
+        var verb = script.IndexOf("if not RemoveEngineByVerb then", StringComparison.Ordinal);
+        var fallback = script.IndexOf("'--unregister ' + DistroName", StringComparison.Ordinal);
+        Assert.True(question > 0 && verb > question && fallback > verb,
+            "the verb is not asked before the Pascal fallback, inside the distribution answer");
+        Assert.Contains("--remove-engine", FreeHarbor.Tray.Cli.CommandLine.HelpText, StringComparison.Ordinal);
+    }
 }
