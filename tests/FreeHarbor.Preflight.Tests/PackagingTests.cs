@@ -1650,6 +1650,34 @@ public sealed class PackagingTests
     }
 
     [Fact]
+    public void The_root_the_forwarder_falls_back_to_is_the_root_the_provision_writes()
+    {
+        // DD312. Under a package the forwarder sits in WindowsApps and finds the CLI under
+        // %LOCALAPPDATA%\<root>\cli instead, so the folder name is restated the same way the pipe is.
+        Assert.Contains(
+            $"RootName = \"{Core.Engine.EnginePaths.CurrentRootName}\"",
+            ShimSource(),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            $"ConfigVariable = \"{Core.Engine.DockerConfigEntry.Variable}\"",
+            ShimSource(),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_package_puts_freeharbor_and_docker_on_PATH_through_aliases()
+    {
+        // DD312. The allowlist entry an agent was given, Bash(freeharbor read:*), still has to match
+        // (DD24), and docker has to reach the forwarder rather than the windowed tray.
+        var manifest = PackageManifest();
+
+        Assert.Contains("<uap5:ExecutionAlias Alias=\"freeharbor.exe\" />", manifest, StringComparison.Ordinal);
+        Assert.Contains("<uap5:ExecutionAlias Alias=\"docker.exe\" />", manifest, StringComparison.Ordinal);
+        Assert.Contains("Executable=\"bin\\docker.exe\"", manifest, StringComparison.Ordinal);
+        Assert.Contains("AppListEntry=\"none\"", manifest, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void The_forwarder_and_the_vendor_cli_cannot_share_a_directory()
     {
         // A rule of Windows rather than a preference. PATHEXT resolves .EXE before every other

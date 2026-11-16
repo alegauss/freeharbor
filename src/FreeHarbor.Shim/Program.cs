@@ -38,6 +38,16 @@ internal static class Program
     /// </remarks>
     private const int PipeWaitMs = 300;
 
+    /// <summary>The folder under %LOCALAPPDATA% this install owns.</summary>
+    /// <remarks>
+    /// Restated for the reason <see cref="EnginePipe"/> is, and held equal to
+    /// <c>EnginePaths.CurrentRootName</c> by the same packaging test.
+    /// </remarks>
+    private const string RootName = "FreeHarbor";
+
+    /// <summary>The variable that tells the CLI where its plugins are (DD73).</summary>
+    private const string ConfigVariable = "DOCKER_CONFIG";
+
     private static int Main(string[] args)
     {
         var cli = RealCli();
@@ -64,6 +74,16 @@ internal static class Program
             // names its own, because a child holds a lock on whichever directory it is given.
             UseShellExecute = false,
         };
+
+        // DD312. The installer writes DOCKER_CONFIG for the user, so compose and buildx are found as
+        // plugins (DD73). A package cannot be relied on to have reached outside shells with that
+        // write, so where nobody set it, the CLI is told for this one call: the root holding cli\ is
+        // the config directory. Never over a value somebody chose.
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ConfigVariable))
+            && Path.GetDirectoryName(Path.GetDirectoryName(cli)) is { } root)
+        {
+            start.Environment[ConfigVariable] = root;
+        }
 
         foreach (var argument in args)
         {
@@ -103,17 +123,22 @@ internal static class Program
     /// `docker` on PATH is a forwarder that calls itself. The layout is fixed by the installer —
     /// this sits in the directory on PATH, and the vendor CLI sits beside it in a directory that is
     /// deliberately not.
+    ///
+    /// <para>Under an MSIX package this file sits in WindowsApps, while the provision still places
+    /// the CLI in %LOCALAPPDATA%\FreeHarbor\cli (DD312), so that is the second place asked.</para>
     /// </remarks>
     private static string? RealCli()
     {
         var here = Path.GetDirectoryName(Environment.ProcessPath);
-        if (here is null)
+        var candidates = new[]
         {
-            return null;
-        }
+            here is null ? null : Path.GetFullPath(Path.Combine(here, "..", "cli", "docker.exe")),
+            Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                RootName, "cli", "docker.exe"),
+        };
 
-        var cli = Path.GetFullPath(Path.Combine(here, "..", "cli", "docker.exe"));
-        return File.Exists(cli) ? cli : null;
+        return candidates.FirstOrDefault(File.Exists);
     }
 
     /// <summary>Whether anything is serving the engine's pipe.</summary>

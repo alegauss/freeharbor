@@ -164,21 +164,6 @@ when run, so the engine moves to first launch; otherwise no Store.
 Done when FreeHarbor is in the Store with its install working without admin, or the
 reason it cannot be is recorded here.
 
-### §DD312 The command line from a package
-
-The Inno setup's pathentry task does three things: it puts {app}\bin on the user's PATH,
-it places the shim as docker.exe and freeharbor.cmd there, and it writes DOCKER_CONFIG
-(DD124). Inside a package, the folder under WindowsApps cannot be launched from outside,
-and HKCU writes may be virtualized.
-
-- **freeharbor.** A uap5:AppExecutionAlias named freeharbor.exe on the tray's Application, so the allowlist entry Bash(freeharbor read:*) still matches (DD24). Measure whether ParentConsole still attaches when the windowed exe is launched through an alias. If it does not, the alias points at a console forwarder instead.
-- **docker.** A second Application with Executable set to the shim, AppListEntry="none" so it never shows in Start, and its own alias docker.exe. The shim is console subsystem, which an alias launch keeps (DD141). Aliases land in %LOCALAPPDATA%\Microsoft\WindowsApps, late on PATH, so an earlier docker on PATH wins; the preflight's rival check already refuses that machine.
-- **DOCKER_CONFIG.** claude-tray measured that a user-scope environment write from its package reached outside shells. Measure the same for DockerConfigEntry.Ensure. If it does not, the shim sets DOCKER_CONFIG for the child process when the variable is absent, which keeps compose and buildx found (DD73, DD74) with no registry write at all.
-- **The vendor CLI.** RealCli looks in ..\cli beside the shim, under WindowsApps in a package, while the provision places it in %LOCALAPPDATA%\FreeHarbor\cli.
-
-Done when, from a fresh terminal after a sideload install, docker compose version,
-docker buildx version and freeharbor read status all answer.
-
 ### §DD313 Start with Windows from a package
 
 Today there are two HKCU Run values (DD97): FreeHarbor, which the installer's checkbox
