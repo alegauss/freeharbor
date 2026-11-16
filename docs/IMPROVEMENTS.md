@@ -170,26 +170,24 @@ The manifest half landed: a FreeHarborTray startup task, on, on the tray's Appli
 and a FreeHarborEngine task, off, on an unlisted Engine Application that runs the same
 exe with `--run` (build\msix\AppxManifest.xml). Measured from a sideload on 16 November
 2026: the tray's task reads Enabled and the engine's Disabled. Under a package,
-`--autostart` writes no Run value and names Settings > Apps > Startup instead.
+`--autostart` writes no Run value and names Settings > Apps > Startup.
 
-What is left is the verb reading and moving the tasks itself.
+Left: `--autostart on` and `off` under a package. Two ways, and the owner picks.
 
-- **The API answers per Application, not per package.** Asked from the tray's Application
-  (the one the freeharbor.exe alias launches), `StartupTask.GetAsync("FreeHarborEngine")`
-  fails and `GetForCurrentPackageAsync` lists the tray's task alone; asked from the Engine
-  Application it answers Disabled. So `--autostart` cannot reach the engine's task from
-  where it runs.
-- **One way through:** the verb hands the question to the Engine Application, which is
-  launched with its own identity through `shell:AppsFolder\<family>!Engine`, with
-  arguments that make it answer rather than serve. Measure whether a parameterised
-  Application accepts extra arguments at activation before building on it; if it does
-  not, add a third unlisted Application whose only job is the startup-task verbs.
-- `--autostart status` reports Enabled, Disabled, DisabledByUser or DisabledByPolicy as
-  they are; `on` calls RequestEnableAsync, and a task the user disabled in Settings is
-  named there rather than forced. The WinRT calls are declared by hand, as
-  PackageIdentity's activation lookup is.
+- **Settings.** `on` and `off` open `ms-settings:startupapps`, where the user flips
+  "FreeHarbor engine". Small, and needs nothing below.
+- **The API.** StartupTask answers per Application, not per package: from the tray's
+  Application (the one the freeharbor.exe alias launches), `GetAsync("FreeHarborEngine")`
+  fails and `GetForCurrentPackageAsync` lists only the tray's task; from the Engine
+  Application it answers Disabled. So the verb must run as the Engine Application, through
+  IApplicationActivationManager with arguments. Whether a parameterised Application
+  receives extra activation arguments is unmeasured: activated with one, the process
+  exited before WMI could read its command line. Then RequestEnableAsync and Disable,
+  declared by hand as PackageIdentity's activation lookup is, with a task the user
+  disabled in Settings named there rather than forced.
 
-Done when `--autostart on` and `off` move the engine's task from a sideload install.
+Done when `--autostart on` and `off` move the engine's task, or open the page that does,
+from a sideload install.
 
 ### §DD314 The build-details link from a package
 
