@@ -24,29 +24,86 @@ public sealed class WslRestart
     /// <summary>The step that shuts WSL down. Named once, for the page and the verb.</summary>
     public const string ShutdownStep = "shut WSL down";
 
+    /// <summary>The step that ends the WSL service with administrator rights (DD351).</summary>
+    public const string ServiceStep = "restart the WSL service";
+
     /// <summary>The step that asks WSL whether it answers again.</summary>
     public const string AnswerStep = "ask WSL whether it answers";
 
+    /// <summary>What is left once nothing this tool can run will reach the service (DD351).</summary>
+    /// <remarks>
+    /// Restart and never Shut down, by name. Measured on 16 November 2026: a WSL stuck the evening
+    /// before came back stuck the next morning, because Fast Startup turns Shut down into a
+    /// hibernation of the kernel and the service's state rides across it. Restart is the one that
+    /// boots Windows cold.
+    /// </remarks>
+    public const string RestartWindows =
+        "restarting Windows is what is left, and it has to be Restart rather than Shut down: with "
+        + "Fast Startup on, Shut down hibernates the kernel and WSL comes back as stuck as it was";
+
     private readonly IWsl _wsl;
     private readonly Func<RepairStep> _stopEngine;
+    private readonly IElevated? _elevated;
+    private readonly string? _logPath;
     private readonly TimeSpan _shutdownBudget;
 
     /// <summary>Construct the restart.</summary>
     /// <param name="wsl">WSL.</param>
     /// <param name="stopEngine">Takes the engine down the announced way, and says so.</param>
+    /// <param name="elevated">
+    /// How a command is run with administrator rights, or <see langword="null"/> where it is not
+    /// offered. Used only when <c>wsl --shutdown</c> hangs too (DD351).
+    /// </param>
+    /// <param name="logPath">
+    /// Where the elevated commands write what they said, or <see langword="null"/> for nowhere. A
+    /// file because an elevated child's handles cannot be read from this side.
+    /// </param>
     /// <param name="shutdownBudget">
     /// How long the shutdown may take, or <see langword="null"/> for a minute. A minute because a
-    /// shutdown that has not returned by then is the service hanging too, and the remedy for that is
-    /// outside this tool: restarting the service needs administrator rights, and so does a reboot's
-    /// worth of anything else.
+    /// shutdown that has not returned by then is the service hanging too, and only ending the
+    /// service reaches that, which needs administrator rights.
     /// </param>
-    public WslRestart(IWsl wsl, Func<RepairStep> stopEngine, TimeSpan? shutdownBudget = null)
+    public WslRestart(
+        IWsl wsl,
+        Func<RepairStep> stopEngine,
+        IElevated? elevated = null,
+        string? logPath = null,
+        TimeSpan? shutdownBudget = null)
     {
         ArgumentNullException.ThrowIfNull(wsl);
         ArgumentNullException.ThrowIfNull(stopEngine);
         _wsl = wsl;
         _stopEngine = stopEngine;
+        _elevated = elevated;
+        _logPath = logPath;
         _shutdownBudget = shutdownBudget ?? TimeSpan.FromMinutes(1);
+    }
+
+    /// <summary>
+    /// The elevated command line that ends the WSL service and starts it again (DD351).
+    /// </summary>
+    /// <param name="logPath">Where it writes what it said, or <see langword="null"/>.</param>
+    /// <returns>The arguments for <c>cmd.exe</c>.</returns>
+    /// <remarks>
+    /// <para><b>Ended rather than stopped.</b> A service that will not answer <c>wsl --shutdown</c>
+    /// will not answer the service manager's stop either, and <c>Restart-Service</c> then waits as
+    /// long as the button did. <c>taskkill /f /t</c> ends <c>wslservice.exe</c> and what it started,
+    /// and the utility VM goes with the process that owned it.</para>
+    ///
+    /// <para>The start is not judged here. <c>net start</c> exits 2 for a service a COM call already
+    /// started again, which is not a failure; the question to WSL afterwards is what decides.</para>
+    ///
+    /// <para>Full System32 paths, for the rule <see cref="ElevatedCompaction"/> already keeps: what
+    /// runs with administrator rights is not a name an earlier directory on the PATH answers for.</para>
+    /// </remarks>
+    public static string ServiceCommand(string? logPath)
+    {
+        var system = Environment.GetFolderPath(Environment.SpecialFolder.System);
+        var taskkill = Path.Combine(system, "taskkill.exe");
+        var net = Path.Combine(system, "net.exe");
+        var first = logPath is null ? "" : $" > \"{logPath}\" 2>&1";
+        var then = logPath is null ? "" : $" >> \"{logPath}\" 2>&1";
+        return $"/c \"\"{taskkill}\" /f /t /im wslservice.exe{first} & \"{net}\" start WSLService{then}\"";
     }
 
     /// <summary>Run it.</summary>
@@ -64,18 +121,34 @@ public sealed class WslRestart
         Land(_stopEngine());
 
         var down = _wsl.Run(_shutdownBudget, "--shutdown");
-        if (!down.Succeeded)
+        if (!down.Succeeded && _elevated is null)
         {
             Land(new RepairStep(
                 ShutdownStep,
                 false,
-                "WSL would not shut down either, so the service itself is stuck: restarting it "
-                + "(Restart-Service WslService, as administrator) or restarting Windows is what is "
-                + $"left. wsl.exe said: {down.Detail()}"));
+                "WSL would not shut down either, so the service itself is stuck: ending "
+                + $"wslservice.exe as administrator, or {RestartWindows}. "
+                + $"wsl.exe said: {down.Detail()}"));
             return new RepairOutcome(steps);
         }
 
-        Land(new RepairStep(ShutdownStep, true, "every WSL distribution on this machine was stopped"));
+        if (down.Succeeded)
+        {
+            Land(new RepairStep(
+                ShutdownStep, true, "every WSL distribution on this machine was stopped"));
+        }
+        else
+        {
+            // The shutdown is not landed as a failure of its own. What it was for, WSL down, is
+            // what this step does by other means, and a failed step here would make a restart that
+            // worked read as one that did not.
+            var service = EndTheService(down);
+            Land(service);
+            if (!service.Ok)
+            {
+                return new RepairOutcome(steps);
+            }
+        }
 
         var answer = _wsl.Run(WslBudget.Probe, "--list", "--quiet");
         Land(answer.Succeeded
@@ -86,5 +159,70 @@ public sealed class WslRestart
                 $"WSL shut down but still does not answer: {answer.Detail()}"));
 
         return new RepairOutcome(steps);
+    }
+
+    /// <summary>End the service with administrator rights, after a shutdown that hung (DD351).</summary>
+    /// <param name="down">What the shutdown said.</param>
+    /// <returns>The step.</returns>
+    private RepairStep EndTheService(WslResult down)
+    {
+        var hung = $"wsl --shutdown did not answer ({down.Detail()}), so the service itself was stuck";
+        if (_logPath is not null)
+        {
+            try
+            {
+                File.Delete(_logPath);
+            }
+            catch (Exception exception) when (exception is IOException
+                or UnauthorizedAccessException or DirectoryNotFoundException)
+            {
+                // A stale log only costs a misleading complaint on the failing path.
+            }
+        }
+
+        var run = _elevated!.Run("cmd.exe", ServiceCommand(_logPath));
+        if (run.Refused)
+        {
+            return new RepairStep(
+                ServiceStep,
+                false,
+                $"{hung}, and administrator rights were declined, so it was left as it was: "
+                + $"{RestartWindows}");
+        }
+
+        if (!run.Ran)
+        {
+            return new RepairStep(
+                ServiceStep,
+                false,
+                $"{hung}, and it could not be ended with administrator rights "
+                + $"({run.Failure ?? "no reason was given"}): {RestartWindows}");
+        }
+
+        return new RepairStep(
+            ServiceStep,
+            true,
+            $"{hung}; it was ended and started again with administrator rights"
+            + (run.ExitCode is 0 or 2 ? "" : $" (exited {run.ExitCode}: {Said()})"));
+    }
+
+    /// <summary>What the elevated commands wrote, on one line.</summary>
+    private string Said()
+    {
+        if (_logPath is null)
+        {
+            return "nothing was kept";
+        }
+
+        try
+        {
+            var said = File.ReadAllText(_logPath).Trim().ReplaceLineEndings(" ");
+            return said.Length > 0 ? said : $"it wrote nothing to {_logPath}";
+        }
+        catch (Exception exception) when (exception is IOException
+            or UnauthorizedAccessException or DirectoryNotFoundException)
+        {
+            return $"its log could not be read from {_logPath}";
+        }
     }
 }

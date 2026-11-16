@@ -119,8 +119,98 @@ public sealed class WslRestartTests
 
         Assert.False(outcome.Succeeded);
         Assert.Equal(WslRestart.ShutdownStep, outcome.Failure!.What);
-        Assert.Contains("WslService", outcome.Failure.Detail, StringComparison.Ordinal);
+        Assert.Contains("wslservice.exe", outcome.Failure.Detail, StringComparison.Ordinal);
         Assert.Single(wsl.Invocations);
+    }
+
+    [Fact]
+    public void A_shutdown_that_hangs_without_elevation_says_restart_rather_than_shut_down()
+    {
+        var wsl = new FakeWsl().Answer(null, "", "wsl.exe did not finish within 60s");
+
+        var outcome = new WslRestart(wsl, Stopped).Run();
+
+        Assert.Contains("Restart rather than Shut down", outcome.Failure!.Detail, StringComparison.Ordinal);
+    }
+
+    // ---- ending the service when the shutdown hangs (DD351) -------------------------------------
+
+    private sealed class FakeElevated(ElevatedRun answer) : IElevated
+    {
+        public List<(string File, string Arguments)> Calls { get; } = [];
+
+        public ElevatedRun Run(string fileName, string arguments)
+        {
+            Calls.Add((fileName, arguments));
+            return answer;
+        }
+    }
+
+    [Fact]
+    public void A_shutdown_that_hangs_ends_the_service_elevated_and_then_asks_wsl()
+    {
+        var wsl = new FakeWsl().Answer(null, "", "wsl.exe did not finish within 60s").Answer(0);
+        var elevated = new FakeElevated(new ElevatedRun(Ran: true, ExitCode: 0));
+        var reported = new List<RepairStep>();
+
+        var outcome = new WslRestart(wsl, Stopped, elevated).Run(reported.Add);
+
+        Assert.True(outcome.Succeeded);
+        Assert.Equal(
+            [FilesystemRepair.StopStep, WslRestart.ServiceStep, WslRestart.AnswerStep],
+            reported.Select(step => step.What));
+        var call = Assert.Single(elevated.Calls);
+        Assert.Equal("cmd.exe", call.File);
+        Assert.Contains("taskkill.exe\" /f /t /im wslservice.exe", call.Arguments, StringComparison.Ordinal);
+        Assert.Contains("net.exe\" start WSLService", call.Arguments, StringComparison.Ordinal);
+        Assert.Equal(["--list", "--quiet"], wsl.Invocations[1]);
+    }
+
+    [Fact]
+    public void A_service_already_started_again_by_wsl_is_not_a_failure()
+    {
+        var wsl = new FakeWsl().Answer(null, "", "hung").Answer(0);
+
+        var outcome = new WslRestart(
+            wsl, Stopped, new FakeElevated(new ElevatedRun(Ran: true, ExitCode: 2))).Run();
+
+        Assert.True(outcome.Succeeded);
+    }
+
+    [Fact]
+    public void A_declined_prompt_leaves_the_service_and_names_restart()
+    {
+        var wsl = new FakeWsl().Answer(null, "", "hung");
+
+        var outcome = new WslRestart(
+            wsl, Stopped, new FakeElevated(new ElevatedRun(Ran: false, Refused: true))).Run();
+
+        Assert.False(outcome.Succeeded);
+        Assert.Equal(WslRestart.ServiceStep, outcome.Failure!.What);
+        Assert.Contains("declined", outcome.Failure.Detail, StringComparison.Ordinal);
+        Assert.Contains("Restart rather than Shut down", outcome.Failure.Detail, StringComparison.Ordinal);
+        Assert.Single(wsl.Invocations);
+    }
+
+    [Fact]
+    public void A_shutdown_that_worked_never_asks_for_administrator_rights()
+    {
+        var elevated = new FakeElevated(new ElevatedRun(Ran: true, ExitCode: 0));
+
+        var outcome = new WslRestart(new FakeWsl(), Stopped, elevated).Run();
+
+        Assert.True(outcome.Succeeded);
+        Assert.Empty(elevated.Calls);
+    }
+
+    [Fact]
+    public void The_service_command_writes_its_words_to_the_log_it_is_given()
+    {
+        var command = WslRestart.ServiceCommand(@"C:\Users\a b\fh\wsl-restart.log");
+
+        Assert.Contains("> \"C:\\Users\\a b\\fh\\wsl-restart.log\" 2>&1", command, StringComparison.Ordinal);
+        Assert.Contains(">> \"C:\\Users\\a b\\fh\\wsl-restart.log\" 2>&1", command, StringComparison.Ordinal);
+        Assert.StartsWith("/c \"\"", command, StringComparison.Ordinal);
     }
 
     [Fact]

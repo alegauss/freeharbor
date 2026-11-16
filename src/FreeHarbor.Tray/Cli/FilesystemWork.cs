@@ -121,7 +121,12 @@ internal sealed class FilesystemWork : IFilesystemWork
     public RepairOutcome RestartWsl(Action<RepairStep> report)
     {
         ArgumentNullException.ThrowIfNull(report);
-        return new WslRestart(new Wsl(), StopTheEngine).Run(report);
+        return new WslRestart(
+                new Wsl(),
+                StopTheEngine,
+                new WindowsElevation(),
+                System.IO.Path.Combine(new EnginePaths().Root, "wsl-restart.log"))
+            .Run(report);
     }
 
     private static RepairOutcome Run(Action<RepairStep> report, bool write)

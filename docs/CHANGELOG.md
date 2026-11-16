@@ -120,6 +120,7 @@
 - ✅ **DD346 (assertion carries the client's words)** **The live compose run test failed once in a full run and passed alone, and its assertion keeps none of compose's words** — Every exit-code assertion in RelayExitCodeTests now prints the code, any failure and the client's own output when it is wrong.
 - ✅ **DD348** **A reinstall keeps the distribution's Alpine packages at the release first imported, so its security patches never land** — Provisioning runs apk upgrade before its adds, so a reinstall moves a kept distribution to its branch's latest patch; simulated here: 3.24.1 to 3.24.4, OpenSSL included.
 - ✅ **DD349** **The pins trail upstream: Moby and the CLI at 29.7.2, Compose 5.4.0, Buildx 0.36.1, Alpine 3.24.1** — Pins now Moby and CLI 29.9.3, Compose 5.7.1, Buildx 0.39.0, Alpine 3.24.4; a reinstall over a live machine came up on all of them with its 6 containers, 77 volumes and 37 images intact.
+- ✅ **DD351** **Restart WSL gives up when wsl --shutdown hangs too, and never asks for the rights that would end the stuck service** — When wsl --shutdown hangs, Restart WSL asks UAC once, ends wslservice.exe and starts it again, then asks WSL; a declined prompt names Restart over Shut down.
 
 ## Block B — The daemon client (talk to the engine)
 
