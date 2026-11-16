@@ -46,7 +46,7 @@ internal static class EngineCommand
         // --autostart and --min-api take a value, and --fsck, --compact and --compact-drill each
         // take a flag; everything else is a verb on its own.
         var allowed = mode is "--autostart" or "--min-api" or "--fsck" or "--compact"
-            or "--compact-drill" ? 2 : 1;
+            or "--compact-drill" or "--remove-engine" ? 2 : 1;
         if (args.Length > allowed)
         {
             return Complain($"unexpected argument {args[allowed]}");
@@ -62,6 +62,7 @@ internal static class EngineCommand
             "--watch" => Watch(),
             "--run" => RunEngine(),
             "--stop" => Stop(),
+            "--remove-engine" => RemoveEngine(args.Length > 1 ? args[1] : ""),
             "--fsck" => Fsck(args.Length > 1 ? args[1] : ""),
             "--fsck-drill" => Drill(),
             "--compact" => Compact(args.Length > 1 ? args[1] : ""),
@@ -722,6 +723,33 @@ internal static class EngineCommand
             .GetAwaiter().GetResult();
         Report(status);
         return Ok;
+    }
+
+    /// <summary>Take the engine off this machine before the app goes (DD317).</summary>
+    /// <param name="flag"><c>--all</c> to remove settings and details too; empty for the engine alone.</param>
+    /// <returns>The exit code.</returns>
+    /// <remarks>
+    /// Stopped first, exactly as <c>--stop</c> stops it, and announced, so a running host does not
+    /// put back the engine this is taking away (DD136). Then <see cref="EngineRemoval"/>, which
+    /// deletes nothing if the unregister fails.
+    /// </remarks>
+    private static int RemoveEngine(string flag)
+    {
+        if (flag is not ("" or "--all"))
+        {
+            return Complain($"--remove-engine takes --all or nothing, not {flag}");
+        }
+
+        _ = AskedStop.Announce();
+        Report(NewLifecycle().StopAsync(EngineLifecycle.PatientGrace).GetAwaiter().GetResult());
+
+        var removal = new EngineRemoval(new Wsl(), new EnginePaths()).Remove(all: flag == "--all");
+        foreach (var line in removal.Lines)
+        {
+            Console.WriteLine($"  {line}");
+        }
+
+        return removal.Succeeded ? Ok : Failed;
     }
 
     /// <summary>Check the distribution's filesystem, and mend it where asked to (DD199).</summary>

@@ -109,6 +109,8 @@ export const product: ProductData = {
     "",
     "  --run            start the engine and serve the pipe until Ctrl+C",
     "  --stop           stop the engine and terminate the distribution",
+    "  --remove-engine  unregister the distribution and delete its disk, downloads and CLI,",
+    "                   before uninstalling; --all also deletes settings and details",
     "  --status         what the engine is doing, by asking it",
     "  --fsck           check the distribution's filesystem; --repair to mend what it finds",
     "  --fsck-drill     rehearse the repair on a scratch disk dirtied on purpose, touching",
