@@ -69,21 +69,6 @@ but a count of what is left alive here is the evidence that question needs.
 
 ## Block C — The window (claude-tray's elements)
 
-### §DD331 Settings against its board
-
-DD301 shipped Settings as a left-aligned column at most 720 px wide, like About, with
-plain radio buttons and their explanation under each. The spec records that as a
-deliberate departure. `settings.png` draws something else, and an idea is filed rather
-than a task because adopting it reverses a recorded decision:
-
-1. A `Settings` page title, then each section heading in semibold at the body size.
-2. Each choice a radio card: card fill and stroke, the chosen one with the accent stroke and an accent-tinted fill, a tag after the name in accent text (`default`, `shared through git`, `edits your file`), the explanation, and a mono line with where it writes (`%LOCALAPPDATA%\FreeHarbor\details`, `<project>\.freeharbor\project.yaml`, `<project>\compose.yaml · x-freeharbor:`).
-3. Projects that save somewhere else as a bordered table: name and compose path in mono, the destination, and a ✕ to drop it.
-4. The read order as a numbered list with its keys in mono, all six steps visible. Today the capture shows the heading and step 1 only before the fold.
-
-If adopted, the spec's section 7 "As built" paragraph is rewritten in the same commit,
-since it would no longer be true. The owner chose the cards on 16 November 2026.
-
 ## Block D — Container operations (what a user came to do)
 
 ## Block E — Images, volumes and networks

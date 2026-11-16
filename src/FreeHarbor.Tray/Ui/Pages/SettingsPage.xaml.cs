@@ -48,6 +48,7 @@ internal partial class SettingsPage : System.Windows.Controls.UserControl
             .ToList();
         Overrides.ItemsSource = overrides;
         NoOverrides.Visibility = overrides.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        OverridesTable.Visibility = overrides.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void DefaultChosen(object sender, RoutedEventArgs e)

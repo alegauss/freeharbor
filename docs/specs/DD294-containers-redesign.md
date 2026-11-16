@@ -430,8 +430,12 @@ selected one carries the accent border.
 
 As built (DD301):
 
-- The page is a left-aligned column at most 720 px wide, like About, and each choice is a
-  plain radio button with its explanation under it, not a radio card.
+- Since DD331 the page follows the board: a centred column at most 920 px wide under a
+  `Settings` title, section headings in semibold at the body size, and each choice a radio
+  card with a tag, its explanation and the path it writes in mono. The chosen card takes the
+  accent stroke over an accent tint. The first card's tag reads `only you` rather than
+  `default`, because the default is whichever card is chosen. Overrides are a bordered table
+  with a ✕ per row, and Remove engine (DD317) closes the page.
 - A project's own choice is kept under the folder compose ran in, else its name. The edit
   dialog opens on it, then on the default, then on FreeHarbor where the project cannot use
   either. A save to the default forgets the project's departure, so the list holds only

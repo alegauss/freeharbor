@@ -1,77 +1,180 @@
 <!-- What the user prefers (DD301). A destination and not a dialog, for About's reason (L2): a choice
-     made once is read and changed while looking at the window, not behind a modal. Today it holds
-     one preference, where edits to names, descriptions and icons are saved, then the projects that
-     depart from it and the order details are read in, so the choice can be predicted. -->
+     made once is read and changed while looking at the window, not behind a modal.
+
+     Laid out to its board since DD331 (docs/specs/DD294-containers-redesign/settings.png): a
+     centred column about 920 px wide, a page title, section headings in semibold at the body size,
+     and each destination a radio card that names its tag and where it writes. -->
 <UserControl x:Class="FreeHarbor.Tray.Ui.Pages.SettingsPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:FreeHarbor.Tray.Ui"
              x:ClassModifier="internal">
+  <UserControl.Resources>
+    <!-- A card whose Tag carries its radio button's IsChecked: the chosen one takes the accent
+         stroke, and the tint layer under it the accent fill. -->
+    <Style x:Key="RadioCard" TargetType="Border">
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+      <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+          <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="RadioTint" TargetType="Border">
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Opacity" Value="0.14" />
+      <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+      <Setter Property="Visibility" Value="Collapsed" />
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+          <Setter Property="Visibility" Value="Visible" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="SectionHead" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+    <Style x:Key="SectionLead" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="Margin" Value="0,2,0,10" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+    <Style x:Key="CardName" TargetType="TextBlock">
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+    <Style x:Key="CardTag" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Margin" Value="10,0,0,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+    </Style>
+    <Style x:Key="CardText" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="Margin" Value="0,4,0,0" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+    <Style x:Key="CardPath" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="Margin" Value="0,4,0,0" />
+      <Setter Property="FontFamily" Value="{x:Static ui:Palette.Mono}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+    </Style>
+  </UserControl.Resources>
+
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-    <StackPanel Margin="10,10,10,20" MaxWidth="720" HorizontalAlignment="Left">
+    <StackPanel Margin="10,10,10,20" MaxWidth="920" HorizontalAlignment="Center">
 
-      <TextBlock Text="Where edits to names, descriptions and icons are saved" FontSize="16"
+      <TextBlock Text="Settings" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,20"
                  Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-      <TextBlock Margin="0,4,0,12" TextWrapping="Wrap" FontSize="12"
-                 Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                 Text="The edit dialog opens on this. A project you save somewhere else keeps its own choice, listed below." />
 
-      <RadioButton x:Name="ToFreeHarbor" GroupName="SaveTo" Tag="FreeHarbor" Checked="DefaultChosen">
-        <StackPanel>
-          <TextBlock Text="In FreeHarbor" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-          <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                     Text="Personal, on this machine only. The project folder is never touched." />
-        </StackPanel>
-      </RadioButton>
-      <RadioButton x:Name="ToProjectFile" GroupName="SaveTo" Tag="ProjectFile" Checked="DefaultChosen"
-                   Margin="0,8,0,0">
-        <StackPanel>
-          <TextBlock Text="In a .freeharbor folder in the project" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-          <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                     Text="Its own file beside the compose file, which it overrides, and shared with the team through git." />
-        </StackPanel>
-      </RadioButton>
-      <RadioButton x:Name="ToComposeFile" GroupName="SaveTo" Tag="ComposeFile" Checked="DefaultChosen"
-                   Margin="0,8,0,0">
-        <StackPanel>
-          <TextBlock Text="In the compose file" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-          <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                     Text="Only its x-freeharbor block is written, and the first save in each project shows the change before making it." />
-        </StackPanel>
-      </RadioButton>
-      <TextBlock Margin="0,12,0,0" FontSize="12" TextWrapping="Wrap"
-                 Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                 Text="Containers started without compose always save in FreeHarbor: they have no project folder to save in." />
+      <TextBlock Text="Where edits to names, descriptions and icons are saved" Style="{StaticResource SectionHead}" />
+      <TextBlock Style="{StaticResource SectionLead}"
+                 Text="Applies to compose projects. A standalone container is always saved in FreeHarbor, because it has no project folder." />
 
-      <TextBlock Text="Projects saved somewhere else" FontSize="12" FontWeight="SemiBold" Margin="0,24,0,8"
-                 Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+      <Grid Margin="0,0,0,8">
+        <Border Style="{StaticResource RadioTint}" Tag="{Binding IsChecked, ElementName=ToFreeHarbor}" />
+        <Border Style="{StaticResource RadioCard}" Tag="{Binding IsChecked, ElementName=ToFreeHarbor}">
+          <RadioButton x:Name="ToFreeHarbor" GroupName="SaveTo" Tag="FreeHarbor" Checked="DefaultChosen"
+                       Margin="16,12" HorizontalAlignment="Stretch">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="In FreeHarbor" Style="{StaticResource CardName}" />
+                <TextBlock Text="only you" Style="{StaticResource CardTag}" />
+              </StackPanel>
+              <TextBlock Style="{StaticResource CardText}"
+                         Text="Only on this machine and only for you. Nothing in the project folder changes." />
+              <TextBlock Style="{StaticResource CardPath}" Text="%LOCALAPPDATA%\FreeHarbor\details.json" />
+            </StackPanel>
+          </RadioButton>
+        </Border>
+      </Grid>
+
+      <Grid Margin="0,0,0,8">
+        <Border Style="{StaticResource RadioTint}" Tag="{Binding IsChecked, ElementName=ToProjectFile}" />
+        <Border Style="{StaticResource RadioCard}" Tag="{Binding IsChecked, ElementName=ToProjectFile}">
+          <RadioButton x:Name="ToProjectFile" GroupName="SaveTo" Tag="ProjectFile" Checked="DefaultChosen"
+                       Margin="16,12" HorizontalAlignment="Stretch">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="In a .freeharbor folder in the project" Style="{StaticResource CardName}" />
+                <TextBlock Text="shared through git" Style="{StaticResource CardTag}" />
+              </StackPanel>
+              <TextBlock Style="{StaticResource CardText}"
+                         Text="A file of its own beside the compose file, which it overrides. Commit it and the team sees the same names and icons." />
+              <TextBlock Style="{StaticResource CardPath}" Text="&lt;project&gt;\.freeharbor\project.yaml" />
+            </StackPanel>
+          </RadioButton>
+        </Border>
+      </Grid>
+
+      <Grid Margin="0,0,0,8">
+        <Border Style="{StaticResource RadioTint}" Tag="{Binding IsChecked, ElementName=ToComposeFile}" />
+        <Border Style="{StaticResource RadioCard}" Tag="{Binding IsChecked, ElementName=ToComposeFile}">
+          <RadioButton x:Name="ToComposeFile" GroupName="SaveTo" Tag="ComposeFile" Checked="DefaultChosen"
+                       Margin="16,12" HorizontalAlignment="Stretch">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="In the compose file" Style="{StaticResource CardName}" />
+                <TextBlock Text="edits your file" Style="{StaticResource CardTag}" />
+              </StackPanel>
+              <TextBlock Style="{StaticResource CardText}"
+                         Text="Only the x-freeharbor block is written. The first save in each project shows the change before making it." />
+              <TextBlock Style="{StaticResource CardPath}" Text="&lt;project&gt;\compose.yaml · x-freeharbor:" />
+            </StackPanel>
+          </RadioButton>
+        </Border>
+      </Grid>
+
+      <TextBlock Text="Projects that save somewhere else" Style="{StaticResource SectionHead}" Margin="0,24,0,0" />
+      <TextBlock Style="{StaticResource SectionLead}"
+                 Text="Set from Save to in a project's Edit details. Remove one to make it follow the default again." />
       <TextBlock x:Name="NoOverrides" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                  Text="None. Every project follows the choice above." />
-      <ItemsControl x:Name="Overrides">
-        <ItemsControl.ItemTemplate>
-          <DataTemplate>
-            <DockPanel Margin="0,0,0,8">
-              <Button DockPanel.Dock="Right" Content="Follow the default" Tag="{Binding Key}" Click="FollowDefault"
-                      Style="{DynamicResource RowAction}" VerticalAlignment="Center" />
-              <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="{Binding Key}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Key}"
-                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                <TextBlock Text="{Binding Value}" FontSize="12"
-                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-              </StackPanel>
-            </DockPanel>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
+      <Border x:Name="OverridesTable" CornerRadius="6" BorderThickness="1" Visibility="Collapsed"
+              BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+              Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+        <ItemsControl x:Name="Overrides">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border BorderThickness="0,0,0,1" Padding="16,10"
+                      BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="{Binding Key}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                             ToolTip="{Binding Key}" FontSize="12" FontFamily="{x:Static ui:Palette.Mono}"
+                             Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                  <TextBlock Grid.Column="1" Text="{Binding Value}" VerticalAlignment="Center" FontSize="12"
+                             Margin="12,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                  <Button Grid.Column="2" Content="✕" Tag="{Binding Key}" Click="FollowDefault"
+                          ToolTip="Follow the default again" Style="{DynamicResource RowAction}"
+                          VerticalAlignment="Center" />
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Border>
 
-      <TextBlock Text="Which value wins" FontSize="12" FontWeight="SemiBold" Margin="0,24,0,8"
-                 Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-      <TextBlock FontSize="12" TextWrapping="Wrap" Margin="0,0,0,6"
-                 Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                 Text="Each field is read from the first of these that sets it:" />
+      <TextBlock Text="Read order" Style="{StaticResource SectionHead}" Margin="0,24,0,0" />
+      <TextBlock Style="{StaticResource SectionLead}"
+                 Text="Every field is read separately; the first source that has it wins." />
       <ItemsControl x:Name="ReadOrder">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
-            <TextBlock Text="{Binding}" FontSize="12" Margin="0,0,0,2"
+            <TextBlock Text="{Binding}" FontSize="12" Margin="0,0,0,4"
                        Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
           </DataTemplate>
         </ItemsControl.ItemTemplate>
@@ -80,10 +183,8 @@
       <!-- DD317. Removing the Store package runs no code, so the engine's disk would outlive it.
            This is the step that comes before uninstalling, and the verb behind it is the one the
            Inno uninstaller runs. -->
-      <TextBlock Text="Remove the engine" FontSize="16" Margin="0,32,0,0"
-                 Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-      <TextBlock Margin="0,4,0,12" TextWrapping="Wrap" FontSize="12"
-                 Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+      <TextBlock Text="Remove the engine" Style="{StaticResource SectionHead}" Margin="0,24,0,0" />
+      <TextBlock Style="{StaticResource SectionLead}"
                  Text="Run this before uninstalling FreeHarbor. It unregisters the freeharbor distribution and deletes its disk, with every image, container and volume on it. Your settings stay." />
       <StackPanel Orientation="Horizontal">
         <Button x:Name="RemoveEngineButton" Content="Remove engine" Click="RemoveTheEngine"
