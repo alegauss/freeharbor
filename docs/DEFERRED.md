@@ -16,6 +16,8 @@
 
 ## Block F — Installer and distribution (free, Apache 2.0)
 
+- ⏸ **DD362** (deps: DD310 ✅) **The MSIX manifest carries a provisional identity, so the Store would refuse its upload** — set aside (Waits for the Partner Center reservation.): Partner Center's reservation of the name FreeHarbor is the only source of the Identity Name and Publisher a submission must match. → §DD362
+
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
 ## Block H — The public surface (the site a reader and an agent both read)

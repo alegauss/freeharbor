@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Microsoft Store package (DD310), ported from claude-tray's, which passed certification.
+  build\build-msix.ps1 fills {VERSION} from <Version> in Directory.Build.props, so the version
+  still lives in one place; the Store requires the fourth part to be 0.
+
+  Identity is provisional. The Store signs the package and refuses an upload whose Name and
+  Publisher differ from the Partner Center reservation, and FreeHarbor has none yet: until it
+  does, these are the values a sideloaded build signs with. Replacing them is the only edit
+  the reservation needs.
+
+  Write virtualization is off (DD309, docs/specs/DD309-msix-virtualization.md). With it on, the
+  app writes its root into the package's LocalCache while the WSL import is handed the real
+  path, and WslService, which runs outside the package, finds nothing there. unvirtualizedResources
+  is a restricted capability, so the submission has to say why: the app hands paths to a Windows
+  service outside the package, and that service has to find the files.
+
+  No extensions yet. The command aliases (DD312), the startup tasks (DD313) and the
+  docker-desktop:// handler (DD314) each arrive with their own task.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap desktop6 rescap">
+
+  <Identity Name="Alegauss.FreeHarbor"
+            Publisher="CN=FreeHarbor Sideload"
+            Version="{VERSION}"
+            ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>FreeHarbor</DisplayName>
+    <PublisherDisplayName>Alegauss</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>
+    <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
+  </Properties>
+
+  <Dependencies>
+    <!-- 19041 is Windows 10 2004, the first build installer.iss accepts for WSL2. -->
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+    <Resource Language="pt-br" />
+  </Resources>
+
+  <Applications>
+    <Application Id="FreeHarbor" Executable="FreeHarbor.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="FreeHarbor"
+        Description="Docker on Windows, built for your coding agent."
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png" />
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <rescap:Capability Name="unvirtualizedResources" />
+  </Capabilities>
+</Package>

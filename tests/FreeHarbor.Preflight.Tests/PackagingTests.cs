@@ -2017,4 +2017,69 @@ public sealed class PackagingTests
         Assert.Equal(
             Shipped.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion,
             BuildVersion.Current);
+
+    // ---- the MSIX package (DD310) ------------------------------------------------------------
+
+    /// <summary>The package manifest as committed, before the build fills the version in.</summary>
+    private static string PackageManifest() =>
+        File.ReadAllText(Path.Combine(RepositoryRoot(), "build", "msix", "AppxManifest.xml"));
+
+    /// <summary>The script that lays the package out and packs it.</summary>
+    private static string PackageScript() =>
+        File.ReadAllText(Path.Combine(RepositoryRoot(), "build", "build-msix.ps1"));
+
+    [Fact]
+    public void The_package_version_comes_from_Directory_Build_props_with_a_fourth_part_of_0()
+    {
+        // One version, stated once (DD14). The manifest carries a placeholder rather than a number,
+        // and the script fills it from the same <Version> the installer reads; the Store refuses a
+        // fourth part that is not 0.
+        Assert.Contains("Version=\"{VERSION}\"", PackageManifest(), StringComparison.Ordinal);
+
+        var script = PackageScript();
+        Assert.Contains("Directory.Build.props", script, StringComparison.Ordinal);
+        Assert.Contains("$version = \"$($Matches[1]).0\"", script, StringComparison.Ordinal);
+        Assert.Contains(".Replace('{VERSION}', $version)", script, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_package_carries_both_binaries_the_installer_ships()
+    {
+        // The same two publishes installer.iss packages: the tray, and the docker forwarder it puts
+        // under bin\. A package built from a different folder would ship a different build.
+        var script = PackageScript();
+        var installer = InstallerScript();
+
+        Assert.Contains(@"src\FreeHarbor.Tray\bin\Release\net10.0-windows\win-x64\publish\FreeHarbor.exe", script, StringComparison.Ordinal);
+        Assert.Contains(@"src\FreeHarbor.Shim\bin\Release\net10.0\win-x64\publish\docker.exe", script, StringComparison.Ordinal);
+        Assert.Contains(@"src\FreeHarbor.Tray\bin\Release\net10.0-windows\win-x64\publish""", installer, StringComparison.Ordinal);
+        Assert.Contains(@"src\FreeHarbor.Shim\bin\Release\net10.0\win-x64\publish""", installer, StringComparison.Ordinal);
+        Assert.Contains("Executable=\"FreeHarbor.exe\"", PackageManifest(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_package_turns_write_virtualization_off()
+    {
+        // DD309 measured it: with virtualization on, the root lands in the package's LocalCache while
+        // WslService, outside the package, is handed the real path and finds nothing to import.
+        var manifest = PackageManifest();
+
+        Assert.Contains("<desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>", manifest, StringComparison.Ordinal);
+        Assert.Contains("<desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>", manifest, StringComparison.Ordinal);
+        Assert.Contains("<rescap:Capability Name=\"unvirtualizedResources\" />", manifest, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Every_logo_the_package_names_is_committed()
+    {
+        // build\icon.mjs draws them; the build only copies, so a missing file is a failed pack.
+        var assets = Path.Combine(RepositoryRoot(), "build", "msix", "Assets");
+        var named = System.Text.RegularExpressions.Regex.Matches(PackageManifest(), @"Assets\\([A-Za-z0-9]+\.png)")
+            .Select(match => match.Groups[1].Value)
+            .Distinct()
+            .ToList();
+
+        Assert.Equal(3, named.Count);
+        Assert.All(named, logo => Assert.True(File.Exists(Path.Combine(assets, logo)), $"{logo} is not in build\\msix\\Assets"));
+    }
 }

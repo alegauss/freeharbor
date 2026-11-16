@@ -71,3 +71,18 @@ const entries = sizes.map((size, index) => {
 const out = join(root, "src", "FreeHarbor.Tray", "FreeHarbor.ico");
 writeFileSync(out, Buffer.concat([header, ...entries, ...pngs]));
 console.log(`${out}  ${sizes.length} sizes, ${offset} bytes`);
+
+// DD310. The MSIX package's three logos, committed beside its manifest for the same reason the
+// .ico is: build-msix.ps1 then needs the Windows SDK and nothing from Node. The 44 px one is a
+// taskbar-sized mark, so it takes the flat drawing the small .ico entries use.
+const logos = [
+  ["Square150x150Logo.png", 150, mark],
+  ["Square44x44Logo.png", 44, small],
+  ["StoreLogo.png", 50, mark],
+];
+for (const [name, size, svg] of logos) {
+  const png = new Resvg(svg, { fitTo: { mode: "width", value: size } }).render().asPng();
+  const path = join(root, "build", "msix", "Assets", name);
+  writeFileSync(path, png);
+  console.log(`${path}  ${size} px, ${png.length} bytes`);
+}

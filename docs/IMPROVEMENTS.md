@@ -164,26 +164,6 @@ when run, so the engine moves to first launch; otherwise no Store.
 Done when FreeHarbor is in the Store with its install working without admin, or the
 reason it cannot be is recorded here.
 
-### §DD310 Building the MSIX package
-
-Ported from claude-tray's build\build-msix.cmd, build-msix.ps1 and
-build\msix\AppxManifest.xml, which passed certification (claude-tray T409 and T412).
-
-- Reserve the name FreeHarbor in Partner Center under the Alegauss account; Identity Name and Publisher are copied from the reservation exactly, or the upload is refused.
-- {VERSION} is filled from <Version> in Directory.Build.props with a fourth part of 0, which the Store requires.
-- The payload is the Release publish of FreeHarbor.exe, the shim's docker.exe, and build\agent.
-- Tiles and StoreLogo are drawn from build\icon.svg by the script that already draws the .ico.
-- Resources en-us and pt-br, matching the installer's languages; MinVersion 10.0.19041, as installer.iss requires for WSL2; runFullTrust; and file and registry write virtualization disabled under rescap:unvirtualizedResources, the one mode DD309 measured working (docs/specs/DD309-msix-virtualization.md).
-- The output goes to dist\FreeHarbor.msix, plus a self-signed variant for sideloading tests.
-
-This task carries the bare package and none of the manifest extensions: the command
-aliases (DD312), the startup tasks (DD313) and the protocol handler (DD314) each come
-with their own task. PackagingTests gains cases that hold the manifest version equal to
-Directory.Build.props and check that both binaries are in the package.
-
-Done when the package installs by sideload on a clean user, the tray starts from the
-Start menu, and the existing Inno build is untouched.
-
 ### §DD311 Behaving as a packaged app
 
 Ported from claude-tray's src\Tray\PackageIdentity.cs. Whether the process is packaged
@@ -298,6 +278,26 @@ uninstalling.
 
 Done when a sideload install, an engine provisioned, Remove engine, then
 Remove-AppxPackage leaves no Lxss entry and no root.
+
+### §DD362 The Store identity from the reservation
+
+DD310 shipped the package with a provisional identity, `Alegauss.FreeHarbor` published
+by `CN=FreeHarbor Sideload`, because FreeHarbor has no Partner Center reservation yet.
+That is enough to build and sideload; the Store signs on submission and refuses an
+upload whose Identity Name and Publisher differ from the reservation.
+
+The owner reserves the name FreeHarbor under the Alegauss account, as claude-tray's was
+(Store ID 9P27BHWNT56D, Publisher `CN=1ADDE401-...`). Then:
+
+- `build\msix\AppxManifest.xml`: Identity Name and Publisher copied from Partner Center's
+  Product identity page, exactly, and the comment that calls them provisional removed.
+- `build-msix.ps1 -Sideload` keeps working: it signs with whatever subject the manifest's
+  Publisher names, so a sideload build uses a self-signed certificate of that subject.
+- PackagingTests gains a case that the Publisher is not the provisional one, so a Store
+  build cannot go out with it again.
+
+Done when `build-msix.cmd` produces a package whose identity matches the reservation,
+which is what DD292's submission uploads.
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
