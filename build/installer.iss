@@ -312,6 +312,10 @@ var
   // Empty when there is nothing to say.
   PreflightFailed: string;
 
+  // DD358. The WSL2 row came back Unknown: WSL is there and did not answer. The page then offers to
+  // end the stuck service rather than to turn on a feature that is already on.
+  PreflightWslStuck: Boolean;
+
   // Asked once and remembered, because the wizard walks over this page in both directions and
   // re-reading the machine on every Back would be a pause with no new answer in it.
   PreflightAsked: Boolean;
@@ -675,6 +679,7 @@ begin
   PreflightRows := '';
   PreflightCommand := '';
   PreflightWsl2 := False;
+  PreflightWslStuck := False;
   if not LoadStringsFromFile(Path, Lines) then
     Exit;
 
@@ -722,6 +727,8 @@ begin
         // page for it — the generic one carries the row's own remedy, which is to restart.
         if (Id = 'wsl2') and (Verdict <> 'Unknown') then
           PreflightWsl2 := True;
+        if (Id = 'wsl2') and (Verdict = 'Unknown') then
+          PreflightWslStuck := True;
       end;
 
       // Every row and not only the blocking ones (DD146). What blocks is what the page is for;
@@ -1005,6 +1012,21 @@ begin
     + ') else ("%SystemRoot%\System32\' + Name + '" ' + Arguments + ')';
 end;
 
+/// The arguments that make an elevated cmd.exe end the stuck WSL service and start it again (DD358).
+function ServiceRestart: string;
+begin
+  // The sequence DD351 gives the tray's Restart WSL, for the page that meets the same stuck service
+  // before anything is installed. Ended rather than stopped: a service that does not answer
+  // `wsl --shutdown` does not answer the service manager's stop either, and the VM goes with the
+  // process that owned it. taskkill and net exist in both views, so the 32-bit cmd that is elevated
+  // finds them where it looks.
+  //
+  // No quotes anywhere, on purpose. cmd strips the first and last quote of a /c line that starts
+  // with one, and %SystemRoot% has no space in it on any Windows this installer supports.
+  Result := '/c %SystemRoot%\System32\taskkill.exe /f /t /im wslservice.exe'
+    + ' & %SystemRoot%\System32\net.exe start WSLService';
+end;
+
 /// Leave Setup where the restart will find it.
 procedure ArrangeToBePickedUp;
 begin
@@ -1061,9 +1083,15 @@ begin
   // Offered only where there is a command to run and a row this file is willing to run one for.
   // Every other blocker — a rival engine, a firmware setting — is somebody else's to change, and a
   // button that elevated for those would be an installer taking a machine apart.
-  PreflightTurnOn.Visible := PreflightWsl2 and (PreflightCommand <> '') and not PreflightClear;
+  //
+  // A stuck WSL is the one other row it runs something for (DD358): the action is fixed, it touches
+  // nothing but WSL's own service, and the alternative the row names is restarting Windows.
+  PreflightTurnOn.Visible :=
+    ((PreflightWsl2 and (PreflightCommand <> '')) or PreflightWslStuck) and not PreflightClear;
   PreflightTurnOn.Top := Row;
-  if PreflightFeatureOn then
+  if PreflightWslStuck and not PreflightWsl2 then
+    PreflightTurnOn.Caption := 'Restart WSL for me'
+  else if PreflightFeatureOn then
     PreflightTurnOn.Caption := 'Restart now'
   else
     PreflightTurnOn.Caption := 'Turn it on for me';
@@ -1124,6 +1152,26 @@ begin
     PreflightMemo.Text :=
       'Nothing has been installed and nothing has been changed. Each row below names the one '
       + 'action that changes it.'#13#10#13#10 + PreflightSaid;
+
+    // DD358. The button's own sentence, because what it stops reaches past this product.
+    if PreflightWslStuck then
+    begin
+      if PreflightRefused then
+        PreflightMemo.Text :=
+          'Restart WSL for me needs one administrator prompt, and that prompt was not granted. '
+          + 'Nothing has changed; restarting Windows does the same.'#13#10#13#10
+          + PreflightMemo.Text
+      else if PreflightFailed <> '' then
+        PreflightMemo.Text :=
+          'Restart WSL for me did not finish. ' + PreflightFailed
+          + ' Restarting Windows does the same.'#13#10#13#10
+          + PreflightMemo.Text
+      else
+        PreflightMemo.Text := PreflightMemo.Text + #13#10
+          + 'Restart WSL for me does it without restarting Windows: behind one administrator '
+          + 'prompt it ends the stuck WSL service, starts it again and checks this machine once '
+          + 'more. Every WSL distribution open on this machine stops with it.';
+    end;
   end;
 
   PreflightFooter.Caption := 'Written to ' + PreflightReport;
@@ -1137,11 +1185,20 @@ end;
 /// Run the command the row named, once, elevated.
 procedure TurnItOn;
 var
-  Exe, Arguments: string;
+  Exe, Arguments, Command: string;
   Shell: Integer;
-  WasPending: Boolean;
+  WasPending, Restarting: Boolean;
 begin
-  SplitCommand(PreflightCommand, Exe, Arguments);
+  // The two things this button elevates for share one ShellExec, so the claim that the page costs
+  // one prompt stays a fact about the code rather than about which row happened to block.
+  Restarting := PreflightWslStuck and not PreflightWsl2;
+  if Restarting then
+    Command := ServiceRestart
+  else
+  begin
+    SplitCommand(PreflightCommand, Exe, Arguments);
+    Command := ThroughCmd(Exe, Arguments);
+  end;
   WasPending := RestartIsPending;
 
   PreflightTurnOn.Enabled := False;
@@ -1149,7 +1206,7 @@ begin
   try
     // SW_SHOWNORMAL, deliberately: `wsl --install` takes minutes and prints as it goes, and a
     // hidden window would leave the wizard frozen with nothing anywhere saying why.
-    if not ShellExec('runas', ExpandConstant('{sys}\cmd.exe'), ThroughCmd(Exe, Arguments), '',
+    if not ShellExec('runas', ExpandConstant('{sys}\cmd.exe'), Command, '',
                      SW_SHOWNORMAL, ewWaitUntilTerminated, Shell) then
     begin
       // ERROR_CANCELLED is the prompt being refused, or an account that cannot elevate at all.
@@ -1171,6 +1228,23 @@ begin
   end;
 
   PreflightRefused := False;
+
+  if Restarting then
+  begin
+    // net start exits 2 for a service something already started again, which is not a failure.
+    // Whether WSL answers is not judged here either: the machine is read again, and the page says
+    // what that read found, which is the only answer that counts.
+    if (Shell <> 0) and (Shell <> 2) then
+    begin
+      PreflightFailed := 'It ran and exited ' + IntToStr(Shell)
+        + ', so the WSL service may not have started again.';
+      Exit;
+    end;
+
+    PreflightAsked := False;
+    Preflight;
+    Exit;
+  end;
 
   // cmd hands back the tool's exit code, which the direct ShellExec never could. A run that
   // failed has turned nothing on, and saying so beats sending somebody to restart for nothing.

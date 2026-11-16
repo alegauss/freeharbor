@@ -1287,7 +1287,8 @@ public sealed class PackagingTests
         var turn = code[code.IndexOf("procedure TurnItOn;", StringComparison.Ordinal)..];
         turn = turn[..turn.IndexOf("\nend;", StringComparison.Ordinal)];
 
-        Assert.Contains("ShellExec('runas', ExpandConstant('{sys}\\cmd.exe'), ThroughCmd(", turn, StringComparison.Ordinal);
+        Assert.Contains("ShellExec('runas', ExpandConstant('{sys}\\cmd.exe'), Command,", turn, StringComparison.Ordinal);
+        Assert.Contains("Command := ThroughCmd(Exe, Arguments);", turn, StringComparison.Ordinal);
         Assert.Contains("%SystemRoot%\\Sysnative\\", code, StringComparison.Ordinal);
         Assert.Contains("%SystemRoot%\\System32\\", code, StringComparison.Ordinal);
 
@@ -1300,6 +1301,34 @@ public sealed class PackagingTests
         var failed = turn.IndexOf("if Shell <> 0 then", StringComparison.Ordinal);
         var claimed = turn.IndexOf("PreflightFeatureOn := True;", StringComparison.Ordinal);
         Assert.True(failed >= 0 && claimed > failed, "a failed run still says the feature was turned on");
+    }
+
+    [Fact]
+    public void A_stuck_wsl_is_offered_a_service_restart_through_the_same_single_prompt()
+    {
+        // DD358. The page that meets a WSL which is there and did not answer offers to end the
+        // stuck service, and it does so through the one ShellExec the page already has.
+        var code = PreflightCode();
+        var turn = code[code.IndexOf("procedure TurnItOn;", StringComparison.Ordinal)..];
+        turn = turn[..turn.IndexOf("\nend;", StringComparison.Ordinal)];
+
+        Assert.Contains("Command := ServiceRestart", turn, StringComparison.Ordinal);
+        Assert.Contains("taskkill.exe /f /t /im wslservice.exe", code, StringComparison.Ordinal);
+        Assert.Contains("net.exe start WSLService", code, StringComparison.Ordinal);
+        Assert.Contains("'Restart WSL for me'", code, StringComparison.Ordinal);
+
+        // Read only off the Unknown verdict: a missing feature still gets the page for turning it on.
+        Assert.Contains("(Id = 'wsl2') and (Verdict = 'Unknown')", code, StringComparison.Ordinal);
+
+        // No quote may open the line: cmd strips the first and last quote of a /c line that starts
+        // with one, which would cut the command in two.
+        var restart = code[code.IndexOf("function ServiceRestart", StringComparison.Ordinal)..];
+        restart = restart[..restart.IndexOf("\nend;", StringComparison.Ordinal)];
+        Assert.DoesNotContain("\"", restart, StringComparison.Ordinal);
+
+        // And the machine is read again afterwards, so the page says what is true now.
+        var after = turn[turn.IndexOf("if Restarting then\n  begin", StringComparison.Ordinal)..];
+        Assert.Contains("Preflight;", after, StringComparison.Ordinal);
     }
 
     [Fact]

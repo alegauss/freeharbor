@@ -138,6 +138,25 @@ public sealed class PreflightPage
             ["heading", "memo", "again", "footer"],
             Hidden: ["commandbox", "copy", "link", "turnon"]),
 
+        // DD358. WSL there and not answering: the generic page, no command to copy and no link to
+        // Microsoft's install instructions, and the one button offering to restart the service.
+        new(
+            "wsl-stuck",
+            ["/wsl2=no", "/stuck=yes"],
+            "This machine cannot host the container engine yet",
+            "no",
+            ["heading", "memo", "turnon", "again", "footer"],
+            TurnOn: "Restart WSL for me",
+            Hidden: ["commandbox", "copy", "link"]),
+        new(
+            "wsl-stuck-refused",
+            ["/wsl2=no", "/stuck=yes", "/refused=yes"],
+            "This machine cannot host the container engine yet",
+            "no",
+            ["heading", "memo", "turnon", "again", "footer"],
+            TurnOn: "Restart WSL for me",
+            Hidden: ["commandbox", "copy", "link"]),
+
         // Reachable only through Check again, and the whole point of it is that Next comes back.
         new(
             "cleared",
@@ -502,7 +521,7 @@ var
   PreflightCopy, PreflightAgain, PreflightTurnOn: TNewButton;
   PreflightLink: TNewLinkLabel;
   PreflightAsked, PreflightClear, PreflightWsl2: Boolean;
-  PreflightRefused, PreflightFeatureOn, PreflightRestartWanted: Boolean;
+  PreflightRefused, PreflightFeatureOn, PreflightRestartWanted, PreflightWslStuck: Boolean;
   PreflightSaid, PreflightCommand, PreflightReport, PreflightFailed: string;
 
 // The page never calls this; the buttons do, and this Setup presses nothing.
@@ -584,6 +603,7 @@ begin
   PreflightSaid := ExpandConstant('{param:said|a row  some detail}');
   PreflightCommand := ExpandConstant('{param:command}');
   PreflightWsl2 := ExpandConstant('{param:wsl2|no}') = 'yes';
+  PreflightWslStuck := ExpandConstant('{param:stuck|no}') = 'yes';
   PreflightRefused := ExpandConstant('{param:refused|no}') = 'yes';
   PreflightFeatureOn := ExpandConstant('{param:on|no}') = 'yes';
   PreflightRestartWanted := ExpandConstant('{param:pending|no}') = 'yes';
