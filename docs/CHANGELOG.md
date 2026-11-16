@@ -284,7 +284,7 @@
 - ✅ **DD312** **Inside a package, docker and freeharbor are not on PATH and DOCKER_CONFIG may land in the package's private hive** — The freeharbor.exe and docker.exe aliases answer from a sideload, compose and buildx included, as the shim finds CLI and DOCKER_CONFIG (design recorded in `build/msix/AppxManifest.xml`).
 - ✅ **DD313 (manifest half)** **Under a package, both Run values go to a private hive Explorer never reads, so nothing starts at sign-in** — The package declares the tray's startup task on and the engine's off, measured from a sideload, and --autostart under it names Settings.
 - ✅ **DD314** **Packaged, the docker-desktop:// link buildx prints opens nothing, because the HKCU handler is never registered** — The package claims docker-desktop:// and a link reaches its exe as --open-build with the URL, the installer handler's own command line (design recorded in `build/msix/AppxManifest.xml`).
-- ✅ **DD317 (verb, Inno, preflight, Settings)** **Uninstalling the package leaves the freeharbor distribution and its multi-gigabyte disk registered with WSL** — --remove-engine, which Inno runs and Settings offers as Remove engine with a size-stating confirmation, takes the engine off; preflight blocks on an orphan.
+- ✅ **DD317 (all but Store listing and proof)** **Uninstalling the package leaves the freeharbor distribution and its multi-gigabyte disk registered with WSL** — --remove-engine, run by Inno and offered as Remove engine in Settings, takes the engine off; preflight blocks on an orphan; the site says remove first.
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 

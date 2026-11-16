@@ -19,8 +19,7 @@
 ## Block F — Installer and distribution (free, Apache 2.0)
 
 - 📋 **DD290** (deps: winget-pkgs moderator approval) **winget install alegauss.FreeHarbor finds nothing while the first winget-pkgs pull request waits for moderators** — The terminal is where a developer looks for a Docker replacement, and the README cannot name the command until the package is live. → §DD290
-- 📋 **DD292** (deps: DD312 ✅, DD313 ✅, DD314 ✅, DD316 ⏸, DD317 ⏳, DD362 ⏸) **Every first download meets a SmartScreen warning, because the installer is not signed** — claude-tray reached the Store (T412), so what is left is the listing and the submission once the package installs and works without admin. → §DD292
-- ⏳ **DD317** (deps: DD309 ✅) **Uninstalling the package leaves the freeharbor distribution and its multi-gigabyte disk registered with WSL** — Left: the Store listing and site uninstall note, and a sideload proof. → §DD317
+- 📋 **DD292** (deps: DD312 ✅, DD313 ✅, DD314 ✅, DD316 ⏸, DD317 ✅, DD362 ⏸) **Every first download meets a SmartScreen warning, because the installer is not signed** — claude-tray reached the Store (T412), so what is left is the listing and the submission once the package installs and works without admin. → §DD292
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 

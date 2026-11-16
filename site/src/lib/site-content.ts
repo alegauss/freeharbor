@@ -1202,6 +1202,8 @@ export const download = {
     { b: "asks about what was created" },
     ". The ",
     { code: "freeharbor" },
-    " distribution holds every image, container and volume you have, so it is never deleted without a question, and an unattended uninstall keeps it.",
+    " distribution holds every image, container and volume you have, so it is never deleted without a question, and an unattended uninstall keeps it. Removing the MSIX package runs no code at all, so before that, use Remove engine in Settings or ",
+    { code: "freeharbor --remove-engine" },
+    ".",
   ] as Rich,
 };

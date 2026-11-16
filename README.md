@@ -60,7 +60,9 @@ and Windows remembers; until then the state is in its tooltip.
 
 Uninstalling removes what was installed and **asks about what was created**. The `freeharbor`
 distribution holds every image, container and volume you have, so it is never deleted without a
-question, and an unattended uninstall keeps it.
+question, and an unattended uninstall keeps it. Removing the MSIX package runs no code at all, so
+before that, use Remove engine in Settings or `freeharbor --remove-engine`; otherwise the
+distribution and its disk stay registered with WSL.
 
 The same executable is every verb:
 

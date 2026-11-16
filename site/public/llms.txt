@@ -166,7 +166,9 @@ it.
   halfway through a download.
 - **Uninstalling asks about what was created.** The `freeharbor` WSL2 distribution holds every
   image, container and volume, so it is never removed without a question, and an unattended
-  uninstall keeps it.
+  uninstall keeps it. Removing the MSIX package runs no code, so run Remove engine in Settings
+  or `freeharbor --remove-engine` first; a distribution left behind with its folder gone is
+  what the preflight's Earlier engine row blocks on.
 - **From source**: `dotnet build`, then `build\build.cmd` for the single-file `.exe`; needs
   the .NET 10 SDK and Windows, and the installer additionally needs Inno Setup 6. Stated in
   the repository's own
