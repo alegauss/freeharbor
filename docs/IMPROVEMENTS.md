@@ -93,6 +93,81 @@ What it cannot do is the real proof: GitHub's Windows runners do not offer WSL2,
 pull request says that one provision on a machine is still owed before merge, the same
 rule DD349 ships under.
 
+### §DD352 A hung wsl.exe is the same failure as HCS_E_CONNECTION_TIMEOUT
+
+DD344 offers Restart WSL only while the journal's latest word is the code
+HCS_E_CONNECTION_TIMEOUT. That code arrives when wsl.exe gives up. On 16 November it
+never gave up: `wsl -l -q` calls from other programs were already hanging at 06:57:41,
+before the tray started at 06:57:57, and every launch after that hung too. The host
+wrote "the launcher is alive and the pipe did not answer within 60s" and nothing else,
+so the stuck-WSL notice and the button rested on a line from the previous afternoon.
+
+The fix is to treat a `wsl --list --quiet` that exceeds WslBudget.Probe as the same fact
+the code is: WSL itself is not answering. The probe is cheap and touches no
+distribution, so it can run when a start passes its budget with the launcher still
+alive. Where it hangs, the journal gets a line carrying a recognisable marker that
+WslFailure.SaysWslIsNotAnswering reads, and the notice and the button follow without a
+second path.
+
+Not this task: deciding what to do about it. DD351 already holds the remedy; this only
+makes sure the remedy is offered.
+
+### §DD353 Fast Startup turns Shut down into hibernation of the kernel
+
+With HiberbootEnabled=1, Windows' Shut down hibernates the kernel session and the next
+power-on resumes it; Microsoft-Windows-Kernel-Boot event 27 records the boot type as
+0x1. Services, including WslService and the HCS state under it, come back in the state
+they were in. A user who reads "restart your computer" and presses Shut down has not
+restarted anything, which is what happened between 15 and 16 November: WSL stuck at
+15:09, Shut down at 22:02, and every wsl.exe hung again from logon the next morning.
+
+DD351 already names Restart over Shut down where the UAC prompt is declined. This task
+is the other half: when WSL is found not answering in the first minutes after a logon,
+and the last boot was hybrid, say so in the stuck-WSL notice and on the Engine page, in
+one sentence: Fast Startup brought the stuck WSL back, and Restart (not Shut down)
+clears it.
+
+Read-only. Turning Fast Startup off is the user's decision about their machine, needs
+administrator rights, and has costs outside this product; the most this offers is the
+name of the setting.
+
+### §DD354 What a host that is done leaves behind
+
+Measured on 16 November with WSL stuck: the host started at 07:02:28 wrote "this host is
+done" at 07:04:01, but process 27008 was still running half an hour later. Under it were
+a `wsl -d freeharbor … dockerd` launcher, a `wsl -d freeharbor … socat` relay channel,
+and a `wsl --list --running --quiet` probe, each with the second wsl.exe the WindowsApps
+alias spawns. The tray had its own hung `wsl --list --running --quiet` too. Every start
+attempt on a stuck WSL adds another set, and they hold handles into a service that is
+already short of them.
+
+Two things to establish and fix. First, why the host process does not exit once it has
+said it is done: a foreground wait on a child, or a relay dispose waiting on a channel
+that never closes. Second, that a wsl.exe whose budget ran out is killed with its whole
+tree (Process.Kill(entireProcessTree: true)), so the alias's child goes with it.
+
+The relay's per-connection socat channel is a separate question, raised by the
+WSAENOBUFS (0x80072747) that preceded the hang on 15 November; that is not this task,
+but a count of what is left alive here is the evidence that question needs.
+
+### §DD355 The live probe must answer absent within a budget
+
+LiveEngine.Look decides, once per run and at discovery, whether the DD260 tests can run.
+It serves a relay on a pipe of its own and asks the installed docker for `version`.
+BundledComposeCli.Run waits for the client to exit, the client waits for the relay, and
+the relay's WslSocatBackend channel is a wsl.exe that, on a machine where WSL is stuck,
+never returns. The probe never answers, and because it is read at discovery, no test in
+the assembly runs, including the 1844 that never touch WSL.
+
+Verifying DD351 needed a loop that killed every socat wsl.exe under testhost so the
+probe would fail fast. With that, the live tests skipped and the rest passed.
+
+The probe should run under a deadline (WslBudget.Probe or a few seconds more), kill the
+client and dispose the relay without waiting on open channels when the deadline passes,
+and return a reason that names it: no daemon answered within the budget, which on this
+machine means WSL itself is not answering. The skip reason is then the diagnosis, and
+the suite stays a suite on the machine that most needs it.
+
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)
