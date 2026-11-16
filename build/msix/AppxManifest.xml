@@ -18,8 +18,13 @@
   The command line (DD312): a folder under WindowsApps cannot be launched from outside, so the
   installer's PATH entry becomes two execution aliases, freeharbor.exe on the tray and docker.exe
   on a second, unlisted application whose executable is the console forwarder. Aliases land in
-  %LOCALAPPDATA%\Microsoft\WindowsApps, late on PATH. The docker-desktop:// handler (DD314)
-  arrives with its own task.
+  %LOCALAPPDATA%\Microsoft\WindowsApps, late on PATH.
+
+  The docker-desktop:// link buildx prints (DD314, DD126): the installer registers it under HKCU,
+  which a package cannot rely on, so the manifest declares the scheme. Parameters hands the URL
+  over on the command line exactly as the installer's handler does, so the code that opens the
+  build is the same for both. Windows offers a choice when two apps claim a scheme, and the
+  registration leaves with the package.
 
   Start with Windows (DD313): a package's HKCU Run values are written where nothing launches them,
   so the installer's two Run values (DD97) become two startup tasks. The tray's is on, as the
@@ -30,12 +35,13 @@
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
   xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
   xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap uap5 uap10 desktop desktop6 rescap">
+  IgnorableNamespaces="uap uap3 uap5 uap10 desktop desktop6 rescap">
 
   <Identity Name="Alegauss.FreeHarbor"
             Publisher="CN=FreeHarbor Sideload"
@@ -77,6 +83,11 @@
         <desktop:Extension Category="windows.startupTask">
           <desktop:StartupTask TaskId="FreeHarborTray" Enabled="true" DisplayName="FreeHarbor" />
         </desktop:Extension>
+        <uap3:Extension Category="windows.protocol">
+          <uap3:Protocol Name="docker-desktop" Parameters="--open-build &quot;%1&quot;">
+            <uap:DisplayName>Docker build details</uap:DisplayName>
+          </uap3:Protocol>
+        </uap3:Extension>
       </Extensions>
     </Application>
     <!-- The engine at sign-in: the same exe serving the engine, off unless the user turns it on. -->

@@ -189,30 +189,6 @@ Left: `--autostart on` and `off` under a package. Two ways, and the owner picks.
 Done when `--autostart on` and `off` move the engine's task, or open the page that does,
 from a sideload install.
 
-### §DD314 The build-details link from a package
-
-Buildx ends every build with View build details: docker-desktop://dashboard/build/...,
-hardcoded in the binary this project pins. DD126 made the link open the build in
-FreeHarbor's window through a handler the installer writes under
-HKCU\Software\Classes\docker-desktop. A packaged app's HKCU write lands in its private
-hive, so on a Store install that link is dead again.
-
-The manifest declares it instead: a uap:Extension of category windows.protocol with
-Name="docker-desktop" on the tray's Application, the logo from the package, and the URL
-passed to the exe. The handler today runs FreeHarbor.exe --open-build "%1"; under a
-protocol activation the URL arrives through the activation arguments instead of the
-command line. Read it there when packaged, through the same hand-declared WinRT lookup
-DD311 uses for the activation kind. Then hand it to the code that already writes
-open-build.txt and signals the running tray (DD126).
-
-The trade-off DD126 recorded still holds: this is another vendor's scheme. A manifest
-registration behaves better than the Inno one on that score, because Windows offers a
-choice when two apps claim a scheme instead of the last writer silently winning, and the
-registration leaves with the package.
-
-Done when a build run from a terminal after a sideload install prints the link and
-clicking it opens that build in the window.
-
 ### §DD316 The first launch carries what the setup wizard did
 
 The Inno wizard does four things a package cannot: it runs --preflight before writing

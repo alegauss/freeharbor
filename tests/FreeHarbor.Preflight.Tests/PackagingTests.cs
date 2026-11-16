@@ -1677,6 +1677,21 @@ public sealed class PackagingTests
     }
 
     [Fact]
+    public void The_package_hands_the_build_link_over_as_the_installer_does()
+    {
+        // DD314. The same verb and the same quoted %1 the installer's HKCU handler carries (DD126), so
+        // one code path opens the build for both channels.
+        Assert.Contains(
+            $"<uap3:Protocol Name=\"docker-desktop\" Parameters=\"{CommandLine.OpenBuildVerb} &quot;%1&quot;\">",
+            PackageManifest(),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            $"--open-build \"\"%1\"\"",
+            InstallerScript(),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void The_package_puts_freeharbor_and_docker_on_PATH_through_aliases()
     {
         // DD312. The allowlist entry an agent was given, Bash(freeharbor read:*), still has to match
