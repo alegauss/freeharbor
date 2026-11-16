@@ -740,9 +740,7 @@ internal static class EngineCommand
             return Complain($"--remove-engine takes --all or nothing, not {flag}");
         }
 
-        _ = AskedStop.Announce();
-        Report(NewLifecycle().StopAsync(EngineLifecycle.PatientGrace).GetAwaiter().GetResult());
-
+        Report(StopForRemoval());
         var removal = new EngineRemoval(new Wsl(), new EnginePaths()).Remove(all: flag == "--all");
         foreach (var line in removal.Lines)
         {
@@ -750,6 +748,18 @@ internal static class EngineCommand
         }
 
         return removal.Succeeded ? Ok : Failed;
+    }
+
+    /// <summary>Stop the engine the way a removal needs it stopped (DD317).</summary>
+    /// <returns>Where the engine ended up.</returns>
+    /// <remarks>
+    /// Announced first, so a running host does not put back the engine being taken away (DD136).
+    /// Shared by the verb and the Settings page, so the two remove the engine one way.
+    /// </remarks>
+    internal static EngineStatus StopForRemoval()
+    {
+        _ = AskedStop.Announce();
+        return NewLifecycle().StopAsync(EngineLifecycle.PatientGrace).GetAwaiter().GetResult();
     }
 
     /// <summary>Check the distribution's filesystem, and mend it where asked to (DD199).</summary>

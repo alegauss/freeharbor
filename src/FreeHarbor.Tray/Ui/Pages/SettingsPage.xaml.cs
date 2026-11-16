@@ -69,6 +69,49 @@ internal partial class SettingsPage : System.Windows.Controls.UserControl
         Refresh();
     }
 
+    /// <summary>Take the engine off this machine, once asked twice (DD317).</summary>
+    /// <param name="sender">Unused.</param>
+    /// <param name="e">Unused.</param>
+    /// <remarks>
+    /// The same stop and the same <see cref="Core.Engine.EngineRemoval"/> the verb runs, off the
+    /// thread that draws. What it printed is shown under the button, because the space that came
+    /// back and a folder WSL still held are both things the reader acts on.
+    /// </remarks>
+    private async void RemoveTheEngine(object sender, RoutedEventArgs e)
+    {
+        var paths = new Core.Engine.EnginePaths();
+        var answer = System.Windows.MessageBox.Show(
+            Window.GetWindow(this),
+            Core.Engine.EngineRemoval.Confirmation(Core.Engine.EngineRemoval.DiskBytes(paths)),
+            "Remove the engine",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning,
+            System.Windows.MessageBoxResult.No);
+
+        if (answer is not System.Windows.MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        RemoveEngineButton.IsEnabled = false;
+        RemovalSaid.Visibility = Visibility.Visible;
+        RemovalSaid.Text = "Stopping the engine and removing it…";
+        try
+        {
+            var removal = await Task.Run(() =>
+            {
+                Cli.EngineCommand.StopForRemoval();
+                return new Core.Engine.EngineRemoval(new Core.Engine.Wsl(), paths).Remove(all: false);
+            }).ConfigureAwait(true);
+
+            RemovalSaid.Text = string.Join(Environment.NewLine, removal.Lines);
+        }
+        finally
+        {
+            RemoveEngineButton.IsEnabled = true;
+        }
+    }
+
     private void FollowDefault(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string key })

@@ -76,6 +76,21 @@
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
+
+      <!-- DD317. Removing the Store package runs no code, so the engine's disk would outlive it.
+           This is the step that comes before uninstalling, and the verb behind it is the one the
+           Inno uninstaller runs. -->
+      <TextBlock Text="Remove the engine" FontSize="16" Margin="0,32,0,0"
+                 Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+      <TextBlock Margin="0,4,0,12" TextWrapping="Wrap" FontSize="12"
+                 Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                 Text="Run this before uninstalling FreeHarbor. It unregisters the freeharbor distribution and deletes its disk, with every image, container and volume on it. Your settings stay." />
+      <StackPanel Orientation="Horizontal">
+        <Button x:Name="RemoveEngineButton" Content="Remove engine" Click="RemoveTheEngine"
+                Padding="12,2" FontSize="12" />
+      </StackPanel>
+      <TextBlock x:Name="RemovalSaid" Margin="0,8,0,0" FontSize="12" TextWrapping="Wrap"
+                 Visibility="Collapsed" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
     </StackPanel>
   </ScrollViewer>
 </UserControl>

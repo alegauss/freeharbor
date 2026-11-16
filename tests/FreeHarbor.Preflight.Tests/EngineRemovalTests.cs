@@ -90,4 +90,42 @@ public sealed class EngineRemovalTests : IDisposable
         Assert.Contains("--remove-engine", FreeHarbor.Tray.Cli.CommandLine.EngineVerbs);
         Assert.Contains("--remove-engine", FreeHarbor.Tray.Cli.CommandLine.HelpText, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void The_confirmation_states_the_disk_size_and_what_goes_with_it()
+    {
+        var said = EngineRemoval.Confirmation(EngineRemoval.DiskBytes(new EnginePaths(_root)));
+
+        Assert.Contains("(1 KB)", said, StringComparison.Ordinal);
+        Assert.Contains("Every image, container and volume", said, StringComparison.Ordinal);
+        Assert.Contains("no undo", said, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_absent_disk_is_confirmed_without_a_size() =>
+        Assert.DoesNotContain("(", EngineRemoval.Confirmation(EngineRemoval.DiskBytes(new EnginePaths(Path.Combine(_root, "none")))), StringComparison.Ordinal);
+
+    [Fact]
+    public void Settings_offers_Remove_engine_through_the_verb_own_stop()
+    {
+        // One removal: the page runs the stop the verb runs, and the same EngineRemoval.
+        var page = File.ReadAllText(RepositoryFile(@"src\FreeHarbor.Tray\Ui\Pages\SettingsPage.xaml.cs"));
+
+        Assert.Contains("Cli.EngineCommand.StopForRemoval();", page, StringComparison.Ordinal);
+        Assert.Contains("EngineRemoval.Confirmation(", page, StringComparison.Ordinal);
+        Assert.Contains("Window.GetWindow(this)", page, StringComparison.Ordinal);
+    }
+
+    private static string RepositoryFile(string relative)
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null
+            && !File.Exists(Path.Combine(directory.FullName, "FreeHarbor.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        Assert.NotNull(directory);
+        return Path.Combine(directory.FullName, relative);
+    }
 }

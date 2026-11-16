@@ -110,6 +110,34 @@ public sealed class EngineRemoval
         return new EngineRemovalReport(lines, freed, succeeded);
     }
 
+    /// <summary>What a confirmation says before the engine is removed (DD317).</summary>
+    /// <param name="diskBytes">What the distribution's folder holds, or <see langword="null"/>.</param>
+    /// <returns>The paragraph a person consents to.</returns>
+    public static string Confirmation(long? diskBytes)
+    {
+        var size = diskBytes is { } bytes ? $" ({Spell(bytes)})" : "";
+        return $"This unregisters the {EnginePaths.CurrentDistribution} distribution and deletes its "
+            + $"disk{size}. Every image, container and volume goes with it, and there is no undo.\n\n"
+            + "Your settings stay. Removing the engine first is what lets the app be uninstalled "
+            + "without leaving that disk behind.\n\nRemove the engine?";
+    }
+
+    /// <summary>What the distribution's folder holds now, or <see langword="null"/> where it is absent.</summary>
+    /// <param name="paths">The install to measure.</param>
+    /// <returns>The bytes.</returns>
+    public static long? DiskBytes(EnginePaths paths)
+    {
+        ArgumentNullException.ThrowIfNull(paths);
+        try
+        {
+            return SizeOf(paths.Distribution);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>How many bytes a file or folder holds, or <see langword="null"/> where it is absent.</summary>
     private static long? SizeOf(string path)
     {
