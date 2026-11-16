@@ -73,25 +73,6 @@ Done when:
 - A failure of this test names compose's own words, and the cause it names is fixed or
   the test waits for what it needs instead of racing it.
 
-### §DD352 A hung wsl.exe is the same failure as HCS_E_CONNECTION_TIMEOUT
-
-DD344 offers Restart WSL only while the journal's latest word is the code
-HCS_E_CONNECTION_TIMEOUT. That code arrives when wsl.exe gives up. On 16 November it
-never gave up: `wsl -l -q` calls from other programs were already hanging at 06:57:41,
-before the tray started at 06:57:57, and every launch after that hung too. The host
-wrote "the launcher is alive and the pipe did not answer within 60s" and nothing else,
-so the stuck-WSL notice and the button rested on a line from the previous afternoon.
-
-The fix is to treat a `wsl --list --quiet` that exceeds WslBudget.Probe as the same fact
-the code is: WSL itself is not answering. The probe is cheap and touches no
-distribution, so it can run when a start passes its budget with the launcher still
-alive. Where it hangs, the journal gets a line carrying a recognisable marker that
-WslFailure.SaysWslIsNotAnswering reads, and the notice and the button follow without a
-second path.
-
-Not this task: deciding what to do about it. DD351 already holds the remedy; this only
-makes sure the remedy is offered.
-
 ### §DD353 Fast Startup turns Shut down into hibernation of the kernel
 
 With HiberbootEnabled=1, Windows' Shut down hibernates the kernel session and the next

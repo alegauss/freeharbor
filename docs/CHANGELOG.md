@@ -124,6 +124,7 @@
 - ✅ **DD360** **Restart WSL on the Engine page asks WSL once after the restart and says nothing while it waits** — After WSL goes down, Restart WSL asks up to 8 times, 3 seconds apart, until it answers, and the Engine page draws which check is running on its progress line.
 - ✅ **DD361** **A reinstall stops at PlaceCli whenever an editor is polling docker, because a running docker.exe cannot be overwritten** — The CLI and plugins are left alone when the bytes match, and otherwise the running copy is renamed aside and swept later; measured with VS Code polling, every place step passes.
 - ✅ **DD350** **Nothing notices a new Moby, CLI, Compose, Buildx or Alpine release, so the pins drift until someone looks** — A weekly workflow pins newer Moby, CLI, Compose, Buildx and Alpine releases within each major in one PR, and files new majors as issues (design recorded in `.github/workflows/engine-pins.yml`).
+- ✅ **DD352** **A WSL that hangs instead of failing is logged as a quiet pipe, so Restart WSL is never offered for it** — A wsl --list killed at its probe budget now writes that WSL itself is not answering, which the stuck notice and Restart WSL read (design recorded in `src/FreeHarbor.Core/Engine/WslFailure.cs`).
 
 ## Block B — The daemon client (talk to the engine)
 

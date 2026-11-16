@@ -29,6 +29,13 @@ internal sealed class FakeWsl : IWsl
         return this;
     }
 
+    /// <summary>Queue a call that hung and was killed at its budget (DD352).</summary>
+    internal FakeWsl Hang()
+    {
+        _answers.Enqueue(new WslResult(null, "", "wsl.exe did not finish within 15 seconds", TimedOut: true));
+        return this;
+    }
+
     /// <summary>Answer whichever calls match, whenever they come.</summary>
     /// <param name="when">Which argument lists this answers.</param>
     /// <param name="exitCode">Its exit code.</param>

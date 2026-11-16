@@ -10,7 +10,11 @@ namespace FreeHarbor.Core.Preflight.Windows;
 /// (DD217).
 /// </param>
 /// <param name="Failure">Why it never ran or never finished, when that is what happened.</param>
-internal sealed record ProcessOutput(int? ExitCode, string Output, string? Failure)
+/// <param name="TimedOut">
+/// Whether it started and was killed at its budget, which is the one failure that says the tool
+/// itself is stuck rather than absent or refused (DD352).
+/// </param>
+internal sealed record ProcessOutput(int? ExitCode, string Output, string? Failure, bool TimedOut = false)
 {
     /// <summary>Whether the tool ran to completion and said it succeeded.</summary>
     public bool Succeeded => ExitCode == 0;
@@ -100,7 +104,7 @@ internal static class ConsoleTool
                 // With one constant it could not: "did not finish within 15 seconds" read the same
                 // whether it was a question nothing answered or an unpack that needed a minute.
                 return new ProcessOutput(
-                    null, "", $"{fileName} did not finish within {Spell(budget)}");
+                    null, "", $"{fileName} did not finish within {Spell(budget)}", TimedOut: true);
             }
 
             foreach (var pump in pumps)

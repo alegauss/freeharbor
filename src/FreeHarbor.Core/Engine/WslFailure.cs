@@ -64,16 +64,30 @@ public sealed record WslFailure(string Meaning, IReadOnlyList<string> Remedy)
     public const string WslNotAnswering = "HCS_E_CONNECTION_TIMEOUT";
 
     /// <summary>
-    /// Whether these words are <c>wsl.exe</c> saying WSL itself stopped answering (DD344).
+    /// What this project writes when a <c>wsl --list</c> hung past its budget (DD352).
+    /// </summary>
+    /// <remarks>
+    /// The same fact as <see cref="WslNotAnswering"/>, reached without the code. Measured on
+    /// 16 November 2026: every <c>wsl.exe</c> hung from logon and none ever gave up, so the code never
+    /// arrived and the journal said only that the pipe was quiet. Our own words rather than WSL's, so
+    /// they read the same on every machine, and spelled once so the line and its reader cannot drift.
+    /// </remarks>
+    public const string WslHung = "so WSL itself is not answering";
+
+    /// <summary>
+    /// Whether these words say WSL itself stopped answering (DD344, DD352).
     /// </summary>
     /// <param name="said">What it wrote, or a status detail carrying it.</param>
     /// <returns><see langword="true"/> where they are.</returns>
     /// <remarks>
-    /// The code and never the sentence, for the reason <see cref="SaysNoSuchDistribution"/> gives:
-    /// the prose is localised, and the capture this rests on is in Portuguese.
+    /// The code and never WSL's sentence, for the reason <see cref="SaysNoSuchDistribution"/> gives:
+    /// the prose is localised, and the capture this rests on is in Portuguese. The one sentence read
+    /// is <see cref="WslHung"/>, which this project writes itself.
     /// </remarks>
     public static bool SaysWslIsNotAnswering(string? said) =>
-        said is not null && said.Contains(WslNotAnswering, StringComparison.OrdinalIgnoreCase);
+        said is not null
+        && (said.Contains(WslNotAnswering, StringComparison.OrdinalIgnoreCase)
+            || said.Contains(WslHung, StringComparison.Ordinal));
 
     /// <summary>
     /// Whether the engine's journal says WSL is not answering now, rather than once (DD344).

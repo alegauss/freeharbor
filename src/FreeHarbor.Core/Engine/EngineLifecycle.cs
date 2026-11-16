@@ -863,10 +863,22 @@ public sealed class EngineLifecycle : IAsyncDisposable
     /// direction <see cref="Registration"/> takes and for the same reason (DD134): load can make
     /// <c>wsl.exe</c> late, and folding late into "gone" manufactures evidence out of a busy
     /// machine.</para>
+    ///
+    /// <para><b>Except where the probe hung</b> (DD352). A question that cheap, touching no
+    /// distribution, does not take a whole <see cref="WslBudget.Probe"/> on a merely busy machine, and
+    /// on 16 November 2026 it was the only evidence there was: WSL hung from logon without ever
+    /// writing <see cref="WslFailure.WslNotAnswering"/>. Still not a verdict about the engine, so no
+    /// watch acts on it; it is what lets the journal's reader offer Restart WSL.</para>
     /// </remarks>
     private string WhatIsThere()
     {
         var running = _wsl.Run("--list", "--running", "--quiet");
+        if (running.TimedOut)
+        {
+            return $"the launcher is alive, but wsl --list did not answer within "
+                + $"{WslBudget.Probe.TotalSeconds:0}s, {WslFailure.WslHung}";
+        }
+
         if (!running.Succeeded)
         {
             return "the launcher is alive";

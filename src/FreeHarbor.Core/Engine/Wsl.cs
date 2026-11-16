@@ -6,7 +6,12 @@ namespace FreeHarbor.Core.Engine;
 /// <param name="ExitCode">The exit code, or <see langword="null"/> if it never ran.</param>
 /// <param name="Output">What it wrote, decoded.</param>
 /// <param name="Failure">Why it never ran or never finished.</param>
-public sealed record WslResult(int? ExitCode, string Output, string? Failure)
+/// <param name="TimedOut">
+/// Whether it started and was killed at its budget (DD352). A launcher that could not be started
+/// also has a failure and no exit code, and only this tells the two apart: the first is WSL hanging,
+/// the second is <c>wsl.exe</c> missing.
+/// </param>
+public sealed record WslResult(int? ExitCode, string Output, string? Failure, bool TimedOut = false)
 {
     /// <summary>Whether it ran and reported success.</summary>
     public bool Succeeded => Failure is null && ExitCode == 0;
@@ -168,7 +173,7 @@ public sealed class Wsl : IWsl
     {
         ArgumentNullException.ThrowIfNull(arguments);
         var output = ConsoleTool.Run(budget, LauncherPath, arguments);
-        return new WslResult(output.ExitCode, output.Output, output.Failure);
+        return new WslResult(output.ExitCode, output.Output, output.Failure, output.TimedOut);
     }
 
     /// <summary>

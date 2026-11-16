@@ -31,6 +31,12 @@ public sealed class WslRestartTests
         Assert.False(WslFailure.SaysWslIsNotAnswering(said));
 
     [Fact]
+    public void A_journal_ending_in_a_hung_list_says_wsl_is_not_answering_now() =>
+        Assert.True(WslFailure.WslIsNotAnsweringNow([Answered,
+            "2026-11-16 06:59:02  Starting  the launcher is alive, but wsl --list did not answer within 15s, "
+            + WslFailure.WslHung + " and the pipe did not answer within 60s (quiet)"]));
+
+    [Fact]
     public void A_journal_ending_in_the_timeout_says_wsl_is_not_answering_now() =>
         Assert.True(WslFailure.WslIsNotAnsweringNow([Answered, Timeout, "2026-11-11 19:40:00  Starting  quiet"]));
 

@@ -1303,6 +1303,25 @@ public sealed class EngineLifecycleTests
 
         Assert.Contains("the launcher is alive", status.Detail, StringComparison.Ordinal);
         Assert.DoesNotContain("the daemon is", status.Detail, StringComparison.Ordinal);
+        Assert.False(WslFailure.SaysWslIsNotAnswering(status.Detail), "a failure is not a hang");
+        Assert.Null(wsl.WithVerb("-d"));
+    }
+
+    [Fact]
+    public async Task A_wsl_list_that_hung_says_wsl_is_not_answering()
+    {
+        // DD352. On 16 November 2026 every wsl.exe hung from logon and none ever returned
+        // HCS_E_CONNECTION_TIMEOUT, so the journal said only that the pipe was quiet and Restart WSL
+        // was never offered. A list killed at its budget is that same fact, and the line now says so.
+        var wsl = new FakeWsl();
+        wsl.Answer(0, "freeharbor\r\n").Hang();
+
+        await using var engine = Silent(wsl, new FakeBackend(null));
+        var status = await engine.StartAsync(TimeSpan.FromSeconds(1));
+
+        Assert.Equal(EngineState.Starting, status.State);
+        Assert.Contains("the launcher is alive", status.Detail, StringComparison.Ordinal);
+        Assert.True(WslFailure.SaysWslIsNotAnswering(status.Detail), status.Detail);
         Assert.Null(wsl.WithVerb("-d"));
     }
 
