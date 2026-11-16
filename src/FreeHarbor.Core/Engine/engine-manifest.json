@@ -23,17 +23,17 @@
   },
   "engine": {
     "id": "engine",
-    "version": "29.9.3",
-    "url": "https://download.docker.com/linux/static/stable/x86_64/docker-29.9.3.tgz",
-    "fileName": "docker-29.9.3.tgz",
-    "sha256": "3fb5d1f13014c18cc54945bc177c58a9056a482dada031e17d12cf2e6922c973"
+    "version": "29.10.0",
+    "url": "https://download.docker.com/linux/static/stable/x86_64/docker-29.10.0.tgz",
+    "fileName": "docker-29.10.0.tgz",
+    "sha256": "7c1ebadc65c716cdc6d35fc78759ed0e4317debf43c21dd12f066f2006999def"
   },
   "cli": {
     "id": "cli",
-    "version": "29.9.3",
-    "url": "https://download.docker.com/win/static/stable/x86_64/docker-29.9.3.zip",
-    "fileName": "docker-29.9.3.zip",
-    "sha256": "7c4ff7bbb31579046cd34dd8b91f7cbd3ab3482a1a85330170be726ef792d751"
+    "version": "29.10.0",
+    "url": "https://download.docker.com/win/static/stable/x86_64/docker-29.10.0.zip",
+    "fileName": "docker-29.10.0.zip",
+    "sha256": "bb894f67d85155e635ce71980fb2cf587e71dad8c41cc145c42a0de5160b6561"
   },
   "compose": {
     "id": "compose",

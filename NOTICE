@@ -21,16 +21,16 @@ Alpine Linux minirootfs
   /usr/share/licenses inside the installed distribution.
 
 Docker Engine (Moby) static binaries for Linux
-  version  29.9.3
+  version  29.10.0
   licence  Apache-2.0
-  source   https://download.docker.com/linux/static/stable/x86_64/docker-29.9.3.tgz
+  source   https://download.docker.com/linux/static/stable/x86_64/docker-29.10.0.tgz
   dockerd, containerd, runc, ctr and docker-proxy are Apache-2.0. The archive also
   carries docker-init, which is tini, under MIT.
 
 Docker CLI for Windows
-  version  29.9.3
+  version  29.10.0
   licence  Apache-2.0
-  source   https://download.docker.com/win/static/stable/x86_64/docker-29.9.3.zip
+  source   https://download.docker.com/win/static/stable/x86_64/docker-29.10.0.zip
   The docker command this project installs and puts on PATH.
 
 Docker Compose CLI plugin for Windows
