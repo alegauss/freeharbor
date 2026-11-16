@@ -18,4 +18,6 @@
 
 ## Block H — The public surface (the site a reader and an agent both read)
 
+- ✅ **DD291** **The README and the site open on the licence, which Rancher and Podman also offer, not on installing without admin** — The pages lead on the coding agent, not the licence or the per-user install, because Rancher Desktop and Podman Desktop offer both of those.
+
 ## Block I — The site on the design system

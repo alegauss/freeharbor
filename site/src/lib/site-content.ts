@@ -148,14 +148,20 @@ export const sponsor: SponsorDeclaration = {
 
 export const hero = {
   badge: "Windows 10 / 11 · Per-user install · Apache-2.0",
+  // DD291. The title names the coding agent, because the licence alone is what Rancher
+  // Desktop and Podman Desktop also offer; the licence is the sentence after it, as the
+  // reason a company allows the tool.
   titleLead: "Docker on Windows,",
-  titleAccent: "without Docker Desktop.",
+  titleAccent: "built for your coding agent.",
   sub: [
-    "FreeHarbor puts ",
+    { b: "Free under Apache-2.0" },
+    " at any headcount or revenue, so your company can allow it. Your agent asks ",
+    { code: "freeharbor read" },
+    " what holds a port or why a container is not answering, gets the answer in a few hundred tokens, and never changes the engine by asking. Underneath, ",
     { b: "upstream Moby" },
-    " into a WSL2 distribution it owns, serves the ",
+    " in a WSL2 distribution it owns serves the ",
     { code: "docker_engine" },
-    " pipe every tool you already have looks for, and shows your containers in one window. Per-user install, no administrator prompt, and nothing left running that you did not ask for.",
+    " pipe every tool you already have looks for. Per-user install, no administrator prompt.",
   ] as Rich,
   // No emoji on these three, and that is a writing rule rather than a taste: an emoji glued
   // to the front of a feature line is the most recognisable mannerism of a generated landing

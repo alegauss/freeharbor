@@ -370,6 +370,7 @@
 - ✅ **DD249** **the page slices the help by prefix, and the guard on that slice shares the assumption so it cannot catch it** — helpExcerpt and every guard in product.test.mjs share one whole-verb matcher, and a case states the rule so the page and its guard cannot agree wrongly again.
 - ✅ **DD304** **The compare page scores Rancher and Podman lower than they are on per-user install and on the docker_engine pipe** — The compare page gives Rancher and Podman their per-user and pipe cells, notes the shared WSL admin step, and claims two rows alone (design superseded: pinned Compose is not won alone).
 - ✅ **DD322** **llms.txt still lists five window destinations and calls a UDP port plain text after the containers redesign** — llms.txt names six destinations with Settings, says non-HTTP ports copy their address, and describes the redesigned containers page.
+- ✅ **DD291** **The README and the site open on the licence, which Rancher and Podman also offer, not on installing without admin** — The README, the site's hero and llms.txt now open on the coding agent freeharbor read serves, with the licence the sentence after (design recorded in `site/src/lib/site-content.ts`).
 
 ## Block I — The site on the design system
 

@@ -303,32 +303,4 @@ Remove-AppxPackage leaves no Lxss entry and no root.
 
 ## Block H — The public surface (the site a reader and an agent both read)
 
-### §DD291 DD291: Opening on the coding agent
-
-From the portfolio review of 30/10/2026 (visibility, `estrategia/portfolio.md`). The
-first answer to a free Docker Desktop alternative is Rancher Desktop or Podman Desktop.
-The README opens on the licence, which those two also satisfy, and the site's hero on
-"without Docker Desktop", which they also are.
-
-The first idea was to lead on installing without admin. Checked on 5 November 2026, it
-does not hold: Podman 6 and Rancher Desktop install per user too.
-
-The owner chose on 16 November 2026 to lead on the coding agent. `freeharbor read`
-answers what Docker cannot (what holds a port, why a container is not answering) in a
-few hundred tokens, and is safe to allow in one line because a read never mutates the
-engine. The site already shows that session as its second block; this moves it to the
-first sentence.
-
-- README: the bold line under the title names the agent case; the licence follows as the
-  reason a company allows it; the "Built for a coding agent too" bullet moves to the top
-  of the list and loses "too".
-- Site: `hero.titleLead`, `titleAccent` and `sub` in `site-content.ts` say the same, and
-  `llms.txt`'s opening paragraph follows.
-- Token figures stay generated or stated as criteria, never typed (DD159).
-- Nobody checked whether Rancher or Podman offer anything comparable; check before
-  claiming it is unique.
-
-Done when the first sentence of the README and of the site's hero names the coding
-agent, and the licence is the line after it.
-
 ## Block I — The site on the design system

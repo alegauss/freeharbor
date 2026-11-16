@@ -1,7 +1,9 @@
 # FreeHarbor
 
-> A free Windows (10/11) desktop app for installing and driving Docker without Docker
-> Desktop. It installs upstream Moby (pinned by version and SHA-256) into a WSL2
+> Docker on Windows, built for a coding agent to drive: `freeharbor read` answers what
+> holds a port or why a container is not answering in a few hundred tokens, and a read
+> never changes the engine. Free under Apache-2.0 at any headcount or revenue, it is a
+> Windows (10/11) desktop app that replaces Docker Desktop. It installs upstream Moby (pinned by version and SHA-256) into a WSL2
 > distribution it owns, serves the Windows named pipe `\\.\pipe\docker_engine` that the
 > `docker` CLI, Compose and every other client already look for, and shows containers in
 > one window. Per-user install under `%LOCALAPPDATA%\FreeHarbor` with no administrator

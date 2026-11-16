@@ -1,7 +1,8 @@
 <div align="center">
 <img src="site/public/logo.svg" alt="FreeHarbor logo" width="120">
 <h1>FreeHarbor</h1>
-<p><strong>A free Docker Desktop alternative for Windows, under Apache-2.0: no headcount threshold, no revenue threshold, no licence to buy.</strong></p>
+<p><strong>Docker on Windows, built for your coding agent: <code>freeharbor read</code> answers what holds a port or why a container is not answering, in a few hundred tokens.</strong></p>
+<p>Free under Apache-2.0: no headcount threshold, no revenue threshold, no licence to buy.</p>
 </div>
 
 <div align="center">
@@ -17,6 +18,9 @@ usually that your employer crossed one. FreeHarbor installs and drives the Docke
 and the licence is [Apache-2.0](LICENSE), including the patent grant that makes a corporate legal
 review straightforward.
 
+- **Built for a coding agent.** `freeharbor read` answers what Docker cannot, such as what holds a
+  port or why a container is not answering, in a few hundred tokens, and is safe to allow in one
+  line because a read never mutates the engine.
 - **A preflight, not a support case.** Before anything is installed, every check states a fact, a
   verdict and the one action that changes it.
 - **An owned distribution.** The engine lives in a WSL2 distribution called `freeharbor` that this
@@ -25,9 +29,6 @@ review straightforward.
 - **A tray icon and one window.** The icon carries the engine's state by shape, not only colour.
   The window lists containers (with *which kind of stopped*, ports as links, logs followed),
   images by size and volumes with what mounts them. Every heading sorts and every list filters.
-- **Built for a coding agent too.** `freeharbor read` answers what Docker cannot, such as what
-  holds a port or why a container is not answering, in a few hundred tokens, and is safe to
-  allow in one line because a read never mutates the engine.
 - **No daemon of its own.** Quitting the tray leaves the engine exactly as it was.
 
 ## What it is not
