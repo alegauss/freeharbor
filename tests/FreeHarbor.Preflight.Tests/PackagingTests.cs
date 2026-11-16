@@ -1327,8 +1327,31 @@ public sealed class PackagingTests
         Assert.DoesNotContain("\"", restart, StringComparison.Ordinal);
 
         // And the machine is read again afterwards, so the page says what is true now.
-        var after = turn[turn.IndexOf("if Restarting then\n  begin", StringComparison.Ordinal)..];
-        Assert.Contains("Preflight;", after, StringComparison.Ordinal);
+        Assert.Contains("WaitForWsl(Progress);", turn, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_wsl_restart_shows_its_progress_and_waits_for_wsl_to_come_back()
+    {
+        // DD359. On 16 November the service was ended at 09:01:48 and Windows brought it back
+        // minutes later; one read straight after the kill found it still stuck, and the page sat
+        // frozen through the run and then said what it said before.
+        var code = PreflightCode();
+
+        Assert.Contains("CreateOutputProgressPage('Restarting WSL'", code, StringComparison.Ordinal);
+
+        var wait = code[code.IndexOf("procedure WaitForWsl", StringComparison.Ordinal)..];
+        wait = wait[..wait.IndexOf("\nend;", StringComparison.Ordinal)];
+        Assert.Contains("for Check := 1 to WslChecks do", wait, StringComparison.Ordinal);
+        Assert.Contains("Progress.SetText(", wait, StringComparison.Ordinal);
+        Assert.Contains("Preflight;", wait, StringComparison.Ordinal);
+        Assert.Contains("if not PreflightWslStuck then", wait, StringComparison.Ordinal);
+        Assert.Contains("PreflightFailed :=", wait, StringComparison.Ordinal);
+
+        // net start's exit code decides nothing: it is 2 for a failure and for "already started".
+        var turn = code[code.IndexOf("procedure TurnItOn;", StringComparison.Ordinal)..];
+        turn = turn[..turn.IndexOf("\nend;", StringComparison.Ordinal)];
+        Assert.DoesNotContain("Shell <> 2", turn, StringComparison.Ordinal);
     }
 
     [Fact]

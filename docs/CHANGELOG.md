@@ -268,6 +268,7 @@
 - ✅ **DD356** **Turn it on for me never shows a UAC prompt and says the prompt was declined** — The button elevates {sys}\cmd.exe, which reaches the real wsl.exe through Sysnative or System32; only code 1223 reads as declined, and a non-zero exit claims nothing.
 - ✅ **DD357** **A WSL that does not answer reads to Setup as a missing feature, and the page offers to turn it on** — A WSL read that did not finish is its own Unknown row saying Restart, not Shut down, with no command; Setup shows the generic page for it, not the feature one.
 - ✅ **DD358** **Setup stopped by a stuck WSL can only tell the user to restart Windows** — The page for a stuck WSL offers Restart WSL for me: one UAC prompt ends wslservice.exe, starts it again and reads the machine again, through the page's single ShellExec.
+- ✅ **DD359** **Restart WSL for me shows no progress and judges WSL once, before Windows has brought the service back** — A progress page names each step; after the kill the machine is read up to 8 times until WSL answers, and net start's exit code, 2 for failure and already-started alike, decides nothing.
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 

@@ -1182,32 +1182,80 @@ begin
   WizardForm.NextButton.Enabled := PreflightClear;
 end;
 
+const
+  // How many times the machine is read again after the service was ended (DD359). Each read waits
+  // at most the fifteen seconds the WSL row allows, so this is about two minutes in all.
+  WslChecks = 8;
+
+/// Read the machine again until WSL answers, saying so as it goes (DD359).
+procedure WaitForWsl(Progress: TOutputProgressWizardPage);
+var
+  Check: Integer;
+begin
+  // Measured on 16 November 2026: ended at 09:01:48, the service was still stopped a minute later
+  // and answering a few minutes after that, started again by Windows rather than by `net start`.
+  // One read straight after the kill found it still stuck, and the page went on saying so about a
+  // WSL that was on its way back. So the read is repeated, and every one of them is on screen.
+  for Check := 1 to WslChecks do
+  begin
+    Progress.SetText('Waiting for WSL to answer again',
+      'Check ' + IntToStr(Check) + ' of ' + IntToStr(WslChecks)
+      + '. Windows can take a minute or two to bring the service back.');
+    Progress.SetProgress(Check - 1, WslChecks);
+
+    PreflightAsked := False;
+    Preflight;
+    if not PreflightWslStuck then
+      Exit;
+
+    Sleep(3000);
+  end;
+
+  PreflightFailed := 'The stuck WSL service was ended, but WSL still did not answer after '
+    + IntToStr(WslChecks) + ' checks.';
+end;
+
 /// Run the command the row named, once, elevated.
 procedure TurnItOn;
 var
   Exe, Arguments, Command: string;
-  Shell: Integer;
+  Shell, Show: Integer;
   WasPending, Restarting: Boolean;
+  Progress: TOutputProgressWizardPage;
 begin
   // The two things this button elevates for share one ShellExec, so the claim that the page costs
   // one prompt stays a fact about the code rather than about which row happened to block.
   Restarting := PreflightWslStuck and not PreflightWsl2;
+  Progress := nil;
   if Restarting then
-    Command := ServiceRestart
+  begin
+    Command := ServiceRestart;
+
+    // DD359. The restart and the wait after it take minutes, and the page used to sit frozen
+    // through all of it and then say what it said before. A progress page names each step, so
+    // the console window is not needed to show that something is happening.
+    Show := SW_HIDE;
+    Progress := CreateOutputProgressPage('Restarting WSL',
+      'Every WSL distribution on this machine stops, and WSL starts again.');
+    Progress.SetText('Ending the stuck WSL service', 'Approve the administrator prompt to go on.');
+    Progress.Show;
+  end
   else
   begin
     SplitCommand(PreflightCommand, Exe, Arguments);
     Command := ThroughCmd(Exe, Arguments);
+
+    // SW_SHOWNORMAL, deliberately: `wsl --install` takes minutes and prints as it goes, and a
+    // hidden window would leave the wizard frozen with nothing anywhere saying why.
+    Show := SW_SHOWNORMAL;
   end;
   WasPending := RestartIsPending;
 
   PreflightTurnOn.Enabled := False;
   PreflightFailed := '';
   try
-    // SW_SHOWNORMAL, deliberately: `wsl --install` takes minutes and prints as it goes, and a
-    // hidden window would leave the wizard frozen with nothing anywhere saying why.
     if not ShellExec('runas', ExpandConstant('{sys}\cmd.exe'), Command, '',
-                     SW_SHOWNORMAL, ewWaitUntilTerminated, Shell) then
+                     Show, ewWaitUntilTerminated, Shell) then
     begin
       // ERROR_CANCELLED is the prompt being refused, or an account that cannot elevate at all.
       // Neither is an error worth a dialog: the page already carries the steps that do the same
@@ -1223,46 +1271,40 @@ begin
         + ' (code ' + IntToStr(Shell) + ').';
       Exit;
     end;
-  finally
-    PreflightTurnOn.Enabled := True;
-  end;
 
-  PreflightRefused := False;
+    PreflightRefused := False;
 
-  if Restarting then
-  begin
-    // net start exits 2 for a service something already started again, which is not a failure.
-    // Whether WSL answers is not judged here either: the machine is read again, and the page says
-    // what that read found, which is the only answer that counts.
-    if (Shell <> 0) and (Shell <> 2) then
+    if Restarting then
     begin
-      PreflightFailed := 'It ran and exited ' + IntToStr(Shell)
-        + ', so the WSL service may not have started again.';
+      // net start's exit code is not read (DD359). It is 2 both for a service that failed and for
+      // one Windows had already started again, which is what it said on 16 November. Whether WSL
+      // answers is the only question, and the machine is read again until it does.
+      WaitForWsl(Progress);
       Exit;
     end;
 
-    PreflightAsked := False;
-    Preflight;
-    Exit;
+    // cmd hands back the tool's exit code, which the direct ShellExec never could. A run that
+    // failed has turned nothing on, and saying so beats sending somebody to restart for nothing.
+    if Shell <> 0 then
+    begin
+      PreflightFailed := 'It ran and exited ' + IntToStr(Shell) + ', so nothing was turned on.';
+      Exit;
+    end;
+
+    PreflightFeatureOn := True;
+
+    // Windows itself now wanting a restart, where it did not before, is the one piece of evidence
+    // available that the run enabled something. Already-pending is not read as proof: plenty of
+    // other things set that key, and claiming a feature is on because Windows Update is halfway
+    // through would send somebody to reboot for nothing.
+    PreflightRestartWanted := RestartIsPending and not WasPending;
+
+    ArrangeToBePickedUp;
+  finally
+    PreflightTurnOn.Enabled := True;
+    if Progress <> nil then
+      Progress.Hide;
   end;
-
-  // cmd hands back the tool's exit code, which the direct ShellExec never could. A run that
-  // failed has turned nothing on, and saying so beats sending somebody to restart for nothing.
-  if Shell <> 0 then
-  begin
-    PreflightFailed := 'It ran and exited ' + IntToStr(Shell) + ', so nothing was turned on.';
-    Exit;
-  end;
-
-  PreflightFeatureOn := True;
-
-  // Windows itself now wanting a restart, where it did not before, is the one piece of evidence
-  // available that the run enabled something. Already-pending is not read as proof: plenty of
-  // other things set that key, and claiming a feature is on because Windows Update is halfway
-  // through would send somebody to reboot for nothing.
-  PreflightRestartWanted := RestartIsPending and not WasPending;
-
-  ArrangeToBePickedUp;
 end;
 
 /// Restart Windows, having said that this is what the button does.
