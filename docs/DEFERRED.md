@@ -2,7 +2,6 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
-- ⏸ **DD321** (deps: —) **In a full test run the pipe relay once took no second connection for thirty seconds, then passed alone** — set aside (Needs a full run that fails it.): The next failing run's message says whether the relay stopped accepting. → §DD321
 - ⏸ **DD303** (deps: —) **Testcontainers detects the engine on about one run in two even with an API version the engine accepts** — set aside (Needs Turing runs.): Whether the misses are docker-java's or the pipe's DD142 bursts decides who fixes it, and nobody has set the runs against the journal. → §DD303
 - ⏸ **DD346** (deps: —) **The live compose run test failed once in a full run and passed alone, and its assertion keeps none of compose's words** — set aside (the engine was stopped when the run reached it): Reproduce it with a live engine and fix what compose then names. → §DD346
 - ⏸ **DD354** (deps: —) **A host that gives up on a hung start leaves its wsl.exe children and itself running** — set aside (Waits for WSL to be stuck again to measure.): Every teardown already kills whole trees, so why the host and its wsl.exe outlive it needs a stuck WSL and the new journal line to measure. → §DD354
@@ -21,7 +20,6 @@
 ## Block F — Installer and distribution (free, Apache 2.0)
 
 - ⏸ **DD283** (deps: DD281 ✅) **Nobody knows whether winget's validation VM can install it, since the preflight exits 7 without WSL2** — set aside (Needs Windows Sandbox, not enabled here.): A silent Sandbox install decides whether the first winget PR passes or needs a moderator. → §DD283
-- ⏸ **DD309** (deps: —) **Nobody knows whether wsl --import run from inside an MSIX package registers a disk both the app and WSL can see** — set aside (Needs the test VM and an admin.): Every other Store task assumes the answer, and write virtualization can split the app's path from WSL's. → §DD309
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 

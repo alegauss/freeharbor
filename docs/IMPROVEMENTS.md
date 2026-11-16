@@ -28,28 +28,29 @@ accepting, it is this engine-side reading reproduced.
 
 On 5 November 2026 `PipeSurvivalTests.A_healthy_relay_stumbles_over_nothing` failed once
 in a full run: the test took 30 seconds and its second `ReachableAsync` returned false.
-It passed three times alone in about 200 ms. The assertion carried no message, so the
-reason the helper recorded was never printed.
+It passed three times alone in about 200 ms.
 
-Ruled out the same day:
+Ruled out the same day: the accept loop being starved (its own thread since DD142, and
+its retry waits on a handle, not on the pool), and the client's timeout running out in
+the pool's queue (a starved pool delays `ConnectAsync` but cannot fail it). The test now
+prints the exception, the time the attempt took and the relay's `Figures`.
 
-- The accept loop being starved. It runs on its own thread since DD142, and the next
-  listener goes up before the connection in hand is served; its retry waits on a wait
-  handle, not on the pool.
-- The client's timeout running out in the pool's queue. A probe against a listening pipe
-  with the pool starved: `ConnectAsync(2000)` connected after 12 seconds instead of timing
-  out. The clock starts inside the task, so starvation delays a connect but cannot fail it.
+The answer came from outside the suite. On 16 November 2026 an installed 2.2.0 host, its
+engine started by hand, wrote this to the journal five seconds after the engine first
+answered:
 
-Left: the connect failing with an `IOException`, or the relay really having no listener
-up for 30 seconds. The test now says which: the exception, how long the attempt took,
-and the relay's `Figures`, which say how many it accepted and whether it is still
-accepting.
+    relay     stopped accepting: IOException: O pipe está sendo fechado.
+    Starting  the daemon is running and no connection within 3s, first quiet poll,
+              the relay accepted 6, holds 1 open and has stopped accepting
 
-What to do next: read that message from the next failing run. A relay that says it has
-stopped accepting is DD142's defect and belongs with DD303's engine-side reading; one
-still accepting, with a fast `IOException`, is the client's, and the helper should retry
-that error as it retries a timeout. A later ten-run loop saw five live-engine relay
-tests fail together in one run only: a burst's shape.
+So the relay itself stops: the accept loop ends on an `IOException` ("the pipe is being
+closed") after six connections, with the daemon still up. That is DD142's defect, not
+the client's. The supervisor brought the engine back 34 seconds later.
+
+What to build: the accept loop treats an `IOException` from a listener as the end of
+that one listener, not of the loop, and puts another listener up (as it does after a
+served connection), stopping only on its own cancellation. A test drives a listener that
+throws `IOException` and asserts the next client still connects.
 
 ### §DD346 A flaky live compose test that says nothing
 
@@ -184,9 +185,9 @@ uninstaller (DD317). The engine download stays (DD315): policy 10.2.2, as of ver
 
 What stays here is the submission: the listing in en-US and pt-BR, the store art,
 claude-tray's store-submit.ps1 ported, and certification notes that justify
-runFullTrust, any unvirtualizedResources, and the engine download with its source, size
-and pinning. The README and the site's download section name the Store beside winget and
-the installer, which both stay.
+runFullTrust, unvirtualizedResources (which DD309 showed the package needs), and the
+engine download with its source, size and pinning. The README and the site's download
+section name the Store beside winget and the installer, which both stay.
 
 If DD309 shows MSIX cannot host the WSL registration, the fallback is policy 10.2.9's
 listing by installer URL, which needs a signed, silent installer that downloads nothing
@@ -194,29 +195,6 @@ when run, so the engine moves to first launch; otherwise no Store.
 
 Done when FreeHarbor is in the Store with its install working without admin, or the
 reason it cannot be is recorded here.
-
-### §DD309 DD309 — Measuring WSL registration from inside a package
-
-The gate for the whole Store path (DD292). A full-trust app in an MSIX package has its
-writes to a new folder under AppData redirected to the package's LocalCache, and its
-HKCU writes kept in a private hive. FreeHarbor's root is %LOCALAPPDATA%\FreeHarbor and
-distro is the BasePath WSL registers the disk at. WslService runs outside the package
-and sees the real filesystem, so the app and the service may disagree about where the
-disk is.
-
-The test: a minimal package, self-signed and sideloaded, holding the current
-FreeHarbor.exe, run once with virtualization on and once with
-desktop6:FileSystemWriteVirtualization and RegistryWriteVirtualization disabled under
-rescap:unvirtualizedResources. In each mode, run --provision, then record:
-
-- the BasePath under HKCU\...\Lxss and where the vhdx really sits;
-- whether the tray reports the engine, starts it and reaches the docker_engine pipe;
-- whether --compact and --fsck find the disk;
-- what is left after Remove-AppxPackage: files, the Lxss entry, the Run values.
-
-Done when the table is written here and the mode the package will use is chosen. If
-neither mode keeps the app and WSL on one disk, DD292 records the fallback (a listing
-that points to the existing installer) and DD309 onward are retired.
 
 ### §DD310 Building the MSIX package
 
@@ -227,7 +205,7 @@ build\msix\AppxManifest.xml, which passed certification (claude-tray T409 and T4
 - {VERSION} is filled from <Version> in Directory.Build.props with a fourth part of 0, which the Store requires.
 - The payload is the Release publish of FreeHarbor.exe, the shim's docker.exe, and build\agent.
 - Tiles and StoreLogo are drawn from build\icon.svg by the script that already draws the .ico.
-- Resources en-us and pt-br, matching the installer's languages; MinVersion 10.0.19041, as installer.iss requires for WSL2; runFullTrust; and the virtualization mode DD309 chose.
+- Resources en-us and pt-br, matching the installer's languages; MinVersion 10.0.19041, as installer.iss requires for WSL2; runFullTrust; and file and registry write virtualization disabled under rescap:unvirtualizedResources, the one mode DD309 measured working (docs/specs/DD309-msix-virtualization.md).
 - The output goes to dist\FreeHarbor.msix, plus a self-signed variant for sideloading tests.
 
 This task carries the bare package and none of the manifest extensions: the command
@@ -336,15 +314,16 @@ this page alone.
 
 The Inno uninstaller closes the tray, unregisters the freeharbor distribution by name
 and offers to delete the root (DD14, DD121). Removing an MSIX package runs none of that.
-What is left depends on what DD309 measured: with virtualization off, the whole root
-stays under %LOCALAPPDATA%\FreeHarbor; with it on, Windows deletes LocalCache but WSL
-keeps a registered distribution whose disk is gone, which wsl --list then shows broken.
+DD309 measured what it leaves in the mode the package uses, with write virtualization
+off: the distribution and its disk, the whole root under %LOCALAPPDATA%\FreeHarbor, and
+a Run value naming an exe that no longer exists
+(docs/specs/DD309-msix-virtualization.md).
 
 Three parts:
 
 - **A verb.** freeharbor --remove-engine stops the engine host, terminates and unregisters the distribution (terminate first, per DD209), and deletes distro, downloads, cli and cli-plugins, keeping settings.json and details.json unless --all is given. It prints what it removed and how much space came back. The Inno uninstaller calls the same code, so there is one removal and not two.
 - **A place in the window.** Settings gets Remove engine, with a confirmation that states the disk size and that every image, container and volume goes with it.
-- **The leftover after the fact.** The preflight gains a row for a registered distribution named freeharbor whose BasePath no longer exists, with the unregister command as its remedy, so a reinstall after a bare package removal can clean up.
+- **The leftover after the fact.** The preflight gains a row for a registered distribution named freeharbor that no installed copy owns, or whose BasePath no longer exists, with the disk size and the unregister command as its remedy, so a reinstall after a bare package removal can clean up.
 
 The Store listing and the site's uninstall note say to run Remove engine before
 uninstalling.

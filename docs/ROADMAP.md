@@ -4,6 +4,8 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
+- 📋 **DD321** (deps: —) **In a full test run the pipe relay once took no second connection for thirty seconds, then passed alone** — On 16 November a live relay ended its accept loop on IOException after six connections, so one closing client takes the pipe down. → §DD321
+
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)
@@ -16,13 +18,13 @@
 
 - 📋 **DD290** (deps: winget-pkgs moderator approval) **winget install alegauss.FreeHarbor finds nothing while the first winget-pkgs pull request waits for moderators** — The terminal is where a developer looks for a Docker replacement, and the README cannot name the command until the package is live. → §DD290
 - 📋 **DD292** (deps: DD312, DD313, DD314, DD316, DD317) **Every first download meets a SmartScreen warning, because the installer is not signed** — claude-tray reached the Store (T412), so what is left is the listing and the submission once the package installs and works without admin. → §DD292
-- 📋 **DD310** (deps: DD309 ⏸) **There is no MSIX package of FreeHarbor to sideload or submit** — A build-msix step packs the same publish the Inno setup ships, under the Alegauss reservation, so the version still lives in Directory.Build.props. → §DD310
+- 📋 **DD310** (deps: DD309 ✅) **There is no MSIX package of FreeHarbor to sideload or submit** — A build-msix step packs the same publish the Inno setup ships, under the Alegauss reservation, so the version still lives in Directory.Build.props. → §DD310
 - 📋 **DD311** (deps: DD310) **A packaged copy would still offer its own self-update and run an Inno setup over a WindowsApps folder** — The Store owns updates, and detecting the package at runtime as claude-tray's PackageIdentity does keeps one exe for both channels. → §DD311
 - 📋 **DD312** (deps: DD310) **Inside a package, docker and freeharbor are not on PATH and DOCKER_CONFIG may land in the package's private hive** — Execution aliases replace the PATH entry, and the shim can hand DOCKER_CONFIG to the vendor CLI itself if the user-scope write does not reach outside shells. → §DD312
 - 📋 **DD313** (deps: DD310, DD311) **Under a package, both Run values go to a private hive Explorer never reads, so nothing starts at sign-in** — Two manifest startup tasks, the tray's on and the engine's off by default, keep both choices and the rule that the engine never starts unasked. → §DD313
 - 📋 **DD314** (deps: DD310, DD311) **Packaged, the docker-desktop:// link buildx prints opens nothing, because the HKCU handler is never registered** — A uap:Protocol in the manifest registers the handler with the package and removes it on uninstall, which the Inno entry had to arrange by hand. → §DD314
 - 📋 **DD316** (deps: DD311, DD315 ✅) **A Store install has no page before the first file, so a machine without WSL2 finds out only after installing** — MSIX runs no code at install time, so the preflight, the WSL2 turn-on, the engine download and the after-install notes move to the first launch. → §DD316
-- 📋 **DD317** (deps: DD309 ⏸) **Uninstalling the package leaves the freeharbor distribution and its multi-gigabyte disk registered with WSL** — MSIX runs no uninstall code, so removing the engine has to be a verb the user runs first, named in the app and in the Store listing. → §DD317
+- 📋 **DD317** (deps: DD309 ✅) **Uninstalling the package leaves the freeharbor distribution and its multi-gigabyte disk registered with WSL** — MSIX runs no uninstall code, so removing the engine has to be a verb the user runs first, named in the app and in the Store listing. → §DD317
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 

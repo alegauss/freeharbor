@@ -276,6 +276,7 @@
 - ✅ **DD357** **A WSL that does not answer reads to Setup as a missing feature, and the page offers to turn it on** — A WSL read that did not finish is its own Unknown row saying Restart, not Shut down, with no command; Setup shows the generic page for it, not the feature one.
 - ✅ **DD358** **Setup stopped by a stuck WSL can only tell the user to restart Windows** — The page for a stuck WSL offers Restart WSL for me: one UAC prompt ends wslservice.exe, starts it again and reads the machine again, through the page's single ShellExec.
 - ✅ **DD359** **Restart WSL for me shows no progress and judges WSL once, before Windows has brought the service back** — A progress page names each step; after the kill the machine is read up to 8 times until WSL answers, and net start's exit code, 2 for failure and already-started alike, decides nothing.
+- ✅ **DD309** **Nobody knows whether wsl --import run from inside an MSIX package registers a disk both the app and WSL can see** — Virtualized, wsl --import fails with ERROR_PATH_NOT_FOUND; unvirtualized, every verb works from inside the package (design recorded in `docs/specs/DD309-msix-virtualization.md`).
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 
