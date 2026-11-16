@@ -18,6 +18,7 @@
 
 - ⏸ **DD362** (deps: DD310 ✅) **The MSIX manifest carries a provisional identity, so the Store would refuse its upload** — set aside (Waits for the Partner Center reservation.): Partner Center's reservation of the name FreeHarbor is the only source of the Identity Name and Publisher a submission must match. → §DD362
 - ⏸ **DD313** (deps: DD310 ✅, DD311 ✅) **Under a package, both Run values go to a private hive Explorer never reads, so nothing starts at sign-in** — set aside (Owner picks Settings or the API.): Under a package, --autostart on and off must open Settings or reach the Engine app's task. → §DD313
+- ⏸ **DD316** (deps: DD311 ✅, DD315 ✅) **A Store install has no page before the first file, so a machine without WSL2 finds out only after installing** — set aside (Needs a machine without WSL2.): MSIX runs no install-time code, so the preflight, WSL2 turn-on and engine download move to the first launch. → §DD316
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 

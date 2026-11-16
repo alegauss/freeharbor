@@ -19,8 +19,7 @@
 ## Block F — Installer and distribution (free, Apache 2.0)
 
 - 📋 **DD290** (deps: winget-pkgs moderator approval) **winget install alegauss.FreeHarbor finds nothing while the first winget-pkgs pull request waits for moderators** — The terminal is where a developer looks for a Docker replacement, and the README cannot name the command until the package is live. → §DD290
-- 📋 **DD292** (deps: DD312 ✅, DD313 ✅, DD314 ✅, DD316, DD317, DD362 ⏸) **Every first download meets a SmartScreen warning, because the installer is not signed** — claude-tray reached the Store (T412), so what is left is the listing and the submission once the package installs and works without admin. → §DD292
-- 🛠 **DD316** (deps: DD311 ✅, DD315 ✅) **A Store install has no page before the first file, so a machine without WSL2 finds out only after installing** — MSIX runs no code at install time, so the preflight, the WSL2 turn-on, the engine download and the after-install notes move to the first launch. → §DD316
+- 📋 **DD292** (deps: DD312 ✅, DD313 ✅, DD314 ✅, DD316 ⏸, DD317, DD362 ⏸) **Every first download meets a SmartScreen warning, because the installer is not signed** — claude-tray reached the Store (T412), so what is left is the listing and the submission once the package installs and works without admin. → §DD292
 - 📋 **DD317** (deps: DD309 ✅) **Uninstalling the package leaves the freeharbor distribution and its multi-gigabyte disk registered with WSL** — MSIX runs no uninstall code, so removing the engine has to be a verb the user runs first, named in the app and in the Store listing. → §DD317
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
