@@ -303,29 +303,32 @@ Remove-AppxPackage leaves no Lxss entry and no root.
 
 ## Block H — The public surface (the site a reader and an agent both read)
 
-### §DD291 DD291 — Opening on the corporate laptop without admin
+### §DD291 DD291: Opening on the coding agent
 
-From the portfolio review of 30/10/2026 (visibility, `estrategia/portfolio.md` and
-`produtos/freewilly.md`). The first answer anyone gives to a free Docker Desktop
-alternative is Rancher Desktop or Podman Desktop: free, open source, multi-platform,
-backed by SUSE and Red Hat. The README and the site open on the licence ("no headcount
-threshold, no revenue threshold"), which those two also satisfy, and mention "per-user
-install, no admin prompt" only as a small note under the download link.
+From the portfolio review of 30/10/2026 (visibility, `estrategia/portfolio.md`). The
+first answer to a free Docker Desktop alternative is Rancher Desktop or Podman Desktop.
+The README opens on the licence, which those two also satisfy, and the site's hero on
+"without Docker Desktop", which they also are.
 
-What separates FreeHarbor is who can install it: a developer on a managed corporate
-laptop, with no admin rights, whose company crossed Docker Desktop's limits. The
-README's first paragraph and the site's hero should open on that reader and that
-situation, with the licence as the reason the company allows it, and say plainly the one
-exception (enabling the WSL feature may need elevation once). A short, honest comparison
-row against Rancher and Podman (admin needed or not, own distribution, no resident
-service) answers the comment before it is written.
+The first idea was to lead on installing without admin. Checked on 5 November 2026, it
+does not hold: Podman 6 and Rancher Desktop install per user too.
 
-Checked on 5 November 2026, and the premise does not hold. Podman 6 installs per-user by
-default, Podman Desktop has a current-user option, and `podman machine` serves
-`docker_engine`. Rancher Desktop installs per-user too, its privileged service aside.
-All need WSL enabled once. Which differentiator leads is a person's call.
+The owner chose on 16 November 2026 to lead on the coding agent. `freeharbor read`
+answers what Docker cannot (what holds a port, why a container is not answering) in a
+few hundred tokens, and is safe to allow in one line because a read never mutates the
+engine. The site already shows that session as its second block; this moves it to the
+first sentence.
 
-Done when the first screen of the README and of the site names the corporate laptop
-without admin, and the comparison with Rancher and Podman is on the page.
+- README: the bold line under the title names the agent case; the licence follows as the
+  reason a company allows it; the "Built for a coding agent too" bullet moves to the top
+  of the list and loses "too".
+- Site: `hero.titleLead`, `titleAccent` and `sub` in `site-content.ts` say the same, and
+  `llms.txt`'s opening paragraph follows.
+- Token figures stay generated or stated as criteria, never typed (DD159).
+- Nobody checked whether Rancher or Podman offer anything comparable; check before
+  claiming it is unique.
+
+Done when the first sentence of the README and of the site's hero names the coding
+agent, and the licence is the line after it.
 
 ## Block I — The site on the design system

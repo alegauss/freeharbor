@@ -32,6 +32,8 @@
 
 ## Block H — The public surface (the site a reader and an agent both read)
 
+- 📋 **DD291** (deps: —) **The README and the site open on the licence, which Rancher and Podman also offer, not on installing without admin** — The owner chose on 16 November to lead on the coding agent that freeharbor read serves, with the licence as the line after it. → §DD291
+
 ## Block I — The site on the design system
 
 ## Non-goals
