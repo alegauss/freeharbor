@@ -29,9 +29,22 @@ const distDir = join(siteDir, "dist");
 const card = await renderOgCard({ svg: cardSvg(), out: join(distDir, "og.png"), fontFamily: CARD_FONT });
 console.log(`og-image: dist/og.png  ${card.width}x${card.height}  (${(card.bytes / 1024).toFixed(0)} kB)`);
 
+/** A route's breadcrumb name: its last path segment, each word capitalised. */
+const crumbName = (path) =>
+  path
+    .replace(/\/$/, "")
+    .split("/")
+    .pop()
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
 const written = prerenderSite({
   distDir,
-  routes: ROUTE_META,
+  // VDS253: each route's crumb is its last path segment, title-cased (`/features/locate` -> "Locate");
+  // the <title> is a sentence, too long for a breadcrumb.
+  routes: ROUTE_META.map((route) => ({ ...route, breadcrumb: crumbName(route.path) })),
+  breadcrumbs: { name: "FreeHarbor", above: [{ name: "alegauss.com", url: "https://alegauss.com/" }] },
   render,
   canonicalUrl,
   outputDir,
