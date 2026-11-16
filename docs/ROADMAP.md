@@ -4,8 +4,6 @@
 
 ## Block A — The Windows engine (Docker without Docker Desktop)
 
-- 📋 **DD355** (deps: —) **The live-engine probe has no deadline, so a stuck WSL hangs the whole test suite before its first test** — On 16 November LiveEngine.Look ran docker version through a relay whose wsl.exe never answered, and dotnet test sat in discovery until it was killed. → §DD355
-
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)

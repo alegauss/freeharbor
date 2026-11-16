@@ -127,6 +127,7 @@
 - ✅ **DD352** **A WSL that hangs instead of failing is logged as a quiet pipe, so Restart WSL is never offered for it** — A wsl --list killed at its probe budget now writes that WSL itself is not answering, which the stuck notice and Restart WSL read (design recorded in `src/FreeHarbor.Core/Engine/WslFailure.cs`).
 - ✅ **DD353** **Shut down with Fast Startup on carries a stuck WSL into the next morning, and nothing tells the user Restart is needed** — With WSL stuck since a hybrid boot, the notice and Engine page say Fast Startup did it: use Restart, not Shut down (design recorded in `src/FreeHarbor.Core/Engine/FastStartup.cs`).
 - ✅ **DD354 (evidence half)** **A host that gives up on a hung start leaves its wsl.exe children and itself running** — A host that is done now journals every child still alive under it, by pid and command line, before its last line.
+- ✅ **DD355** **The live-engine probe has no deadline, so a stuck WSL hangs the whole test suite before its first test** — The live-engine probe gives docker version 20s, then kills it, so a stuck WSL skips the live tests rather than hang the suite (design recorded in `tests/FreeHarbor.Preflight.Tests/LiveEngine.cs`).
 
 ## Block B — The daemon client (talk to the engine)
 

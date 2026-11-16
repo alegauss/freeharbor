@@ -124,6 +124,45 @@ internal static class LiveEngine
         /// </remarks>
         internal string ReadALineThenEnd(string[] arguments, TimeSpan patience)
         {
+            using var client = Start(arguments);
+
+            try
+            {
+                var line = client.StandardOutput.ReadLineAsync();
+                return line.Wait(patience) ? line.Result ?? "" : "";
+            }
+            finally
+            {
+                End(client);
+            }
+        }
+
+        /// <summary>Run a client and give up on it at a deadline (DD355).</summary>
+        /// <param name="deadline">How long it gets.</param>
+        /// <param name="arguments">What to ask it, after the host.</param>
+        /// <returns>Its exit code, or <see langword="null"/> where it was still running at the deadline.</returns>
+        /// <remarks>
+        /// The shipped runner waits ten minutes, which is right for an <c>up</c> and wrong for a question
+        /// asked at discovery: on 16 November 2026 the relay's <c>wsl.exe</c> never answered and the
+        /// whole suite sat in discovery until it was killed, the 1844 tests that never touch WSL with it.
+        /// </remarks>
+        internal int? Ask(TimeSpan deadline, params string[] arguments)
+        {
+            using var client = Start(arguments);
+            _ = client.StandardOutput.ReadToEndAsync();
+            _ = client.StandardError.ReadToEndAsync();
+            if (client.WaitForExit((int)deadline.TotalMilliseconds))
+            {
+                return client.ExitCode;
+            }
+
+            End(client);
+            return null;
+        }
+
+        /// <summary>Start this install's docker against this relay.</summary>
+        private Process Start(IEnumerable<string> arguments)
+        {
             var startInfo = new ProcessStartInfo(_paths.DockerCli)
             {
                 WorkingDirectory = Anywhere,
@@ -138,32 +177,31 @@ internal static class LiveEngine
                 startInfo.ArgumentList.Add(argument);
             }
 
-            using var client = Process.Start(startInfo)
+            return Process.Start(startInfo)
                 ?? throw new InvalidOperationException($"{_paths.DockerCli} could not be started");
+        }
 
+        /// <summary>Kill a client with its tree and wait a bounded time for it to go.</summary>
+        private static void End(Process client)
+        {
             try
             {
-                var line = client.StandardOutput.ReadLineAsync();
-                return line.Wait(patience) ? line.Result ?? "" : "";
+                client.Kill(entireProcessTree: true);
             }
-            finally
+            catch (Exception exception) when (exception is InvalidOperationException
+                or System.ComponentModel.Win32Exception or NotSupportedException)
             {
-                try
-                {
-                    client.Kill(entireProcessTree: true);
-                }
-                catch (Exception exception) when (exception is InvalidOperationException
-                    or System.ComponentModel.Win32Exception or NotSupportedException)
-                {
-                    // It ended on its own, which is one of the two endings being asserted.
-                }
-
-                client.WaitForExit((int)TimeSpan.FromSeconds(30).TotalMilliseconds);
+                // It ended on its own.
             }
+
+            client.WaitForExit((int)TimeSpan.FromSeconds(30).TotalMilliseconds);
         }
 
         /// <inheritdoc/>
         public ValueTask DisposeAsync() => _relay.DisposeAsync();
+
+        /// <summary>Stop serving, waiting at most this long on channels still open (DD355).</summary>
+        internal ValueTask DisposeAsync(TimeSpan join) => _relay.DisposeAsync(join);
     }
 
     /// <summary>A backend that says how many of its channels are still open (DD262).</summary>
@@ -219,9 +257,21 @@ internal static class LiveEngine
         }
 
         var served = new Served();
+        var hung = false;
         try
         {
-            if (served.Run(Anywhere, "version", "--format", "{{.Server.Version}}").ExitCode != 0)
+            // DD355. Bounded, because this is read at discovery and a client that never returns
+            // takes every test in the assembly with it, not only the ones that need a daemon.
+            var answered = served.Ask(ProbeDeadline, "version", "--format", "{{.Server.Version}}");
+            if (answered is null)
+            {
+                hung = true;
+                return $"no daemon answered within {ProbeDeadline.TotalSeconds:0}s through a relay "
+                    + "served here, and the client never returned, which on this machine means WSL "
+                    + "itself is not answering. Restart WSL (or Windows) and re-run to assert against it.";
+            }
+
+            if (answered != 0)
             {
                 return "no daemon answered through a relay served here, so nothing can report an "
                     + "exit code. Start FreeHarbor and re-run to assert against it.";
@@ -250,9 +300,18 @@ internal static class LiveEngine
         }
         finally
         {
-            served.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            // A channel whose wsl.exe hung may never close, so the relay is not waited on for it.
+            (hung ? served.DisposeAsync(TimeSpan.FromSeconds(1)) : served.DisposeAsync())
+                .AsTask().GetAwaiter().GetResult();
         }
     }
+
+    /// <summary>How long the first question gets (DD355).</summary>
+    /// <remarks>
+    /// The probe budget a <c>wsl.exe</c> question gets in the product, plus room for the client and
+    /// the relay's own start: a daemon that is up answers <c>version</c> in well under a second.
+    /// </remarks>
+    internal static readonly TimeSpan ProbeDeadline = WslBudget.Probe + TimeSpan.FromSeconds(5);
 
     /// <summary>Remove whatever a failed run left on the machine.</summary>
     /// <param name="served">The relay to ask, which is the one this run is measuring.</param>

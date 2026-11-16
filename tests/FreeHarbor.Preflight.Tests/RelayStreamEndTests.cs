@@ -32,6 +32,26 @@ public sealed class RelayStreamEndTests
     private static readonly TimeSpan Patience = TimeSpan.FromSeconds(20);
 
     [FactWhenTheEngineAnswers]
+    public async Task A_client_still_running_at_its_deadline_is_given_up_on_and_the_relay_still_stops()
+    {
+        // DD355. The discovery probe's escape, driven by the one request that never ends on its own:
+        // `docker events` streams until it is killed, which is what a client stuck behind a hung
+        // wsl.exe looks like from here. It must come back unanswered, and promptly.
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var engine = new LiveEngine.Served();
+        try
+        {
+            Assert.Null(engine.Ask(TimeSpan.FromSeconds(2), "events"));
+        }
+        finally
+        {
+            await engine.DisposeAsync(TimeSpan.FromSeconds(1));
+        }
+
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(15), $"took {clock.Elapsed}");
+    }
+
+    [FactWhenTheEngineAnswers]
     public async Task A_follow_that_ends_because_the_container_exited_is_reported_as_a_success()
     {
         // The half that matches DD260's three: the daemon stops writing, and what the client reads

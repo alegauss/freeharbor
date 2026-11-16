@@ -92,24 +92,6 @@ The relay's per-connection socat channel is a separate question, raised by the
 WSAENOBUFS (0x80072747) that preceded the hang on 15 November; that is not this task,
 but a count of what is left alive here is the evidence that question needs.
 
-### §DD355 The live probe must answer absent within a budget
-
-LiveEngine.Look decides, once per run and at discovery, whether the DD260 tests can run.
-It serves a relay on a pipe of its own and asks the installed docker for `version`.
-BundledComposeCli.Run waits for the client to exit, the client waits for the relay, and
-the relay's WslSocatBackend channel is a wsl.exe that, on a machine where WSL is stuck,
-never returns. The probe never answers, and because it is read at discovery, no test in
-the assembly runs, including the 1844 that never touch WSL.
-
-Verifying DD351 needed a loop that killed every socat wsl.exe under testhost so the
-probe would fail fast. With that, the live tests skipped and the rest passed.
-
-The probe should run under a deadline (WslBudget.Probe or a few seconds more), kill the
-client and dispose the relay without waiting on open channels when the deadline passes,
-and return a reason that names it: no daemon answered within the budget, which on this
-machine means WSL itself is not answering. The skip reason is then the diagnosis, and
-the suite stays a suite on the machine that most needs it.
-
 ## Block B — The daemon client (talk to the engine)
 
 ## Block C — The window (claude-tray's elements)
