@@ -401,11 +401,13 @@ public sealed class EngineProvisioner
                 ?? throw new InvalidOperationException(
                     $"{Path.GetFileName(cliZipPath)} has no {entryName}");
 
-            Directory.CreateDirectory(_paths.VendorCliDirectory);
-            entry.ExtractToFile(_paths.DockerCli, overwrite: true);
+            // DD361. Not ExtractToFile: an overwrite fails while anything is running docker.exe,
+            // and an editor polling it through the shim keeps it running nearly all the time.
+            var wrote = InUseFile.Place(entry.Open, entry.Length, _paths.DockerCli);
 
             return new StepResult(ProvisioningStep.PlaceCli, true,
-                $"docker {_manifest.Cli.Version} at {_paths.DockerCli}");
+                $"docker {_manifest.Cli.Version} at {_paths.DockerCli}"
+                + (wrote ? "" : ", already in place"));
         }
         catch (Exception exception) when (exception is IOException
             or InvalidDataException or InvalidOperationException or UnauthorizedAccessException)
@@ -441,10 +443,12 @@ public sealed class EngineProvisioner
     {
         try
         {
-            Directory.CreateDirectory(_paths.PluginsDirectory);
-            File.Copy(downloaded, target, overwrite: true);
+            // DD361, for the reason PlaceCli gives: a compose run in progress holds its plugin.
+            var wrote = InUseFile.Place(
+                () => File.OpenRead(downloaded), new FileInfo(downloaded).Length, target);
 
-            return new StepResult(step, true, $"{artefact.Id} {artefact.Version} at {target}");
+            return new StepResult(step, true,
+                $"{artefact.Id} {artefact.Version} at {target}" + (wrote ? "" : ", already in place"));
         }
         catch (Exception exception) when (exception is IOException
             or UnauthorizedAccessException or NotSupportedException)

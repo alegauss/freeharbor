@@ -122,6 +122,7 @@
 - ✅ **DD349** **The pins trail upstream: Moby and the CLI at 29.7.2, Compose 5.4.0, Buildx 0.36.1, Alpine 3.24.1** — Pins now Moby and CLI 29.9.3, Compose 5.7.1, Buildx 0.39.0, Alpine 3.24.4; a reinstall over a live machine came up on all of them with its 6 containers, 77 volumes and 37 images intact.
 - ✅ **DD351** **Restart WSL gives up when wsl --shutdown hangs too, and never asks for the rights that would end the stuck service** — When wsl --shutdown hangs, Restart WSL asks UAC once, ends wslservice.exe and starts it again, then asks WSL; a declined prompt names Restart over Shut down.
 - ✅ **DD360** **Restart WSL on the Engine page asks WSL once after the restart and says nothing while it waits** — After WSL goes down, Restart WSL asks up to 8 times, 3 seconds apart, until it answers, and the Engine page draws which check is running on its progress line.
+- ✅ **DD361** **A reinstall stops at PlaceCli whenever an editor is polling docker, because a running docker.exe cannot be overwritten** — The CLI and plugins are left alone when the bytes match, and otherwise the running copy is renamed aside and swept later; measured with VS Code polling, every place step passes.
 
 ## Block B — The daemon client (talk to the engine)
 
