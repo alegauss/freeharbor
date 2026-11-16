@@ -280,6 +280,7 @@
 - ✅ **DD309** **Nobody knows whether wsl --import run from inside an MSIX package registers a disk both the app and WSL can see** — Virtualized, wsl --import fails with ERROR_PATH_NOT_FOUND; unvirtualized, every verb works from inside the package (design recorded in `docs/specs/DD309-msix-virtualization.md`).
 - ✅ **DD283** **Nobody knows whether winget's validation VM can install it, since the preflight exits 7 without WSL2** — winget's own validation VM measured it on PR 453564: the preflight exits 7, the bot files Validation-Installation-Error, and manual validation must be asked for.
 - ✅ **DD310** **There is no MSIX package of FreeHarbor to sideload or submit** — build-msix.cmd packs both binaries, unvirtualized, at the Directory.Build.props version; -Sideload signs a copy that installs and starts from Start (design recorded in `build/msix/AppxManifest.xml`).
+- ✅ **DD311** **A packaged copy would still offer its own self-update and run an Inno setup over a WindowsApps folder** — A packaged copy never starts its release watch, About says the Store owns its updates, and its startup-task launch skips the window (design recorded in `src/FreeHarbor.Tray/PackageIdentity.cs`).
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 

@@ -191,7 +191,14 @@ internal sealed class TrayApplication : ApplicationContext
         // Always, with nothing to enable (DD171). After the engine, and the watch's own delay is on
         // top of that: a release check is the least urgent thing this process does, and the first
         // twenty seconds of a launch may be provisioning a distribution.
-        _releases.Start();
+        //
+        // Not under a package (DD311): the Store owns updates, and the setup this would download
+        // installs beside the package instead of replacing it. With the watch never started, no
+        // update balloon or menu item can appear either, since both come from it.
+        if (PackageIdentity.SelfUpdates(PackageIdentity.IsPackaged))
+        {
+            _releases.Start();
+        }
     }
 
     /// <summary>Remember what the menu's box now says (DD135).</summary>
@@ -1056,7 +1063,10 @@ internal static class Program
                 // filter box was where it showed, and every capture of this window missed it.
                 Ui.WpfInputBridge.Install();
 
-                var tray = new TrayApplication(openWindow: route.OpenWindow);
+                // DD311. Under a package the startup task launches this bare, which would open the
+                // window at every sign-in; the package says which activation it was.
+                var tray = new TrayApplication(openWindow: PackageIdentity.OpensWindow(
+                    route.OpenWindow, PackageIdentity.IsPackaged, PackageIdentity.ActivationKind()));
                 only!.OnRaise(tray.RaiseWindow);
                 only.OnQuit(tray.QuitFromSignal);
                 only.OnBuild(tray.ShowBuildFromSignal);

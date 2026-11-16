@@ -50,8 +50,8 @@ internal sealed partial class AboutPage : System.Windows.Controls.UserControl
             BitmapCacheOption.OnLoad).Frames;
         Mark.Source = frames.OrderByDescending(frame => frame.PixelWidth).First();
 
-        BuildLine.Text = $"Build {BuildVersion.Current}";
-        Reaches.Text = WhatItReaches();
+        BuildLine.Text = BuildLineFor(BuildVersion.Current, PackageIdentity.IsPackaged);
+        Reaches.Text = WhatItReaches(PackageIdentity.IsPackaged);
         Terms.Text = Attribution.Scope;
         Copyright.Text =
             $"{Attribution.Licence} · Copyright {Attribution.Holder}. "
@@ -160,16 +160,28 @@ internal sealed partial class AboutPage : System.Windows.Controls.UserControl
     /// used to be named as a menu tick a reader could go and find; it happens on every launch, so what
     /// this page owes them is the host, the frequency and what the request carries — the three facts
     /// somebody deciding whether they mind would actually ask for.</para>
+    ///
+    /// <para><b>A packaged copy asks nothing of the release host</b> (DD311), because the Store owns
+    /// its updates and the watch never starts, so the page must not claim a request it never makes.</para>
     /// </remarks>
-    private static string WhatItReaches()
+    /// <param name="packaged">Whether this copy runs in a package.</param>
+    internal static string WhatItReaches(bool packaged)
     {
         var artefacts = EngineManifest.Current.Artefacts.Count();
-        return $"Nothing is uploaded, there is no account and nothing is measured. This build "
-            + $"downloads {artefacts} pinned artefacts, by digest, during a provision you asked for. "
-            + $"It also asks {ReleaseCheck.Host} four times a day for the latest release tag, so it "
-            + "can tell you a version exists. That request carries this product's name and version "
-            + "and nothing about you.";
+        var said = $"Nothing is uploaded, there is no account and nothing is measured. This build "
+            + $"downloads {artefacts} pinned artefacts, by digest, during a provision you asked for.";
+        return packaged
+            ? said + " Its updates come from the Microsoft Store, so it asks nothing about new releases."
+            : said + $" It also asks {ReleaseCheck.Host} four times a day for the latest release tag, so "
+                + "it can tell you a version exists. That request carries this product's name and version "
+                + "and nothing about you.";
     }
+
+    /// <summary>The build line, and where its updates come from when that is not this app (DD311).</summary>
+    /// <param name="version">This build's version.</param>
+    /// <param name="packaged">Whether this copy runs in a package.</param>
+    internal static string BuildLineFor(string version, bool packaged) =>
+        packaged ? $"Build {version} · updates come from the Microsoft Store" : $"Build {version}";
 
     /// <summary>The manifest's own id, spelled the way a reader would say it.</summary>
     private static string Named(string id) => id switch
