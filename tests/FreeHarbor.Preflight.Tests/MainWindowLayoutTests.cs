@@ -146,7 +146,13 @@ public sealed class MainWindowLayoutTests
         // the window rather than on first visit. The rest of the list is not fixed here: DD83 added
         // About, and a guard that has to be edited every time a destination lands is a guard that
         // says nothing about the one thing that matters.
-        Assert.Equal("Containers", destinations[0]);
+        //
+        // First among those the strip shows: Setup (DD316) sits before it, hidden until a Store copy's
+        // first launch asks for it, because on that day it is the one thing to do first.
+        var hidden = Regex.Matches(xaml, @"Tag=""([^""]+)"" Checked=""Destination_Checked"" Visibility=""Collapsed""")
+            .Select(match => match.Groups[1].Value)
+            .ToHashSet(StringComparer.Ordinal);
+        Assert.Equal("Containers", destinations.First(destination => !hidden.Contains(destination)));
         Assert.Equal(destinations.Count, destinations.Distinct(StringComparer.Ordinal).Count());
 
         // And there is a page behind each one: a strip entry with nothing to show would navigate to

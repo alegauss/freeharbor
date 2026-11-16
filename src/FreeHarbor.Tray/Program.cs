@@ -170,6 +170,16 @@ internal sealed class TrayApplication : ApplicationContext
         };
         _events.Start();
 
+        // DD316. The setup page asked the restart that turns WSL2 on to bring it back, and the startup
+        // task's launch is the quiet one (DD311), so the marker it left is what opens the window. Taken
+        // when read, so one restart reopens it once.
+        var marker = Ui.FirstRun.RestartMarker(_paths);
+        if (Ui.FirstRun.ReopensAfterRestart(PackageIdentity.IsPackaged, System.IO.File.Exists(marker)))
+        {
+            System.IO.File.Delete(marker);
+            openWindow = true;
+        }
+
         if (openWindow)
         {
             OpenWindow();
@@ -421,6 +431,16 @@ internal sealed class TrayApplication : ApplicationContext
         _open.Closed += (_, _) => _open = null;
         _open.Show();
         _ = _open.RefreshAsync();
+
+        // DD316. A Store copy meeting a machine with no engine opens on what the wizard would have
+        // shown, since installing the package ran none of it.
+        if (Ui.FirstRun.IsDue(
+                PackageIdentity.IsPackaged,
+                _paths.DistributionRegistered,
+                System.IO.File.Exists(_paths.Settings)))
+        {
+            _open.ShowSetup();
+        }
     }
 
     private void StartEngine()

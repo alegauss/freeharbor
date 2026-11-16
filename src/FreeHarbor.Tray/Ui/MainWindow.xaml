@@ -122,6 +122,11 @@
                 BorderThickness="0,0,0,1"
                 BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
             <StackPanel x:Name="Strip" Orientation="Horizontal" HorizontalAlignment="Left">
+                <!-- DD316: what the setup wizard did, for a Store copy's first launch. Hidden until
+                     then, and shown first because it is the one thing to do before the rest. -->
+                <RadioButton x:Name="NavSetup" Style="{StaticResource NavDest}"
+                             GroupName="Destination" Content="Setup"
+                             Tag="Setup" Checked="Destination_Checked" Visibility="Collapsed" />
                 <RadioButton x:Name="NavContainers" Style="{StaticResource NavDest}"
                              GroupName="Destination" Content="Containers"
                              Tag="Containers" Checked="Destination_Checked" />

@@ -1,0 +1,127 @@
+<!-- What the setup wizard did, for a Store copy's first launch (DD316). Installing an MSIX package
+     runs no code, so the check of the machine, turning WSL2 on, the engine download and the notes
+     the wizard ends on happen here instead, built from the same pieces. Laid out like Settings. -->
+<UserControl x:Class="FreeHarbor.Tray.Ui.Pages.SetupPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:FreeHarbor.Tray.Ui"
+             x:ClassModifier="internal">
+  <UserControl.Resources>
+    <Style x:Key="SectionHead" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Margin" Value="0,24,0,0" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+    <Style x:Key="Lead" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="Margin" Value="0,2,0,10" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+    <Style x:Key="Mono" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="FontFamily" Value="{x:Static ui:Palette.Mono}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+    <Style x:Key="Said" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="Margin" Value="0,8,0,0" />
+      <Setter Property="Visibility" Value="Collapsed" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+    <Style x:Key="Card" TargetType="Border">
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="16,12" />
+      <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+      <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+    </Style>
+  </UserControl.Resources>
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="10,10,10,20" MaxWidth="920" HorizontalAlignment="Center">
+
+      <TextBlock Text="Set up FreeHarbor" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,4"
+                 Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+      <TextBlock Style="{StaticResource Lead}"
+                 Text="Installing from the Microsoft Store copies the app and nothing else. This page does what the setup wizard does: it checks this machine, turns WSL2 on if it is missing, and downloads the engine." />
+
+      <TextBlock Text="This machine" Style="{StaticResource SectionHead}" />
+      <TextBlock x:Name="VerdictLine" Style="{StaticResource Lead}" Text="Checking…" />
+      <Border Style="{StaticResource Card}">
+        <ItemsControl x:Name="Rows">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Margin="0,3">
+                <DockPanel>
+                  <TextBlock DockPanel.Dock="Left" Text="{Binding Mark}" Width="56" FontSize="12"
+                             FontFamily="{x:Static ui:Palette.Mono}"
+                             Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                  <TextBlock DockPanel.Dock="Left" Text="{Binding Title}" Width="190" FontSize="12"
+                             FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                  <TextBlock Text="{Binding Detail}" FontSize="12" TextWrapping="Wrap"
+                             Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                </DockPanel>
+                <TextBlock Text="{Binding Remedy}" Visibility="{Binding RemedyShown}" Margin="246,2,0,0"
+                           FontSize="12" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Border>
+      <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+        <Button x:Name="CheckAgain" Content="Check again" Click="CheckAgainClicked" Padding="12,2" FontSize="12" />
+      </StackPanel>
+
+      <!-- Only where the WSL2 row is what blocks: what the feature is, the command, and the button
+           that runs it behind one administrator prompt (DD131, DD132). -->
+      <StackPanel x:Name="WslPanel" Visibility="Collapsed">
+        <TextBlock Text="Turn WSL2 on" Style="{StaticResource SectionHead}" />
+        <TextBlock x:Name="WslWords" Style="{StaticResource Lead}" />
+        <Border Style="{StaticResource Card}">
+          <DockPanel>
+            <Button DockPanel.Dock="Right" Content="Copy" Click="CopyClicked" Padding="12,2" FontSize="12"
+                    VerticalAlignment="Center" />
+            <TextBlock x:Name="Command" Style="{StaticResource Mono}" VerticalAlignment="Center" />
+          </DockPanel>
+        </Border>
+        <TextBlock Style="{StaticResource Lead}" Margin="0,8,0,8"
+                   Text="Turn it on for me runs that command with one administrator prompt. It turns the feature on and installs no Linux distribution: FreeHarbor brings its own. Windows then needs a restart, and FreeHarbor opens on this page again after it." />
+        <StackPanel Orientation="Horizontal">
+          <Button x:Name="TurnOn" Content="Turn it on for me" Click="TurnOnClicked" Padding="12,2" FontSize="12"
+                  Style="{DynamicResource AccentButtonStyle}" />
+        </StackPanel>
+        <TextBlock x:Name="WslSaid" Style="{StaticResource Said}" />
+      </StackPanel>
+
+      <TextBlock Text="The engine" Style="{StaticResource SectionHead}" />
+      <TextBlock x:Name="EngineLead" Style="{StaticResource Lead}" />
+      <StackPanel Orientation="Horizontal">
+        <Button x:Name="Download" Content="Download and install the engine" Click="DownloadClicked"
+                Padding="12,2" FontSize="12" />
+      </StackPanel>
+      <TextBlock x:Name="Steps" Style="{StaticResource Mono}" Margin="0,8,0,0" Visibility="Collapsed"
+                 Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+      <TextBlock x:Name="EngineSaid" Style="{StaticResource Said}" />
+
+      <TextBlock Text="Where the icon is" Style="{StaticResource SectionHead}" />
+      <TextBlock x:Name="Overflow" Style="{StaticResource Lead}" />
+
+      <TextBlock Text="If a coding agent uses this machine" Style="{StaticResource SectionHead}" />
+      <TextBlock Style="{StaticResource Lead}"
+                 Text="FreeHarbor ships a surface built for one. Nothing here copies it anywhere: your agent configuration is yours. To use it, copy the skill where your agent looks for one:" />
+      <Border Style="{StaticResource Card}">
+        <TextBlock x:Name="AgentCommands" Style="{StaticResource Mono}" />
+      </Border>
+      <TextBlock Style="{StaticResource Lead}" Margin="0,10,0,6"
+                 Text="and add this line to the allow array in your .claude\settings.json. It grants every read verb and no write:" />
+      <Border Style="{StaticResource Card}">
+        <TextBlock x:Name="AllowLine" Style="{StaticResource Mono}" />
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

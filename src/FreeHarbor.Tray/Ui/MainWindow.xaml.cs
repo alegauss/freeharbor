@@ -33,6 +33,7 @@ internal partial class MainWindow : Window
     private readonly WindowRecall _recall;
     private readonly IBuildHistory _builds;
     private readonly EngineSeams _engineSeams;
+    private readonly FirstRunSeams _setupSeams;
 
     private ImagesPage? _images;
     private VolumesPage? _volumes;
@@ -40,6 +41,7 @@ internal partial class MainWindow : Window
     private EnginePage? _engine;
     private SettingsPage? _settings;
     private AboutPage? _about;
+    private SetupPage? _setup;
 
     /// <summary>The builds destination, built on first use and then kept (DD126).</summary>
     /// <remarks>A property because two reach it: the nav strip, and <see cref="ShowBuild"/>.</remarks>
@@ -66,15 +68,18 @@ internal partial class MainWindow : Window
     /// laptop did that afternoon, which is not reviewable and not safe to put in a README.
     /// </param>
     /// <param name="windowState">Where the window's memory is kept; this account's file by default (DD301).</param>
+    /// <param name="setup">What the setup page reads and does (DD316); this machine's by default.</param>
     internal MainWindow(
         IEngineClient api, Func<EngineState> engineState, Action startEngine,
-        IBuildHistory? builds = null, EngineSeams? engine = null, string? windowState = null)
+        IBuildHistory? builds = null, EngineSeams? engine = null, string? windowState = null,
+        FirstRunSeams? setup = null)
     {
         InitializeComponent();
         _api = api;
         _engineState = engineState;
         _builds = builds ?? new BuildHistory();
         _engineSeams = engine ?? EngineDestination.OnThisMachine();
+        _setupSeams = setup ?? FirstRunDestination.OnThisMachine(startEngine);
 
         Containers = new ContainersPage(api, engineState, startEngine);
         DestinationHost.Children.Add(Containers);
@@ -88,10 +93,21 @@ internal partial class MainWindow : Window
         // navigates, and during InitializeComponent there is nothing built to navigate to. A name this
         // window no longer has — a page removed since the file was written — falls back rather than
         // opening on nothing.
-        if (!ShowTab(_recall.Destination))
+        //
+        // Never Setup (DD316): it is shown when a first launch asks for it, and remembering it would
+        // reopen a hidden page on a machine that has finished setting up.
+        if (string.Equals(_recall.Destination, FirstRun.Destination, StringComparison.Ordinal)
+            || !ShowTab(_recall.Destination))
         {
             NavContainers.IsChecked = true;
         }
+    }
+
+    /// <summary>Show the setup page, because this is a Store copy's first launch (DD316).</summary>
+    internal void ShowSetup()
+    {
+        NavSetup.Visibility = Visibility.Visible;
+        NavSetup.IsChecked = true;
     }
 
     /// <summary>The destination being read now.</summary>
@@ -194,6 +210,13 @@ internal partial class MainWindow : Window
                 _about ??= Add(new AboutPage(_api));
                 page = _about;
                 _ = _about.RefreshAboutAsync();
+                break;
+            case "Setup":
+                // Shown in the strip too, so a capture that asks for it sees what the window would.
+                NavSetup.Visibility = Visibility.Visible;
+                _setup ??= Add(new SetupPage(_setupSeams));
+                page = _setup;
+                _ = _setup.CheckAsync();
                 break;
             default:
                 page = Containers;

@@ -286,6 +286,7 @@
 - ✅ **DD313 (manifest half)** **Under a package, both Run values go to a private hive Explorer never reads, so nothing starts at sign-in** — The package declares the tray's startup task on and the engine's off, measured from a sideload, and --autostart under it names Settings.
 - ✅ **DD314** **Packaged, the docker-desktop:// link buildx prints opens nothing, because the HKCU handler is never registered** — The package claims docker-desktop:// and a link reaches its exe as --open-build with the URL, the installer handler's own command line (design recorded in `build/msix/AppxManifest.xml`).
 - ✅ **DD317 (all but Store listing and proof)** **Uninstalling the package leaves the freeharbor distribution and its multi-gigabyte disk registered with WSL** — --remove-engine, run by Inno and offered as Remove engine in Settings, takes the engine off; preflight blocks on an orphan; the site says remove first.
+- ✅ **DD316 (the setup page)** **A Store install has no page before the first file, so a machine without WSL2 finds out only after installing** — A packaged first launch opens on Setup: the preflight, an elevated WSL2 turn-on that reopens it after the restart, the engine download and the agent notes.
 
 ## Block G — The agent surface (an agent operates this, and pays in tokens)
 

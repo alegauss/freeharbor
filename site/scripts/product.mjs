@@ -304,9 +304,13 @@ if (trayItems.length === 0) {
 
 const mainWindow = read(mainWindowFile, "the window's nav strip");
 
+// A destination the strip hides is skipped (DD316): Setup is shown only on a Store copy's first
+// launch, so a reader of the window never sees it among the others.
 const destinations = [
-  ...mainWindow.matchAll(/<RadioButton[^>]*?Content="([^"]+)"[^>]*?Tag="([^"]+)"/gs),
-].map((m) => m[1]);
+  ...mainWindow.matchAll(/<RadioButton([^>]*?)Content="([^"]+)"[^>]*?Tag="([^"]+)"([^>]*)>/gs),
+]
+  .filter((m) => !/Visibility="Collapsed"/.test(m[1] + m[4]))
+  .map((m) => m[2]);
 
 if (destinations.length === 0) {
   throw new Error(

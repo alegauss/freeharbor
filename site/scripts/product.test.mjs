@@ -173,7 +173,12 @@ test("the window's destinations are the ones the nav strip carries", () => {
   // the sentence leaves the site counting to four on a window that shows five. That is exactly
   // the drift DD160 corrected, and it happened again the moment a destination was added.
   const strip = source("src", "FreeHarbor.Tray", "Ui", "MainWindow.xaml");
-  const carried = [...strip.matchAll(/<RadioButton[^>]*?Content="([^"]+)"/gs)].map((m) => m[1]);
+  // A destination the strip hides is not one a reader sees (DD316: Setup, on a Store copy's first
+  // launch only), so it is left out on both sides.
+  const carried = [...strip.matchAll(/<RadioButton([^>]*)>/gs)]
+    .filter((m) => !/Visibility="Collapsed"/.test(m[1]))
+    .map((m) => /Content="([^"]+)"/.exec(m[1])?.[1])
+    .filter(Boolean);
 
   assert.ok(carried.length > 0, "no destinations parsed out of MainWindow.xaml");
   assert.deepEqual(product.window.destinations, carried);

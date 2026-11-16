@@ -167,7 +167,12 @@ internal static class WindowCapture
 
         var window = new Ui.MainWindow(
             api, () => fixture || live ? EngineState.Running : EngineState.Stopped, () => { },
-            builds, engine, windowState)
+            builds, engine, windowState,
+
+            // DD316: the setup page shows a machine without WSL2 and refuses to act, for the reason
+            // the Engine page's seams do. The live one reads this machine and acts on nothing until
+            // a button is pressed, which a capture never does.
+            fixture ? Ui.FirstRunDestination.Fixture() : null)
         {
             WindowStartupLocation = System.Windows.WindowStartupLocation.Manual,
             // Off the desktop entirely. Not merely unfocused: there is no screen region for anything
@@ -205,6 +210,11 @@ internal static class WindowCapture
         var code = Failed;
         window.Show();
 
+        // Before the tab is shown and not only before the refresh below (DD316): a page that reads
+        // on being shown, as Setup does, otherwise resumes off the dispatcher and draws nothing.
+        SynchronizationContext.SetSynchronizationContext(
+            new System.Windows.Threading.DispatcherSynchronizationContext(window.Dispatcher));
+
         if (tab is not null && !window.ShowTab(tab))
         {
             // Refused, not defaulted, and before any file exists. A name this window does not have
@@ -224,9 +234,8 @@ internal static class WindowCapture
         // DD340: the dispatcher's context is installed by Application.Run, which has not run yet, so
         // without this a read that really waits on the pipe resumes on a pool thread and the redraw
         // throws there, unobserved, leaving the empty page. The fixture answers synchronously and
-        // never needed it, which is why this went unseen until a capture read a real engine.
-        SynchronizationContext.SetSynchronizationContext(
-            new System.Windows.Threading.DispatcherSynchronizationContext(window.Dispatcher));
+        // never needed it, which is why this went unseen until a capture read a real engine. The
+        // context is installed above, before the tab.
         _ = window.RefreshAsync();
 
         var settle = new System.Windows.Threading.DispatcherTimer { Interval = Settle };
