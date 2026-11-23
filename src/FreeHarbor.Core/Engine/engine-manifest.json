@@ -23,30 +23,30 @@
   },
   "engine": {
     "id": "engine",
-    "version": "29.9.3",
-    "url": "https://download.docker.com/linux/static/stable/x86_64/docker-29.9.3.tgz",
-    "fileName": "docker-29.9.3.tgz",
-    "sha256": "3fb5d1f13014c18cc54945bc177c58a9056a482dada031e17d12cf2e6922c973"
+    "version": "29.10.0",
+    "url": "https://download.docker.com/linux/static/stable/x86_64/docker-29.10.0.tgz",
+    "fileName": "docker-29.10.0.tgz",
+    "sha256": "7c1ebadc65c716cdc6d35fc78759ed0e4317debf43c21dd12f066f2006999def"
   },
   "cli": {
     "id": "cli",
-    "version": "29.9.3",
-    "url": "https://download.docker.com/win/static/stable/x86_64/docker-29.9.3.zip",
-    "fileName": "docker-29.9.3.zip",
-    "sha256": "7c4ff7bbb31579046cd34dd8b91f7cbd3ab3482a1a85330170be726ef792d751"
+    "version": "29.10.0",
+    "url": "https://download.docker.com/win/static/stable/x86_64/docker-29.10.0.zip",
+    "fileName": "docker-29.10.0.zip",
+    "sha256": "bb894f67d85155e635ce71980fb2cf587e71dad8c41cc145c42a0de5160b6561"
   },
   "compose": {
     "id": "compose",
-    "version": "5.7.1",
-    "url": "https://github.com/docker/compose/releases/download/v5.7.1/docker-compose-windows-x86_64.exe",
-    "fileName": "docker-compose-windows-x86_64-5.7.1.exe",
-    "sha256": "e4316597452650ae92fe9719a2a7c2fce8f56c5ceafed88d2aed6e39b2b2b2d0"
+    "version": "5.8.0",
+    "url": "https://github.com/docker/compose/releases/download/v5.8.0/docker-compose-windows-x86_64.exe",
+    "fileName": "docker-compose-windows-x86_64-5.8.0.exe",
+    "sha256": "0c2d9245a5f61e8e3cc85009b8b4888fa82fded08239d28bd6da5ca818eda2b2"
   },
   "buildx": {
     "id": "buildx",
-    "version": "0.39.0",
-    "url": "https://github.com/docker/buildx/releases/download/v0.39.0/buildx-v0.39.0.windows-amd64.exe",
-    "fileName": "buildx-v0.39.0.windows-amd64.exe",
-    "sha256": "b51a432f9013fe9b506e34df9eb4e3d2464350ddf792d579ce07f36cc57cb743"
+    "version": "0.39.1",
+    "url": "https://github.com/docker/buildx/releases/download/v0.39.1/buildx-v0.39.1.windows-amd64.exe",
+    "fileName": "buildx-v0.39.1.windows-amd64.exe",
+    "sha256": "4a665d2c71f6f87a42313cb8847b8e834e2dfb1626a1b57fcdbaacf41a6c8387"
   }
 }
